@@ -12,8 +12,10 @@ export const CONTRACT_REFUSALS = {
   // Bookings
   occurrence_full: { es: 'Esta clase ya está llena.', en: 'This class is full.' },
   occurrence_not_open: { es: 'Esta clase ya no admite reservas: empezó, se canceló o terminó.', en: 'This class no longer takes bookings: it has started, been cancelled or ended.' },
+  check_in_closed: { es: 'La clase ya terminó: ya no se puede registrar la llegada.', en: 'The class has ended: arrivals can no longer be recorded.' },
   already_booked: { es: 'Ya tienes una reserva en esta clase.', en: 'You already have a booking in this class.' },
-  daily_limit_reached: { es: 'Ya tienes una clase reservada ese día. Puedes reservar una clase por día.', en: 'You already have a class booked that day. You can book one class a day.' },
+  person_overlap: { es: 'Ya hay otra clase reservada a esa hora. Elige una clase que no se cruce con las reservas existentes.', en: 'Another class is already booked at that time. Pick a class that does not overlap the existing bookings.' },
+  daily_limit_reached: { es: 'Llegaste al límite de reservas para ese día. Elige otro día.', en: 'You have reached the booking limit for that day. Choose another day.' },
   spot_required: { es: 'Elige un tapete para reservar esta clase.', en: 'Choose a mat to book this class.' },
   spot_invalid: { es: 'Ese tapete no existe en esta sala. Elige otro.', en: 'That mat does not exist in this room. Choose another.' },
   spot_taken: { es: 'Alguien acaba de tomar ese tapete. Elige otro.', en: 'Someone just took that mat. Choose another.' },
@@ -39,6 +41,7 @@ export const CONTRACT_REFUSALS = {
   voucher_expired: { es: 'Este bono ya venció.', en: 'This voucher has expired.' },
   voucher_redeemed: { es: 'Este bono ya se usó y no se puede cambiar.', en: 'This voucher has been used and cannot be changed.' },
   voucher_used_up: { es: 'Este bono ya se usó por completo, o ya lo canjeaste.', en: 'This voucher is fully used, or you have already redeemed it.' },
+  voucher_first_time_only: { es: 'Este código es solo para personas nuevas en Hoy: ya tienes clases, un pago o una clase a la que asististe.', en: 'This code is only for people new to Hoy: you already have classes, a payment or an attended class.' },
   // Payments
   product_inactive: { es: 'Este producto ya no está a la venta.', en: 'This product is no longer for sale.' },
   audience_not_allowed: { es: 'Este precio es solo para afiliados. Pregunta en recepción.', en: 'This price is for affiliates only. Ask at the front desk.' },

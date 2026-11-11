@@ -3,8 +3,7 @@ import {readPendingDeskIntent} from './pendingDeskIntent';
 import type {PaymentRow} from './schema';
 import {executeGiftPurchaseCommand,type GiftPurchaseCommand,type GiftPurchaseResult} from '../modules/voucher-gifts/purchaseCommand';
 import {checkSaleQuote} from './operationalQuotes';
-import { dailyAdmissionConflict, identifiedSessionAdmission } from './dailyAdmission';
-import { effectiveAdmissionCapacity, sessionAdmissionAvailable } from './sessionAdmission';
+import { effectiveAdmissionCapacity, identifiedSessionAdmission, sessionAdmissionAvailable } from './sessionAdmission';
 import { ensureFullDemoSession } from './seed/ensureFullDemoSession';
 import { appendClassPayRule, defaultClassPayRule, type AppendClassPayRuleCommand, type ClassPayRuleRow } from './classPayRules';
 import { dateKey, addDays, atStudioTime, studioParts, STUDIO_TIMEZONE } from '../i18n/format';
@@ -100,7 +99,9 @@ export class MockProvider implements DataProvider {
     if (!(this.db.class_templates ?? []).some(row => row.id.startsWith('tpl_fixed_'))) upgradeTimetable(this.db, buildSeed());
     this.expandDemoCalendar();
     ensureFullDemoSession(this.db, Date.now());
-    this.assignLegacyMats();
+    // The calendar expanded above is saved now, as it was when assignLegacyMats() ended with a persist (a later before/after
+    // comparison must not see the expansion as a change).
+    this.persist();
     // Cross-tab realtime: another tab's persist() fires `storage` here; reload and tell every subscriber.
     if (typeof window !== 'undefined') window.addEventListener('storage', (e) => this.onStorage(e));
   }
@@ -129,16 +130,6 @@ export class MockProvider implements DataProvider {
       }
     }
   }
-  private assignLegacyMats() {
-    const bookings = this.db.bookings as BookingRow[];
-    for (const session of this.db.class_sessions as ClassSessionRow[]) {
-      const modality = (this.db.modalities as ModalityRow[]).find(m => m.id === session.modality_id);
-      if (!usesMats(modality)) continue;
-      const active = bookings.filter(b => b.session_id === session.id && occupiesMat(b));
-      for (const booking of active) if (booking.mat_number == null) booking.mat_number = chooseMat(active, Math.min(session.capacity, tenant.studio.mats));
-    }
-    this.persist();
-  }
   private syncCapacity(sessionId: string) {
     const session = (this.db.class_sessions as ClassSessionRow[]).find(s => s.id === sessionId);
     if (!session) return;
@@ -152,7 +143,6 @@ export class MockProvider implements DataProvider {
     const others = (this.db.bookings as BookingRow[]).filter(b => b.session_id === row.session_id && b.id !== row.id && occupiesMat(b));
     if (others.some(b => b.user_id === row.user_id) || (this.db.voucher_bookings as VoucherBookingRow[]).some(b => b.sessionId === session.id && b.status !== 'cancelled' && b.participants.some(p => p.userId === row.user_id))) throw new Error('booking_exists');
     if (admission && identifiedSessionAdmission(this.db, session, row.user_id, row.id)) throw new Error('booking_exists');
-    if (admission && dailyAdmissionConflict(this.db, session, row.user_id, row.id)) throw new Error('same_day_conflict');
     const modality = (this.db.modalities as ModalityRow[]).find(m => m.id === session.modality_id && m.tenant_id === session.tenant_id);
     const template = this.db.class_templates.find(t => t.id === session.template_id && t.tenant_id === session.tenant_id);
     if (admission && !sessionAdmissionAvailable(session, modality, template)) throw new Error('session_unavailable');
@@ -160,7 +150,8 @@ export class MockProvider implements DataProvider {
     const capacity = admission ? effectiveAdmissionCapacity(session, (this.db.rooms as RoomRow[]).find(r => r.id === session.room_id && r.tenant_id === session.tenant_id), modality) : session.capacity;
     const seats = (this.db.bookings as BookingRow[]).filter(b => b.tenant_id === session.tenant_id && b.session_id === session.id && b.id !== row.id && !['cancelled', 'late_cancel'].includes(b.status));
     if (seats.length + voucherSeats(this.db, session.id, session.tenant_id) >= capacity) throw new Error('session_full');
-    return usesMats(modality) ? { ...row, mat_number: chooseMat([...others, ...(this.db.voucher_bookings as VoucherBookingRow[]).filter(b => b.sessionId === session.id && b.status !== 'cancelled').flatMap(b => b.mats.map(mat_number => ({ status: 'booked', mat_number } as BookingRow)))], Math.min(capacity, tenant.studio.mats), row.mat_number) } : { ...row, mat_number: null };
+    // Hoy 12 Nov (D1): no mat is chosen or assigned. A number is checked only when a caller still names one (an older booking).
+    return usesMats(modality) && row.mat_number != null ? { ...row, mat_number: chooseMat([...others, ...(this.db.voucher_bookings as VoucherBookingRow[]).filter(b => b.sessionId === session.id && b.status !== 'cancelled').flatMap(b => b.mats.map(mat_number => ({ status: 'booked', mat_number } as BookingRow)))], Math.min(capacity, tenant.studio.mats), row.mat_number) } : { ...row, mat_number: null };
   }
 
   private requireBookingPayment(row: BookingRow) {
@@ -396,7 +387,7 @@ export class MockProvider implements DataProvider {
   /** Refresh only synthetic sample fixtures when an already-open demo crosses a class start. */
   prepareDemoSamples(): void {
     if (!ensureFullDemoSession(this.db, Date.now())) return;
-    this.assignLegacyMats();
+    this.persist();
     for (const table of ['class_sessions', 'bookings', 'waitlist']) this.emit({ table, type: 'reset' });
   }
 
@@ -451,7 +442,6 @@ export class MockProvider implements DataProvider {
     ensureDemoPromotions(this.db, tenant.id);
     this.expandDemoCalendar();
     ensureFullDemoSession(this.db, Date.now());
-    this.assignLegacyMats();
     this.persist();
     for (const t of Object.keys(this.db)) this.emit({ table: t, type: 'reset' });
   }

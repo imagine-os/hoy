@@ -89,6 +89,8 @@ try {
     const PROMPT = { es: 'Inicia sesión para ver los horarios y reservar', en: 'Sign in to see the timetable and book' };
     for (const lang of ['es', 'en']) {
       const ctx = await newContext(browser, { lang });
+      // The home is the root path now (D11) and the root shows Coming Soon until go-live: production reads that setting from the tenant's config, so give it.
+      await ctx.route('**/app-config.json', (r) => r.fulfill({ contentType: 'application/json', body: JSON.stringify({ apiBase: '/api/cos', tenant: 'hoy', launch: { siteLive: true } }) }));
       const page = await ctx.newPage();
       const errors = [];
       page.on('pageerror', (e) => errors.push(e.message));

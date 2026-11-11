@@ -2,11 +2,9 @@ import { useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useData } from '../../../data/DataContext';
-import { usesMats } from '../../../data/mats';
 import { dateKey, formatDateTime, formatTime } from '../../../i18n/format';
-import { tenant } from '../../../tenant/tenant';
 import { Button } from '../../../components/atom/Button/Button';
-import { Input, Select } from '../../../components/atom/Input/Input';
+import { Input } from '../../../components/atom/Input/Input';
 import { Card } from '../../../components/molecule/Card/Card';
 import { Field } from '../../../components/molecule/Field/Field';
 import { Notice } from '../../../components/molecule/Notice/Notice';
@@ -97,10 +95,9 @@ export function ServerChangeSheet({ open, onClose, booking, joined, onResult }: 
   const [mode, setMode] = useState<'menu' | 'move' | 'cancel'>('menu');
   const [day, setDay] = useState(() => dateKey(new Date(s.starts_at)));
   const [target, setTarget] = useState<string | null>(null);
-  const [mat, setMat] = useState<number | null>(null);
   const [busy, setBusy] = useState(false), [error, setError] = useState<unknown>(null);
   const inFlight = useRef(false);
-  const moveKey = useSubmitKey(`move:${booking.id}:${target ?? ''}:${mat ?? ''}`);
+  const moveKey = useSubmitKey(`move:${booking.id}:${target ?? ''}`);
   const cancelKey = useSubmitKey(`cancel:${booking.id}`);
   const held = booking.status === 'held';
   const canMove = moveOpen(booking, s.starts_at, policy, now);
@@ -108,8 +105,7 @@ export function ServerChangeSheet({ open, onClose, booking, joined, onResult }: 
   const hours = booking.policy_reschedule_hours ?? policy.rescheduleHours;
   const alts = useMemo(() => all.filter((a) => a.session.id !== s.id && classPhase(a.session, now) === 'open' && dateKey(new Date(a.session.starts_at)) === day), [all, s.id, day, now]);
   const chosen = alts.find((a) => a.session.id === target) ?? null;
-  const needsMat = !!chosen && usesMats(chosen.modality);
-  const close = () => { if (busy) return; setMode('menu'); setError(null); setTarget(null); setMat(null); onClose(); };
+  const close = () => { if (busy) return; setMode('menu'); setError(null); setTarget(null); onClose(); };
 
   const act = async (write: () => Promise<unknown>, key: ReturnType<typeof useSubmitKey>, done: { tone: 'success' | 'warn'; text: string }) => {
     if (inFlight.current) return;
@@ -118,7 +114,7 @@ export function ServerChangeSheet({ open, onClose, booking, joined, onResult }: 
     catch (e) { key.settle(e); setError(e); }
     finally { inFlight.current = false; setBusy(false); }
   };
-  const move = () => !consentHeld && chosen && act(() => moveOnServer(data, { bookingId: booking.id, toSessionId: chosen.session.id, matNumber: needsMat ? mat : null }, moveKey.take()), moveKey,
+  const move = () => !consentHeld && chosen && act(() => moveOnServer(data, { bookingId: booking.id, toSessionId: chosen.session.id }, moveKey.take()), moveKey,
     { tone: 'success', text: t('customer.srv.move.done', { when: formatDateTime(chosen.session.starts_at, lang) }) });
   const cancel = () => act(() => cancelOnServer(data, { bookingId: booking.id }, cancelKey.take()), cancelKey,
     { tone: 'warn', text: t(held ? 'customer.srv.cancel.held.done' : 'customer.srv.cancel.done') });
@@ -143,15 +139,10 @@ export function ServerChangeSheet({ open, onClose, booking, joined, onResult }: 
                 ? <Notice tone="info" title={t('customer.change.noAlt')}>{t('customer.change.noAlt.body')}</Notice>
                 : <Card padding="sm" className="stack-sm">{alts.map((a) => (
                   <div key={a.session.id} role="radio" aria-checked={target === a.session.id} className={target === a.session.id ? 'is-active' : undefined}>
-                    <ClassRow title={a.session.title} teacher={a.teacher?.display_name ?? ''} startsAt={a.session.starts_at} durationMin={a.modality?.duration_min ?? 60} tone={a.modality?.tone ?? 'river'} booked={a.session.booked_count} capacity={a.session.capacity} booked_by_me={target === a.session.id} onClick={() => { if (!busy) { setTarget(a.session.id); setMat(null); setError(null); } }} />
+                    <ClassRow title={a.session.title} teacher={a.teacher?.display_name ?? ''} startsAt={a.session.starts_at} durationMin={a.modality?.duration_min ?? 60} tone={a.modality?.tone ?? 'river'} booked={a.session.booked_count} capacity={a.session.capacity} booked_by_me={target === a.session.id} onClick={() => { if (!busy) { setTarget(a.session.id); setError(null); } }} />
                   </div>))}</Card>}
-              {needsMat && <Field label={t('site.mat.title')} hint={t('customer.srv.move.mat')}>{(id) => (
-                <Select id={id} value={mat ?? ''} onChange={(e) => setMat(Number(e.target.value) || null)}>
-                  <option value="">—</option>
-                  {Array.from({ length: Math.min(chosen!.session.capacity, tenant.studio.mats) }, (_, i) => i + 1).map((n) => <option key={n} value={n}>{t('site.mat.number', { n })}</option>)}
-                </Select>)}</Field>}
               <Refusal error={error} />
-              <Button block loading={busy} disabled={!chosen || busy || (needsMat && !mat)} onClick={() => void move()}>{t('customer.srv.move.confirm')}</Button>
+              <Button block loading={busy} disabled={!chosen || busy} onClick={() => void move()}>{t('customer.srv.move.confirm')}</Button>
               <p className="xs muted">{t('customer.srv.move.note')}</p>
             </>}
           </section>

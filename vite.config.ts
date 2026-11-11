@@ -132,6 +132,12 @@ function productionBuild(): Plugin {
   return {
     name: 'hoy-production-build',
     enforce: 'pre',
+    // Lane H-SEO (D11): the website is on real paths (/clases/fuego), and the app's assets are relative (base './', for
+    // GitHub Pages). One root base on every production page, `/` included, so ./images and ./brand resolve from the root
+    // after the browser moves to a deeper path. The review build keeps './' relative to wherever it is hosted.
+    transformIndexHtml(html) {
+      return html.replace(/(<meta charset="UTF-8" \/>)/i, '$1\n    <base href="/" />');
+    },
     generateBundle(_, bundle) {
       const rendered = new Set<string>();
       for (const chunk of Object.values(bundle)) if (chunk.type === 'chunk') for (const [id, m] of Object.entries(chunk.modules)) if (m.renderedLength > 0) rendered.add(id);

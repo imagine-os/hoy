@@ -16,6 +16,7 @@ import { checkReceipt, giftNotes, productSoldAlone, RECEIPT_TYPES, transferOps, 
 import { useAction, useCos, useLoad } from './useCos';
 import { holdView, safeCheckoutReturn, type HoldView, type ServerBookingRow } from '../../customer/booking/serverBooking';
 import { useBookingPolicy, type BookingPolicy } from '../../customer/booking/bookingPolicy';
+import { PageHead } from '../../customer/ui';
 import { ConsentHoldNotice, useConsentHeld } from '../../identity/ConsentHold';
 import { consentHoldsPay } from '../../identity/consentHoldRules';
 
@@ -69,7 +70,17 @@ export function TransferPayPage() {
   return <PayScreen key={`${what}/${id}`} what={what} id={id} />;
 }
 
+/** The customer page frame (as ServerCheckoutPage): container, page head with back link, the block spacing. */
 function PayScreen({ what, id }: { what: string; id: string }) {
+  const { t } = useI18n();
+  const back = safeCheckoutReturn(useSearchParams()[0].get('next')) ?? '/app';
+  return <div className="container page cust-page">
+    <PageHead back={back} title={t('payLaunch.pay.title')} />
+    <PayBody what={what} id={id} />
+  </div>;
+}
+
+function PayBody({ what, id }: { what: string; id: string }) {
   // H-6's gift screen passes the recipient in router state; only a `gift-recipient:` note for a gift product is kept.
   const notes = giftNotes((useLocation().state as { paymentNotes?: unknown } | null)?.paymentNotes);
   // RS-03: a trial or package bought from a class's checkout keeps that class, to go back once the receipt is sent.
@@ -126,8 +137,7 @@ function PayScreen({ what, id }: { what: string; id: string }) {
     setDone(true);
   });
 
-  return <div className="stack">
-    <h1>{t('payLaunch.pay.title')}</h1>
+  return <>
     <Card>
       <div className="stack-sm">
         <span>{product.data.name}</span>
@@ -150,13 +160,13 @@ function PayScreen({ what, id }: { what: string; id: string }) {
         {ins.qrImageUrl && (failedQr === ins.qrImageUrl ? <span className="small muted" data-qr="unavailable">{t('payLaunch.pay.qrUnavailable')}</span> : <img src={ins.qrImageUrl} alt={t('payLaunch.pay.qr')} style={{ width: 'min(240px, 100%)', height: 'auto' }} onError={() => setFailedQr(ins.qrImageUrl)} />)}
       </div>
     </Card> : pay.status !== 'loading' && <Notice tone="warn">{t('payLaunch.pay.noInstructions')}</Notice>}
-    {v.affiliate !== false && <form className="stack" onSubmit={(e) => { e.preventDefault(); void send(); }} noValidate>
+    {v.affiliate !== false && <div><form className="stack" onSubmit={(e) => { e.preventDefault(); void send(); }} noValidate>
       <Field label={t('payLaunch.pay.reference')}>{(fid) => <Input id={fid} name="reference" maxLength={120} value={reference} disabled={action.busy || action.uncertain || !!resumeId} onChange={(e) => { setReference(e.target.value); action.renew(); }} />}</Field>
       <Field label={t('payLaunch.pay.receipt')} required>{(fid) => <input id={fid} name="receipt" type="file" accept={RECEIPT_TYPES.join(',')} disabled={action.busy} onChange={(e) => { setFile(e.target.files?.[0] ?? null); action.setError(null); }} />}</Field>
       {resumeId && <Notice tone="warn">{t(paymentId ? 'payLaunch.pay.partial' : 'payLaunch.pay.missingImage')}</Notice>}
       {action.uncertain ? <Notice tone="warn">{t('payLaunch.uncertain')}</Notice> : action.error && <p role="alert">{t(refusalKey(action.error), { code: action.error })}</p>}
       <Button type="submit" loading={action.busy} disabled={action.busy || !file}>{t(action.busy ? 'payLaunch.pay.sending' : 'payLaunch.pay.send')}</Button>
-    </form>}
+    </form></div>}
     <p className="small muted">{t('payLaunch.pay.payAtDesk')}</p>
-  </div>;
+  </>;
 }

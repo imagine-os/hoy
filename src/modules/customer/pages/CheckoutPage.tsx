@@ -11,8 +11,8 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useSession } from '../../../auth/SessionProvider';
-import { useData, useTable } from '../../../data/DataContext';
-import type { BookingRow, ClassSessionRow, PaymentRow, UserRow } from '../../../data/schema';
+import { useData } from '../../../data/DataContext';
+import type { BookingRow, PaymentRow, UserRow } from '../../../data/schema';
 import { formatCOP, MS } from '../../../i18n/format';
 import { useLayout } from '../../../layout/useLayout';
 import { Button } from '../../../components/atom/Button/Button';
@@ -29,13 +29,12 @@ import { PACKAGE_IDS, PASS_IDS, priceOf, useBookingActions, useEntitlements, use
 import { PAYMENT_METHODS, activatePaidPackage, recordPayment, wompiCheckout, type ElectronicMethod, type PayMethod, type WompiResult } from '../payments';
 import { policy } from '../policy';
 import { PageHead, durationMin, toneOf, roomName, teacherName } from '../ui';
-import { MatPicker } from '../../../components/organism/MatPicker/MatPicker';
-import { usesMats, occupiesMat, chooseMat } from '../../../data/mats';
+import { occupiesMat } from '../../../data/mats';
 import { tenant } from '../../../tenant/tenant';
 import { DeclinedBlock, type DeclinedState } from './blocks';
 import { SplitSections } from '../split';
 import { useActions } from '../../../actions';
-import { need, useAppNavHandlers } from '../actions';
+import { useAppNavHandlers } from '../actions';
 import { Icon } from '../../../components/atom/Icon/Icon';
 
 import { ReceiptAlertResult } from '../../../components/organism/ReceiptAlertResult/ReceiptAlertResult';
@@ -66,16 +65,11 @@ export function CheckoutPage() {
   const { joined, loading } = useSessionJoined(id);
   const admissionAvailable=!!joined && sessionAdmissionAvailable(joined.session,joined.modality,joined.session.template_id?{id:joined.session.template_id,active:joined.templateActive}:undefined);
   const ent = useEntitlements();
-  const { book, sameDayConflict } = useBookingActions();
+  const { book } = useBookingActions();
   const { rows: myBookings } = useMyBookings();
-  const { rows: sessions } = useTable<ClassSessionRow>('class_sessions');
 
   const passParam = params.get('pass');
   const claimId = params.get('claim');
-  const [mat, setMat] = useState<number | null>(() => Number(params.get('mat')) || null);
-  const { rows: roomBookings } = useTable<BookingRow>('bookings', { where: { session_id: id ?? '' } });
-  const yoga = usesMats(joined?.modality);
-  const matValid = mat != null && Number.isInteger(mat) && mat >= 1 && mat <= Math.min(joined?.session.capacity ?? 0, tenant.studio.mats) && !roomBookings.some(b => occupiesMat(b) && b.mat_number === mat);
   const alreadyBooked = myBookings.some(b => b.session_id === id && occupiesMat(b));
   const [choice, setChoice] = useState<Choice | null>(() => {
     if (passParam && isPass(passParam as Choice)) return passParam as Choice;
@@ -125,7 +119,7 @@ export function CheckoutPage() {
     return () => { alive = false; generation++; stop.forEach(unsubscribe => unsubscribe()); };
   }, [data, transferContext, deskPaymentId, user.id, role, deskConfirmationRetry]);
   const recoveryBlocked = !!recovery && recovery.phase !== 'missing';
-  const deskScope: DeskIntentScope = {tenantId:tenant.id,customerId:user.id,sessionId:id??'',matNumber:yoga?mat:null,planId:isPass(kind)?`plan_${kind}`:''};
+  const deskScope: DeskIntentScope = {tenantId:tenant.id,customerId:user.id,sessionId:id??'',planId:isPass(kind)?`plan_${kind}`:''};
   const deskScopeKey=JSON.stringify(deskScope),[deskRetry,setDeskRetry]=useState(0);
   const deskLive=useRef({scope:deskScopeKey,method});deskLive.current={scope:deskScopeKey,method};
   const [deskRead,setDeskRead]=useState<{provider:DataProvider;context:string;scope:string;phase:'ready'|'error';payment:PaymentRow|null}|null>(null);
@@ -180,7 +174,6 @@ export function CheckoutPage() {
     } catch { if (isCurrent()) setPackageRecovery({ provider, context, request, knownDuplicate, phase: 'unconfirmed' }); return undefined; }
   };
 
-  const conflict = useMemo(() => joined ? sameDayConflict(myBookings, sessions, joined.session) : null, [joined, myBookings, sessions, sameDayConflict]);
   const selectedItem=review.quote?quotedItem(review.quote):isPass(kind)?priceOf(kind):null;
   const amount = isPass(kind) ? review.quote?.chargedAmount??0 : 0;
   const transferMethod = {id:'transfer' as const,provider:'manual' as const,label:{es:t('transfers.method'),en:t('transfers.method')},hint:{es:t('transfers.methodHint'),en:t('transfers.methodHint')},glyph:'bank' as const};
@@ -221,9 +214,7 @@ export function CheckoutPage() {
           await requireExistingBookingContact(tx,user.id,tenant.id,deskControl);
           if(!review.quote)throw Error('quote_changed');
           await checkSaleQuote(tx,review.quote);assertAdmissionContext(deskControl);
-          if(yoga){if(!matValid)throw Error('mat_invalid');chooseMat(await tx.list<BookingRow>('bookings',{where:{session_id:joined.session.id}}),Math.min(joined.session.capacity,tenant.studio.mats),mat);assertAdmissionContext(deskControl);}
           if(alreadyBooked)throw Error('booking_exists');
-          if(conflict)throw Error('same_day_conflict');
           const pending=await recordPayment(tx,{userId:user.id,planId:review.quote.planId,amount:review.quote.chargedAmount,method:'cash',ivaRate:policy.ivaRate,quote:review.quote});assertAdmissionContext(deskControl);
           const saved=await tx.update<PaymentRow>('payments',pending.id,{frontend_desk_intent:makePendingDeskIntent(deskScope,review.quote)});assertAdmissionContext(deskControl);
           await requireSessionAdmission(tx,joined.session.id,deskControl);
@@ -238,19 +229,14 @@ export function CheckoutPage() {
       await requireSessionAdmission(data,joined.session.id,control);
       await requireExistingBookingContact(data,user.id,tenant.id,control);
       if(isPass(kind)&&review.quote)await checkSaleQuote(data,review.quote);
-      if (yoga) {
-        if (!matValid) { setError('mat'); return 'mat'; }
-        chooseMat(await data.list<BookingRow>('bookings', { where: { session_id: joined.session.id } }), Math.min(joined.session.capacity, tenant.studio.mats), mat);
-      }
       if (alreadyBooked) throw new Error('booking_exists');
       if (joined.session.status !== 'scheduled' || new Date(joined.session.starts_at).getTime() <= Date.now()) throw new Error('session_unavailable');
-      if (conflict) { setError('conflict'); return 'conflict'; }
       if (!data.atomic) throw new Error('atomic_unavailable');
       if(method==='transfer' && amount>0 && isPass(kind)) {
         if(!receiptImage){setTransferError(true);return 'receipt_required';}
         const item=selectedItem!;
         try {
-          const receipt=await submitTransfer(data,{key:transferKey.current,userId:user.id,sessionId:joined.session.id,matNumber:yoga?mat:null,productId:`plan_${item.id}`,productName:item.name,amount,classes:item.classes??1,expiresAt:review.quote!.entitlementExpiresAt!,image:receiptImage,quote:review.quote!},()=>!transferValid());
+          const receipt=await submitTransfer(data,{key:transferKey.current,userId:user.id,sessionId:joined.session.id,productId:`plan_${item.id}`,productName:item.name,amount,classes:item.classes??1,expiresAt:review.quote!.entitlementExpiresAt!,image:receiptImage,quote:review.quote!},()=>!transferValid());
           if(transferValid())setDone({booking:null,pending:true,receiptId:receipt.id,receiptContext:transferOwnerContext,provider:data,context:transferOwnerContext});return 'fictional transfer pending; no active booking or hold';
         }catch{if(transferValid())setTransferError(true);return 'transfer_save_failed';}
       }
@@ -284,7 +270,7 @@ export function CheckoutPage() {
             paidWith = 'package'; packagePlanId = `plan_${item.id}`;
           }
         }
-        const booking = await book(joined.session, paidWith, { packagePlanId, paymentId:bookingPaymentId, matNumber: yoga ? mat : null, data: transaction,isCurrent:transferValid,claimId });
+        const booking = await book(joined.session, paidWith, { packagePlanId, paymentId:bookingPaymentId, data: transaction,isCurrent:transferValid,claimId });
         assertAdmissionContext({isCurrent:transferValid});
         return { booking, pending };
       },{idempotencyKey:`checkout:${user.id}:${checkoutKey.current}`});
@@ -298,11 +284,11 @@ export function CheckoutPage() {
       const failure = e instanceof Error ? e.message : '';
       if(failure.startsWith('desk_intent_')){setDeskRead({provider:data,context:transferOwnerContext,scope:deskScopeKey,phase:'error',payment:null});return 'desk_request_review_required';}
       if (failure === 'booking_contact_required') { setError('contact'); return 'booking_contact_required'; }
-      if (kind === 'package' && !['session_full', 'session_unavailable', 'package_balance', 'same_day_conflict'].includes(failure) && !failure.startsWith('mat_')) {
+      if (kind === 'package' && !['session_full', 'session_unavailable', 'package_balance', 'person_overlap'].includes(failure)) {
         const recovered = await recoverPackageBooking({ userId:user.id, sessionId:joined.session.id, checkoutKey:checkoutKey.current }, failure === 'booking_exists');
         return recovered?.kind === 'saved' && recovered.source === 'attempt' ? `booked ${recovered.booking.id}` : 'package_confirmation_checked';
       }
-      const code = trialErrorKey(e) ?? (failure.startsWith('mat_') ? 'mat' : failure === 'session_full' ? 'full' : failure === 'same_day_conflict' ? 'conflict' : 'unavailable');
+      const code = trialErrorKey(e) ?? (failure === 'session_full' ? 'full' : failure === 'person_overlap' ? 'overlap' : 'unavailable');
       setError(code);
       return code;
     } finally { setBusy(false);confirmBusy.current=false; }
@@ -310,28 +296,15 @@ export function CheckoutPage() {
 
   // WebMCP (0025). The handlers read the latest render through a ref so they are memoized once.
   // app.confirmReservation only books what costs nothing now (a class of the package); a charge stays a person's click.
-  const live = useRef({ confirm, joined, yoga, matValid, amount, alreadyBooked, conflict, roomBookings });
-  live.current = { confirm, joined, yoga, matValid, amount, alreadyBooked, conflict, roomBookings };
+  const live = useRef({ confirm, joined, amount, alreadyBooked });
+  live.current = { confirm, joined, amount, alreadyBooked };
   const navHandlers = useAppNavHandlers();
   const handlers = useMemo(() => ({
     ...navHandlers,
-    'app.pickMat': (p?: Record<string, string>) => {
-      const { joined: j, yoga: y, roomBookings: taken } = live.current;
-      if (!j) throw new Error('no class is open in checkout');
-      if (!y) throw new Error('this class does not use mats');
-      const n = Number(need(p, 'mat'));
-      const max = Math.min(j.session.capacity, tenant.studio.mats);
-      if (!Number.isInteger(n) || n < 1 || n > max) throw new Error(`mat must be 1–${max}`);
-      if (taken.some((b) => occupiesMat(b) && b.mat_number === n)) throw new Error(`mat ${n} is taken`);
-      setMat(n); setError(null);
-      return `mat ${n} selected`;
-    },
     'app.confirmReservation': async () => {
       const c = live.current;
       if (!c.joined) throw new Error('no class is open in checkout');
       if (c.alreadyBooked) throw new Error('already booked');
-      if (c.conflict) throw new Error('one class a day: another booking that day');
-      if (c.yoga && !c.matValid) throw new Error('pick a free mat first (app.pickMat)');
       if (c.amount > 0) throw new Error('this reservation charges a pass; payment needs a person to confirm');
       const out = await c.confirm();
       if (!out.startsWith('booked')) throw new Error(out);
@@ -351,7 +324,7 @@ export function CheckoutPage() {
 
   const s = joined.session;
   const SECTIONS: Record<string, () => ReactNode> = {
-    ClassSummary: () => <div className="stack"><ClassCard title={s.title} teacher={teacherName(joined)} room={roomName(joined)} startsAt={s.starts_at} endsAt={s.ends_at} tone={toneOf(joined)} booked={s.booked_count} capacity={s.capacity} level={s.level} /><SessionEditorial session={s} />{yoga && <MatPicker sessionId={s.id} capacity={s.capacity} value={mat} onChange={n => { setMat(n); setError(null); }} />}</div>,
+    ClassSummary: () => <div className="stack"><ClassCard title={s.title} teacher={teacherName(joined)} room={roomName(joined)} startsAt={s.starts_at} endsAt={s.ends_at} tone={toneOf(joined)} booked={s.booked_count} capacity={s.capacity} level={s.level} /><SessionEditorial session={s} /></div>,
     EntitlementPicker: () => declined ? null : (
       <section className="stack-sm">
         <h2 className="cust-h2">{t('customer.checkout.payWith')}</h2>
@@ -397,13 +370,12 @@ export function CheckoutPage() {
         {transferError&&<Notice tone="danger">{t('transfers.submitError')}</Notice>}
         {error?.startsWith('customer.trialGuard.')&&<Notice tone="warn">{t(error)}</Notice>}
         {error === 'contact' && <Notice tone="warn">{t('customer.book.contactRequired')}</Notice>}
-        {error === 'mat' && <Notice tone="warn">{t('site.mat.error')}</Notice>}
         {alreadyBooked && !recovery && !shownDone && <Notice tone="info" action={myBookings.some(b => b.session_id === id && b.paid_with === 'package' && occupiesMat(b)) ? <Button variant="secondary" onClick={() => recoverPackageBooking({ userId:user.id, sessionId:s.id })}>{t('customer.class.viewBooking')}</Button> : undefined}>{t('customer.home.booked')}</Notice>}
         {recovery && <Notice tone={recovery.phase === 'existing' ? 'success' : recovery.phase === 'checking' ? 'info' : 'warn'} title={t(`customer.checkout.recovery.${recovery.phase}`)} action={recovery.phase === 'checking' ? undefined : recovery.phase === 'duplicate' ? <Button variant="secondary" onClick={() => nav('/app/schedule')}>{t('customer.checkout.recovery.backToSchedule')}</Button> : recovery.phase === 'existing' && recovery.booking ? <Button variant="secondary" onClick={() => nav(`/app/booking/${recovery.booking!.id}`)}>{t('customer.class.viewBooking')}</Button> : recovery.phase === 'missing' && recovery.request.checkoutKey ? <Button variant="secondary" disabled={busy || kind !== 'package' || alreadyBooked || !admissionAvailable} onClick={confirm}>{t('customer.checkout.recovery.retryBooking')}</Button> : <Button variant="secondary" onClick={() => recoverPackageBooking(recovery.request, recovery.knownDuplicate)}>{t('customer.checkout.recovery.checkAgain')}</Button>}>{t(`customer.checkout.recovery.${recovery.phase}.body`)}</Notice>}
         {error === 'full' && <Notice tone="warn" title={t('customer.checkout.race.title')} action={<Button size="sm" onClick={() => nav(`/app/waitlist/${s.id}`)}>{t('core.common.waitlist')}</Button>}>{t('customer.checkout.race.body')}</Notice>}
         {!shownDone && recovery?.phase !== 'existing' && (!admissionAvailable || error === 'unavailable') && <Notice tone="danger" title={t('core.common.error')}>{t('customer.checkout.unavailable')}</Notice>}
-        {(error === 'conflict' || conflict) && <Notice tone="warn">{t('customer.book.oneADay')} {conflict && <Link to={`/app/class/${conflict}`}>{t('customer.class.seeOther')}</Link>}</Notice>}
-        <Button block size="lg" loading={busy} disabled={deskBlocked||recoveryBlocked||!admissionAvailable||(kind==='trial'&&ent.trial.status!=='eligible')||(isPass(kind)&&!review.available)||(method==='transfer'&&amount>0&&!receiptImage) || !!conflict || alreadyBooked || (yoga && !matValid) || s.status !== 'scheduled' || new Date(s.starts_at).getTime() <= Date.now()} onClick={confirm}>
+        {error === 'overlap' && <Notice tone="warn">{t('customer.refusal.person_overlap')}</Notice>}
+        <Button block size="lg" loading={busy} disabled={deskBlocked||recoveryBlocked||!admissionAvailable||(kind==='trial'&&ent.trial.status!=='eligible')||(isPass(kind)&&!review.available)||(method==='transfer'&&amount>0&&!receiptImage) || alreadyBooked || s.status !== 'scheduled' || new Date(s.starts_at).getTime() <= Date.now()} onClick={confirm}>
           {isPass(kind)&&!review.available?t('quotes.review'):method==='transfer'&&amount>0 ? t('transfers.submit') : amount > 0 ? (methodOpt.provider === 'wompi' ? t('customer.checkout.payWompi', { amount: formatCOP(amount, lang) }) : t('customer.checkout.confirmManual', { amount: formatCOP(amount, lang) })) : t('customer.checkout.confirm')}
         </Button>
         <p className="xs muted" style={{ textAlign: 'center' }}>{t('customer.checkout.policy', { h: policy.cancelWindowHours })}</p>
@@ -416,13 +388,12 @@ export function CheckoutPage() {
       <PageHead back={`/app/class/${s.id}`} title={t('customer.checkout.title')} sub={claimId ? t('customer.checkout.claiming') : undefined} />
       <Notice tone="info">{t('customer.checkout.demo')}</Notice>
       {isPass(kind)&&<QuoteNotice catalog={catalog} review={review}/>}
-      {/* ≥ 900 px: what you are booking (class + mat) on the left, how you pay + confirm on the right (D-0006). */}
+      {/* ≥ 900 px: what you are booking (the class) on the left, how you pay + confirm on the right (D-0006). */}
       <SplitSections narrowClassName="stack" className="cust-checkout" names={sections.filter(isVisible)} render={(n) => SECTIONS[n]?.() ?? null} side={(n) => n !== 'ClassSummary'} />
       <Drawer open={!!shownDone&&(!shownDone.receiptId||shownDone.receiptContext===transferContext)} onClose={() => shownDone && nav(shownDone.booking ? `/app/booking/${shownDone.booking.id}` : '/app/classes')} title={shownDone?.deskPaymentId ? shownDone.pending ? deskText.request : deskText.record : t(shownDone?.pending ? method==='transfer'?'transfers.pending':'customer.checkout.pending.title' : 'customer.book.ok')} side="bottom">
         {shownDone && (
           <div className="stack">
             <ClassCard variant="next" title={s.title} teacher={teacherName(joined)} room={roomName(joined)} startsAt={s.starts_at} endsAt={s.ends_at} tone={toneOf(joined)} booked={s.booked_count} capacity={s.capacity} />
-            {shownDone.booking?.mat_number && <p className="small">{t('site.mat.confirmed', { n: shownDone.booking.mat_number })}</p>}
             {shownDone.pending&&currentDesk?.payment&&(!shownDone.deskPaymentId||currentDeskConfirmation?.phase==='pending')&&<Notice title={deskText.saved}>{formatCOP(currentDesk.payment.amount,lang)} · {bi(savedDeskQuote!.name)} · {savedDeskQuote!.classes} {deskText.classes} · {t('customer.classes.expires')} {savedDeskQuote!.entitlementExpiresAt??'—'} · {currentDesk.payment.id}<p>{deskText.body}</p></Notice>}
             {shownDone.pending && shownDone.deskPaymentId ? currentDeskConfirmation?.phase === 'pending' ? <Notice tone="warn" title={t('customer.checkout.pending.title')}>{t('customer.checkout.pending.body')}</Notice> : currentDeskConfirmation?.phase === 'error' || currentDeskConfirmation?.phase === 'unavailable' ? <Notice tone="warn" action={<Button variant="secondary" onClick={() => setDeskConfirmationRetry(n => n + 1)}>{t('core.common.retry')}</Button>}>{currentDeskConfirmation.phase === 'error' ? deskText.unconfirmedRecord : deskText.unavailableRecord} <Link to="/app/history">{deskText.history}</Link></Notice> : <p role="status">{deskText.checkingRecord}</p> : shownDone.pending ? <Notice tone="warn" title={t(method==='transfer'?'transfers.pending':'customer.checkout.pending.title')}>{t(method==='transfer'?'transfers.pendingBody':'customer.checkout.pending.body')}</Notice> : <p className="small muted">{shownDone.deskPaymentId ? deskText.recordBody : shownDone.recovered ? t('customer.checkout.recovery.saved.body') : t('customer.checkout.success.body', { min: durationMin(joined) })}</p>}
             {shownDone.receiptId&&<ReceiptAlertResult receiptId={shownDone.receiptId}/>}

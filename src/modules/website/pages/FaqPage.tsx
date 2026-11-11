@@ -26,6 +26,11 @@ import { siteSpecs } from '../specs';
 import { useFaqGroups } from '../hooks';
 import { useFaqJsonLd } from '../jsonLd';
 import '../faq.css';
+import { cleanPathOf } from '../paths';
+import { PRODUCTION_BUILD } from '../../../config/launch';
+
+/** Lane H-SEO: the FAQ's address in the production build (a bare `#…` would resolve against the root base). */
+const FAQ_HREF = PRODUCTION_BUILD ? cleanPathOf('/site/faq') : '';
 
 // ── 1. Helpers ─────────────────────────────────────────────────────────────────────────────────────
 
@@ -92,7 +97,7 @@ export function FaqPage() {
           <ol>
             {view.map((g) => (
               <li key={g.key}>
-                <a href={`#faq-${g.key}`} onClick={(e) => { e.preventDefault(); document.getElementById(`faq-${g.key}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }} className={g.items.length ? undefined : 'is-empty'}>
+                <a href={`${FAQ_HREF}#faq-${g.key}`} onClick={(e) => { e.preventDefault(); document.getElementById(`faq-${g.key}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }} className={g.items.length ? undefined : 'is-empty'}>
                   <span className="faq-index-num">{g.head.num}</span>
                   <span className="faq-index-title">{g.head.title}</span>
                   <span className="faq-index-n" aria-label={t('site.faq.questions', { n: g.items.length })}>{g.items.length}</span>

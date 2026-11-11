@@ -246,7 +246,7 @@ function ReviewRegisterPage() {
       return { payment, number, subtotal: totals.subtotal, tax: totals.tax, total: totals.total, customer: displayName, contact, item, checkedIn, isNew, booking: bookingTitle, payout: payoutDone };
       }, { idempotencyKey: saleKey.current });
       if(isCurrent())setDone(result);
-    } catch (e) { const code = e instanceof Error ? e.message : ''; setError(trialErrorKey(e)??(['booking_contact_required','payment_confirmation_required','session_unavailable','session_full','booking_exists','same_day_conflict','insufficient_classes','package_frozen','package_expired','mock_atomic_adapter_required'].includes(code) ? code : 'failed')); } finally { setBusy(false); saleBusy.current = false; }
+    } catch (e) { const code = e instanceof Error ? e.message : ''; setError(trialErrorKey(e)??(['booking_contact_required','payment_confirmation_required','session_unavailable','session_full','booking_exists','person_overlap','insufficient_classes','package_frozen','package_expired','mock_atomic_adapter_required'].includes(code) ? code : 'failed')); } finally { setBusy(false); saleBusy.current = false; }
   };
 
   const reset = () => { saleKey.current = crypto.randomUUID(); setDone(null); setForm({ first: '', last: '', phone: '', email: '', birthday: '', emergency: '', consent: false }); setPersonId(null); setExistingQ(''); setMode('new'); setItemId('trial'); setMethod('cash'); setPaidRaw(null); setNote(''); setSpecial(NO_SPECIAL); setContactName(''); };

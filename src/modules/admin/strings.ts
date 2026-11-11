@@ -880,8 +880,6 @@ export const strings: StringTable = {
   'admin.settings.f.mats': { es: 'Mats por clase', en: 'Mats per class' },
   'admin.settings.f.mats.hint': { es: 'Lo citan lista de espera, medidor de cupos y checkout', en: 'Quoted by waitlist, capacity meter and checkout' },
   'admin.settings.f.classesPerDay': { es: 'Clases por día entre semana', en: 'Classes per weekday' },
-  'admin.settings.f.perPerson': { es: 'Clases por persona y día', en: 'Classes per person per day' },
-  'admin.settings.f.perPerson.hint': { es: 'C-01 · C-04', en: 'C-01 · C-04' },
   'admin.settings.rooms': { es: 'Salas', en: 'Rooms' },
   'admin.settings.rooms.edit': { es: 'Editar salas en Contenido →', en: 'Edit rooms in Content →' },
   'admin.settings.f.cancellation': { es: 'Ventana de cancelación (h)', en: 'Cancellation window (h)' },

@@ -35,6 +35,8 @@ export const liveScheduleStrings: StringTable = {
   'live.f.bioEn': { es: 'Biografía (inglés)', en: 'Bio (English)' },
   'live.f.specialties': { es: 'Especialidades', en: 'Specialties' },
   'live.f.photo': { es: 'Foto', en: 'Photo' },
+  'live.f.classImage': { es: 'Imagen de la clase', en: 'Class image' },
+  'live.f.classImageAfterSave': { es: 'La imagen de la clase se sube después de guardar la clase por primera vez.', en: 'The class image is uploaded after you save the class for the first time.' },
   'live.f.photoAfterSave': { es: 'La foto se sube después de guardar al profesor por primera vez.', en: 'The photo is uploaded after you save the teacher for the first time.' },
   'live.problem.title': { es: 'Escribe el nombre.', en: 'Write the name.' },
   'live.problem.weekday': { es: 'Elige el día.', en: 'Choose the day.' },

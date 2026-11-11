@@ -10,7 +10,7 @@ const preview: PaymentRow = { ...historical, id: 'fictional-library-only', plan_
   snapshotVersion: 1, tenantId: tenant.id, itemId: 'single', productId: 'plan_single', planId: 'plan_single', code: 'FICTIONAL', name: { es: 'Ejemplo ficticio', en: 'Fictional example' },
   amount: 1, currency: 'COP', purchaseDate: '2026-10-23', classes: 1, validityDays: null, catalogRevision: 0, priceId: 'fictional', source: 'legacy_demo', kind: 'class', sourceKey: 'fictional-library-only', quantity: 1, chargedAmount: 1, fallbackValidityDays: null, entitlementExpiresAt: '2099-01-01',
 } };
-const retained={...preview,frontend_desk_intent:makePendingDeskIntent({tenantId:tenant.id,customerId:'fictional',sessionId:'fictional-library-session',matNumber:null,planId:'plan_single'},preview.frontend_quote as import('../../../data/operationalQuotes').FrozenSaleQuote)};
+const retained={...preview,frontend_desk_intent:makePendingDeskIntent({tenantId:tenant.id,customerId:'fictional',sessionId:'fictional-library-session',planId:'plan_single'},preview.frontend_quote as import('../../../data/operationalQuotes').FrozenSaleQuote)};
 export default defineMeta({ tier: 'organism', name: 'DeskPaymentSettlement', description: { es: 'Confirmación local de una solicitud de recepción con términos retenidos.', en: 'Local settlement of a front-desk request with retained terms.' }, props: [
   { name: 'payment', type: 'PaymentRow', required: true, description: { es: 'Solicitud demo sin comprobante; no infiere términos anteriores.', en: 'Receipt-free demo request; never infers historical terms.' } },
   { name: 'onSettled', type: '(payment: PaymentRow) => void', required: true, description: { es: 'Resultado confirmado localmente.', en: 'Locally confirmed outcome.' } },

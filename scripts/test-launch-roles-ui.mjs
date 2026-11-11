@@ -13,6 +13,7 @@ import { mkdir, readFile, stat } from 'node:fs/promises';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { extname, join, resolve, sep } from 'node:path';
 import { serveDist, launchBrowser, newContext, reporter } from './lib/launch-qa.mjs';
+import { routeOf } from './lib/site-route.mjs';
 
 const { check, done } = reporter('11 roles');
 const isProd = (dir) => existsSync(join(dir, 'index.html')) && readdirSync(join(dir, 'assets')).filter((f) => f.endsWith('.js')).some((f) => readFileSync(join(dir, 'assets', f), 'utf8').includes('clerk-js'));
@@ -99,7 +100,7 @@ const BASE = 'http://127.0.0.1:5193';
 
 const browser = await launchBrowser();
 const errors = [];
-const route = (page) => decodeURIComponent(new URL(page.url()).hash.slice(1));
+const route = (page) => routeOf(page.url());
 async function openProd(path, { width = 1280, lang = 'es' } = {}) {
   const ctx = await browser.newContext({ viewport: { width, height: 900 }, reducedMotion: 'reduce' });
   await ctx.route(/^https?:\/\/(?!127\.0\.0\.1)/, (r) => r.abort());
@@ -196,7 +197,7 @@ const MATRIX = {
 const srv = await serveDist(5323);
 const browser = await launchBrowser();
 const errors = [];
-const route = (page) => new URL(page.url()).hash.slice(1);
+const route = (page) => routeOf(page.url(), { decode: false });
 async function open(role, path, opts = {}) {
   const ctx = await newContext(browser, { userId: USERS[role], ...opts });
   const page = await ctx.newPage();

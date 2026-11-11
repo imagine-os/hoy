@@ -233,7 +233,7 @@ try {
   check('site: a teacher\'s bio from Company OS shows', (await frame(page, 'Clara Zuluaga').innerText()).includes('Guía con calma.'));
   const clara = frame(page, 'Clara Zuluaga').locator('img').first();
   check('site: a teacher\'s photo comes from /media/<id> and really loads', (await clara.getAttribute('src')) === `/media/${IDS.oldPhoto}` && await loaded(clara));
-  check('site: a teacher\'s specialty shows, as a link to the class', await frame(page, 'Clara Zuluaga').locator('a[href*="classes/fuego"]').count() === 1 && /Fuego/.test(await frame(page, 'Clara Zuluaga').innerText()));
+  check('site: a teacher\'s specialty shows, as a link to the class', await frame(page, 'Clara Zuluaga').locator('a[href="/clases/fuego"]').count() === 1 && /Fuego/.test(await frame(page, 'Clara Zuluaga').innerText()));
   check('site: a teacher with no bio or photo renders, with the pending portrait', await noPhoto(frame(page, 'Nora Prueba')));
   const hostile = await frame(page, 'Tomás Hostil').innerText();
   check('site: hostile text is shown as text and runs nothing', hostile.includes('<img src=x') && !(await page.evaluate(() => window.__xss)) && await frame(page, 'Tomás Hostil').locator('img[src="x"]').count() === 0);

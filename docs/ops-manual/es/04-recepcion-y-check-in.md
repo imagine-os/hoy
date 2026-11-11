@@ -73,7 +73,7 @@ igual que lo haría en su app.
 ## 4. Walk-ins (llega sin reserva)
 1. Si hay cupo, regístrala y cobra (ver [Ventas y planes](10-ventas-y-planes.md)).
 2. Si no hay cupo, ofrece la siguiente clase del día o la lista de espera.
-3. Recuerda la regla: una persona, una clase al día.
+3. Recuerda la regla: una persona puede tener varias clases al día, pero no dos a la misma hora.
 4. Los precios no se escriben ni se negocian: se eligen en Registrar y cobrar.
 
 **Qué decir:** "Esa ya está llena. Hay cupo a las 9:30, ¿te la guardo? O te dejo en lista de espera."

@@ -5,8 +5,7 @@ import { SessionEditorial } from '../../../components/molecule/SessionEditorial/
 import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link, useNavigate, useLocation, useParams } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
-import { useData, useTable } from '../../../data/DataContext';
-import type { ClassSessionRow } from '../../../data/schema';
+import { useData } from '../../../data/DataContext';
 import { formatDate, formatTime } from '../../../i18n/format';
 import { useLayout } from '../../../layout/useLayout';
 import { tenant } from '../../../tenant/tenant';
@@ -19,7 +18,7 @@ import { Notice } from '../../../components/molecule/Notice/Notice';
 import { EmptyState } from '../../../components/molecule/EmptyState/EmptyState';
 import { Skeleton } from '../../../components/atom/Skeleton/Skeleton';
 import { canvasSpecs } from '../specs';
-import { useBookingActions, useEntitlements, useMyBookings, useSessionJoined, useWaitlistFor } from '../hooks';
+import { useEntitlements, useMyBookings, useSessionJoined, useWaitlistFor } from '../hooks';
 import { trialOffered } from '../offers';
 import { policy } from '../policy';
 import {  PageHead, durationMin, roomName, shareText } from '../ui';
@@ -29,8 +28,6 @@ import { SERVER_RULES } from '../booking/bookingPolicy';
 import { classPhase, holdsPlace, type ServerBookingRow } from '../booking/serverBooking';
 import { useLiveUpdates } from '../../../data/companyos/hooks';
 
-/** Production (H-4): no browser copy of the one-class-a-day rule; the server answers `daily_limit_reached`. */
-const NO_BROWSER_RULES = { sameDayConflict: () => null as string | null };
 const NO_WAITLIST: { mine: ReturnType<typeof useWaitlistFor>['mine'] | null } = { mine: null };
 
 const spec = canvasSpecs['C-03'];
@@ -47,15 +44,10 @@ export function ClassDetailPage() {
   const { sections, isVisible } = useLayout(spec);
   const { joined, loading } = useSessionJoined(id);
   const { rows: myBookings } = useMyBookings();
-  const { rows: sessions } = useTable<ClassSessionRow>('class_sessions');
-  // SERVER_RULES is fixed per build, so the hook order never changes between renders.
-  const { sameDayConflict } = SERVER_RULES ? NO_BROWSER_RULES : useBookingActions();
   // No waitlist at launch: production reads none (SERVER_RULES is fixed per build, so the hook order never changes).
   const { mine: myWait } = SERVER_RULES ? NO_WAITLIST : useWaitlistFor(id);
   const ent = useEntitlements();
   const [shared, setShared] = useState<string | null>(null);
-
-  const conflict = useMemo(() => joined ? sameDayConflict(myBookings, sessions, joined.session) : null, [joined, myBookings, sessions, sameDayConflict]);
 
   const [now, setNow] = useState(Date.now);
   const myBooking = useMemo(() => myBookings.find((b) => b.session_id === id && (SERVER_RULES ? holdsPlace(b as unknown as ServerBookingRow, now) : b.status === 'booked' || b.status === 'checked_in')), [myBookings, id, now]);
@@ -118,18 +110,12 @@ export function ClassDetailPage() {
     // Production has no waitlist at launch: a full class says so (the server refuses `occurrence_full` anyway).
     if (SERVER_RULES && full) return <Button block size="lg" variant="secondary" disabled>{t('customer.srv.phase.full')}</Button>;
     if (full) return <Button block size="lg" loading={navigating} disabled={navigating} onClick={() => void openAdmission()}>{myWait && (myWait.status === 'waiting' || myWait.status === 'offered') ? t('customer.class.viewWaitlist') : t('customer.class.joinWaitlist')}</Button>;
-    if (conflict) return (
-      <div className="stack-sm">
-        <Button block size="lg" disabled>{t('core.common.book')}</Button>
-        <p className="xs muted" style={{ textAlign: 'center' }}>{t('customer.book.oneADay')} <Link to={`/app/class/${conflict}`}>{t('customer.class.seeOther')}</Link></p>
-      </div>
-    );
     return <Button block size="lg" loading={navigating} disabled={navigating} onClick={() => void openAdmission()}>{ent.hasAnyEntitlement ? t('core.common.book') : !trialOffered(ent) ? t('customer.class.bookAndPay') : t('customer.class.bookTrial')}</Button>;
   };
 
   const SECTIONS: Record<string, () => ReactNode> = {
     'HeroImage (placeholder)': () => (
-      <div style={{ aspectRatio: '16 / 9', overflow: 'hidden', borderRadius: 'var(--r-lg)' }}><ClassThumbnail modality={m}/></div>
+      <div style={{ aspectRatio: '16 / 9', overflow: 'hidden', borderRadius: 'var(--r-lg)' }}><ClassThumbnail modality={m} imageUrl={s.image_url}/></div>
     ),
     'TitleBlock (time, duration, room)': () => (
       <div className="stack-sm">

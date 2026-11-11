@@ -1,7 +1,7 @@
 import type { BaseRow } from '../schema';
 import { tenant } from '../../tenant/tenant';
 import { modalities as seedModalities, plans as seedPlans, rooms as seedRooms } from '../seed/catalog';
-import { COACH_FIELDS, coachBio, coachPhotoUrl, coachSpecialties } from './publicImages';
+import { COACH_FIELDS, SCHEDULE_FIELDS, coachBio, coachPhotoUrl, coachSpecialties } from './publicImages';
 import { contentArticles, faqEntries } from '../seed/content';
 import { mediaAssets } from '../seed/media';
 import { legalDocuments } from '../seed/legal';
@@ -244,6 +244,8 @@ const classTemplates = entity({
     duration_min: { field: 'duration_minutes', from: num }, capacity: { field: 'capacity', from: num },
     start_date: { field: 'valid_from', kind: 'day' }, end_date: { field: 'valid_until', kind: 'day' },
     active: { field: 'active', from: (v) => v !== false },
+    // Hoy 12 Nov (D2): the class's own image, a bare file id as stored (untrusted, like a teacher's photo); Class schedule › Clases writes it.
+    image_url: { derive: (r) => coachPhotoUrl(r.data[SCHEDULE_FIELDS.image]) },
     level: { derive: () => 'all' }, generation_mode: { derive: () => 'automatic' }, theme: { derive: () => null }, description: { derive: () => null },
   },
   createDefaults: () => ({ kind: 'class' }),
@@ -251,8 +253,10 @@ const classTemplates = entity({
 
 const classSessions = entity({
   table: 'class_sessions', entity: 'occurrence',
-  include: [{ field: 'schedule', as: 'schedule_row', fields: ['modality'] }],
+  include: [{ field: 'schedule', as: 'schedule_row', fields: ['modality', SCHEDULE_FIELDS.image] }],
   cols: {
+    // An occurrence shows its schedule's image; a class added by hand has no schedule and so none.
+    image_url: { derive: (r) => coachPhotoUrl(embedded(r, 'schedule_row')?.[SCHEDULE_FIELDS.image]) },
     template_id: { field: 'schedule', from: str }, title: { field: 'title' }, modality_id: classModalityCol,
     teacher_id: { field: 'coach', from: str }, room_id: { field: 'resource', from: str },
     starts_at: { field: 'starts_at', kind: 'instant' }, ends_at: { field: 'ends_at', kind: 'instant' },
@@ -317,7 +321,7 @@ const payments = entity({
     /** The desk approves with the amount received: it becomes the payment's amount (with a reason when it differs). */
     amount_paid: { field: 'amount', from: (v, r) => (r.data.status === 'approved' ? num(v) : null), to: (v) => (v == null ? undefined : v) },
     method: { field: 'method', ...PAYMENT_METHOD }, provider: { field: 'provider', ...PAYMENT_PROVIDER },
-    provider_ref: { field: 'provider_ref' }, status: { field: 'status' }, note: { field: 'notes' },
+    provider_ref: { field: 'provider_ref' }, status: { field: 'status' }, note: { field: 'notes' }, status_reason: { field: 'status_reason' },
     reference: { field: 'reference' }, concept: { field: 'concept' }, price_override_reason: { field: 'price_override_reason' },
     for_entity: { field: 'for_entity' }, for_id: { field: 'for_id' }, date: { field: 'date', kind: 'day' },
     /**
@@ -339,7 +343,7 @@ const transferReceipts = entity({
     product_id: { field: 'product', from: str }, amount_received: { field: 'amount', from: num },
     status: { field: 'status', ...RECEIPT_STATUS },
     booking_id: { field: 'for_id', from: (v, r) => (r.data.for_entity === 'booking' ? str(v) : null) },
-    review_reason: { derive: (r) => str(r.data.price_override_reason) ?? str(r.data.notes) },
+    review_reason: { derive: (r) => str(r.data.status === 'declined' ? r.data.status_reason : null) ?? str(r.data.price_override_reason) ?? str(r.data.notes) },
     reviewed_at: { derive: (r) => (r.data.status && r.data.status !== 'pending' ? toInstant(r.updatedAt) : null) },
     session_id: { derive: () => null }, mat_number: { derive: () => null }, product_name: { derive: () => null },
     classes: { derive: () => null }, expires_at: { derive: () => null }, image_data_url: { derive: () => null },
@@ -356,7 +360,7 @@ const transferReceipts = entity({
     if ('amount_received' in p) d.amount = p.amount_received;
     if ('booking_id' in p) { d.for_entity = p.booking_id ? 'booking' : null; d.for_id = p.booking_id ?? null; }
     if ('status' in p) d.status = RECEIPT_STATUS.to!(p.status, p);
-    if ('review_reason' in p) d[p.status === 'approved' ? 'price_override_reason' : 'notes'] = p.review_reason;
+    if ('review_reason' in p) d[p.status === 'approved' ? 'price_override_reason' : 'status_reason'] = p.review_reason;
     return d;
   },
 });

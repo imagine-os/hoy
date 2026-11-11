@@ -1,8 +1,7 @@
 import { requireExistingBookingContact } from '../../data/bookingContact';
-import { dailyAdmissionConflict, requireDailyAdmission } from '../../data/dailyAdmission';
 import { useScopedCustomerRead } from './useScopedCustomerRead';
 import { joinTenantSessions, ownBookingRows } from './scopedSessionRows';
-import { requireSessionAdmission, assertAdmissionContext } from '../../data/sessionAdmission';
+import { requireSessionAdmission, requireBookingAdmission, assertAdmissionContext } from '../../data/sessionAdmission';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {useTrialAssessment} from './useTrialAssessment';
 import { useSession } from '../../auth/SessionProvider';
@@ -136,18 +135,12 @@ export function useNow(ms = 30_000) {
 export function useBookingActions() {
   const data = useData();
   const { user, role } = useSession();
-  const { rows: dailyVouchers } = useTable('voucher_bookings', { where: { tenant_id: tenant.id } });
   const live = useRef({data,actorId:user.id,role,mounted:true});
   live.current = {data,actorId:user.id,role,mounted:true};
   useEffect(()=>{live.current.mounted=true;return()=>{live.current.mounted=false;};},[]);
   const isCurrent = useCallback(()=>live.current.mounted && live.current.data===data && live.current.actorId===user.id && live.current.role===role && ['customer','teacher','super_admin'].includes(role),[data,user.id,role]);
 
-  /** Rule: one class per person per day. Returns the conflicting booking's session id when there is one. */
-  const sameDayConflict = useCallback((myBookings: BookingRow[], sessions: ClassSessionRow[], target: ClassSessionRow): string | null => {
-    return dailyAdmissionConflict({ bookings: myBookings.filter(row => row.session_id !== target.id), voucher_bookings: dailyVouchers, class_sessions: sessions }, target, user.id);
-  }, [dailyVouchers, user.id]);
-
-  const book = useCallback(async (session: ClassSessionRow, paidWith: EntitlementKind, opts?: { packagePlanId?: string | null; paymentId?: string; matNumber?: number | null; data?: DataProvider; isCurrent?: () => boolean; claimId?: string | null }) => {
+  const book = useCallback(async (session: ClassSessionRow, paidWith: EntitlementKind, opts?: { packagePlanId?: string | null; paymentId?: string; data?: DataProvider; isCurrent?: () => boolean; claimId?: string | null }) => {
     const control={isCurrent:()=>isCurrent() && (!opts?.isCurrent || opts.isCurrent())};
     assertAdmissionContext(control);
     const run = async (transaction: DataProvider) => {
@@ -158,7 +151,7 @@ export function useBookingActions() {
     if (fresh.booked_count >= fresh.capacity) throw new Error('session_full');
     const existing = await transaction.list<BookingRow>('bookings', { where: { user_id: user.id, session_id: fresh.id } });
     if (existing.some(b => b.status === 'booked' || b.status === 'checked_in')) throw new Error('booking_exists');
-    await requireDailyAdmission(transaction, fresh, user.id, control);
+    await requireBookingAdmission(transaction, fresh, user.id, control);
     if(opts?.claimId){
       const entry=await transaction.get<WaitlistRow>('waitlist',opts.claimId);
       assertAdmissionContext(control);
@@ -175,7 +168,7 @@ export function useBookingActions() {
       if (!purchase) throw new Error('package_balance');
     }
     await requireSessionAdmission(transaction,session.id,control);
-    const booking = await transaction.insert<BookingRow>('bookings', { user_id: user.id, session_id: fresh.id, status: 'booked', paid_with: paidWith, ledger_id: null, payment_id: paidWith === 'single' || paidWith === 'trial' ? opts?.paymentId ?? null : null, checked_in_at: null, cancelled_at: null, rated: false, mat_number: opts?.matNumber ?? null });
+    const booking = await transaction.insert<BookingRow>('bookings', { user_id: user.id, session_id: fresh.id, status: 'booked', paid_with: paidWith, ledger_id: null, payment_id: paidWith === 'single' || paidWith === 'trial' ? opts?.paymentId ?? null : null, checked_in_at: null, cancelled_at: null, rated: false });
     if (paidWith === 'package') {
       const c = await transaction.insert<ClassLedgerRow>('class_ledger', { purchase_ledger_id: purchase?.id ?? null, user_id: user.id, plan_id: purchase?.plan_id ?? null, payment_id: purchase?.payment_id ?? null, delta: -1, reason: 'booking', expires_at: null } as Partial<ClassLedgerRow>);
       await transaction.update('bookings', booking.id, { ledger_id: c.id });
@@ -255,7 +248,7 @@ export function useBookingActions() {
     return book(session,paidWith,{claimId:entry.id});
   }, [book, data]);
 
-  return { book, cancel, reschedule, joinWaitlist, leaveWaitlist, claimWaitlist, sameDayConflict, promoteWaitlist,expireWaitlist };
+  return { book, cancel, reschedule, joinWaitlist, leaveWaitlist, claimWaitlist, promoteWaitlist,expireWaitlist };
 }
 
 /** Pricing helpers shared by C-04 / C-07 / C-17 — every figure comes from pricing.ts. */

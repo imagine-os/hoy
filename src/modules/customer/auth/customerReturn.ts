@@ -9,6 +9,7 @@ export function customerReturn(value: string | null | undefined): string | null 
   const entries = [...params.entries()];
   if (/^\/app\/checkout\/[A-Za-z0-9_-]+$/.test(path)) {
     if (!entries.length) return path;
+    // An older link may still carry `?mat=`: it is kept as a valid destination and ignored by checkout (mats are no longer chosen).
     if (entries.length === 1 && entries[0][0] === 'mat' && /^[1-9]\d*$/.test(entries[0][1])) return `${path}?mat=${entries[0][1]}`;
   }
   if (/^\/app\/waitlist\/[A-Za-z0-9_-]+$/.test(path) && !entries.length) return path;

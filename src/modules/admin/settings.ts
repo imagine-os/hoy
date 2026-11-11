@@ -22,7 +22,7 @@ export interface OpeningHours { open: string; close: string }
 export type ContactField = 'whatsapp' | 'address' | 'email' | 'instagram';
 export const CONTACT_FIELDS: readonly ContactField[] = ['whatsapp', 'address', 'email', 'instagram'];
 export interface StudioSettings {
-  studio: { mats: number; classesPerDay: number; perPersonPerDay: number; rooms: number };
+  studio: { mats: number; classesPerDay: number; rooms: number };
   /**
    * M-08a — the studio's contact identity (0018). Every field defaults to src/tenant/tenant.ts. `confirmedFields`
    * (0036) is the owner saying "this one is real", per field: until a field is confirmed every consumer (site

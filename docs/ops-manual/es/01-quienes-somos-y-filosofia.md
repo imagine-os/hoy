@@ -94,7 +94,7 @@ Somos un club de bienestar pequeño a propósito. Cuidar a pocas personas bien e
 una limitación.
 
 1. No vendemos más cupos de los que caben en la sala.
-2. Cada persona toma una clase al día, en cualquier plan.
+2. Cada persona puede tomar varias clases al día, sin que se crucen en horario, en cualquier plan.
 3. Si la clase está llena, está llena: ofrecemos la siguiente o la lista de espera.
 
 Esta es la capacidad del estudio:

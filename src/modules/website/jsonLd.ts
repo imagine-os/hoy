@@ -34,9 +34,13 @@ export function useStudioJsonLd(enabled = true) {
   useEffect(() => {
     if (typeof document === 'undefined' || !enabled) return undefined;
     let el = document.getElementById(SCRIPT_ID) as HTMLScriptElement | null;
-    if (!el) { el = document.createElement('script'); el.type = 'application/ld+json'; el.id = SCRIPT_ID; document.head.appendChild(el); }
+    // The Hoy server writes the studio's JSON-LD (a richer `HealthClub`) into every public page under this id: leave it
+    // alone, neither replace nor remove it. Only an element this hook made (`data-client`; the review build has no
+    // server) is ours to update and take away.
+    if (el && !el.hasAttribute('data-client')) return undefined;
+    if (!el) { el = document.createElement('script'); el.type = 'application/ld+json'; el.id = SCRIPT_ID; el.setAttribute('data-client', ''); document.head.appendChild(el); }
     el.textContent = json;
-    return () => { document.getElementById(SCRIPT_ID)?.remove(); };
+    return () => { const own = document.getElementById(SCRIPT_ID); if (own?.hasAttribute('data-client')) own.remove(); };
   }, [json, enabled]);
 }
 

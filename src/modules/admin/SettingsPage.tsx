@@ -1,3 +1,4 @@
+import {SERVER_RULES} from '../customer/booking/bookingPolicy';
 import {SharedImageField} from '../../components/organism/SharedImageField/SharedImageField';
 import {ImageDraft,SETTING_IMAGE,saveThenRemoveOld,studioSettingsOwnerId,type ImagePort,type ImageSaveNotice} from '../../data/companyos/publicImages';
 import {SavedPaymentInstructions} from '../../components/organism/PaymentInstructions/PaymentInstructions';
@@ -214,7 +215,6 @@ export function SettingsPage({ group = 'general' }: { group?: SettingsGroup }) {
                   <div className="grid grid-3">
                     <Field label={t('admin.settings.f.mats')} hint={t('admin.settings.f.mats.hint')}>{(id) => <Input id={id} type="number" min={1} value={d.mats} disabled={!canWrite} onChange={(e) => set({ ...d, mats: Number(e.target.value) })} />}</Field>
                     <Field label={t('admin.settings.f.classesPerDay')}>{(id) => <Input id={id} type="number" min={1} value={d.classesPerDay} disabled={!canWrite} onChange={(e) => set({ ...d, classesPerDay: Number(e.target.value) })} />}</Field>
-                    <Field label={t('admin.settings.f.perPerson')} hint={t('admin.settings.f.perPerson.hint')}>{(id) => <Input id={id} type="number" min={1} value={d.perPersonPerDay} disabled={!canWrite} onChange={(e) => set({ ...d, perPersonPerDay: Number(e.target.value) })} />}</Field>
                   </div>
                   <div className="stack-sm"><div className="eyebrow">{t('admin.settings.rooms')}</div>{rooms.map((r) => <div key={r.id} className="row-between small"><span>{r.name}</span><span className="muted">{r.capacity} mats{r.heated ? ' · ♨' : ''}</span></div>)}<Link to="/admin/content" className="small">{t('admin.settings.rooms.edit')}</Link></div>
                 </>
@@ -224,7 +224,7 @@ export function SettingsPage({ group = 'general' }: { group?: SettingsGroup }) {
                   <div className="grid grid-2">
                     <Field label={t('admin.settings.f.cancellation')} hint="C-08 · C-11 · E-03">{(id) => <Input id={id} type="number" min={0} value={d.cancellationHours} disabled={!canWrite} onChange={(e) => set({ ...d, cancellationHours: Number(e.target.value) })} />}</Field>
                     <Field label={t('admin.settings.f.waitlistClaim')} hint="C-20">{(id) => <Input id={id} type="number" min={5} value={d.waitlistClaimMin} disabled={!canWrite} onChange={(e) => set({ ...d, waitlistClaimMin: Number(e.target.value) })} />}</Field>
-                    <Field label={t('admin.settings.f.lateGrace')} hint="S-02 · S-03">{(id) => <Input id={id} type="number" min={0} value={d.lateGraceMin} disabled={!canWrite} onChange={(e) => set({ ...d, lateGraceMin: Number(e.target.value) })} />}</Field>
+                    {!SERVER_RULES && <Field label={t('admin.settings.f.lateGrace')} hint="S-02 · S-03">{(id) => <Input id={id} type="number" min={0} value={d.lateGraceMin} disabled={!canWrite} onChange={(e) => set({ ...d, lateGraceMin: Number(e.target.value) })} />}</Field>}
                     <Field label={t('admin.settings.f.noShowFee')} hint={settings.features.noShowFee ? 'COP' : t('admin.settings.f.noShowFee.off')}>{(id) => <Input id={id} type="number" min={0} value={d.noShowFee} disabled={!canWrite || !settings.features.noShowFee} onChange={(e) => set({ ...d, noShowFee: Number(e.target.value) })} />}</Field>
                     <Field label={t('admin.settings.f.freezeDays')} hint="C-07b">{(id) => <Input id={id} type="number" min={0} value={d.freezeMaxDays} disabled={!canWrite} onChange={(e) => set({ ...d, freezeMaxDays: Number(e.target.value) })} />}</Field>
                     <Field label={t('admin.settings.f.freezes')} hint="C-07b">{(id) => <Input id={id} type="number" min={0} value={d.freezesPerPackage} disabled={!canWrite} onChange={(e) => set({ ...d, freezesPerPackage: Number(e.target.value) })} />}</Field>

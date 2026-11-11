@@ -4,12 +4,10 @@ import { useI18n } from '../../../i18n/I18nProvider';
 import { useSession } from '../../../auth/SessionProvider';
 import { useData } from '../../../data/DataContext';
 import { useLivePricing } from '../../../data/livePricing';
-import { usesMats } from '../../../data/mats';
 import { formatCOP, formatTime } from '../../../i18n/format';
 import { Button } from '../../../components/atom/Button/Button';
 import { Notice } from '../../../components/molecule/Notice/Notice';
 import { ClassCard } from '../../../components/organism/ClassCard/ClassCard';
-import { MatPicker } from '../../../components/organism/MatPicker/MatPicker';
 import { EmptyState } from '../../../components/molecule/EmptyState/EmptyState';
 import { Skeleton } from '../../../components/atom/Skeleton/Skeleton';
 import { useEntitlements, useMyBookings, useNow, useSessionJoined } from '../hooks';
@@ -21,10 +19,9 @@ import { classPhase, holdsPlace, purchaseReturnLink, type ServerBookingRow } fro
 import { audienceVisible, trialOffered } from '../offers';
 import { useAffiliate } from '../useAffiliate';
 import { ConsentHoldNotice, useConsentHeld } from '../../identity/ConsentHold';
+import { VoucherCodeEntry } from '../../vouchers/production/VoucherCodeEntry';
 
 /** What the customer pays the class with. A trial or a package is bought first and the class is kept in the link (RS-03). */
-/** Members can't read other people's bookings: every mat shows free and the server answers `spot_taken`. */
-const NO_TAKEN: readonly number[] = [];
 type Choice = 'package' | 'single' | 'trial' | 'pack12' | 'pack12_smtc';
 const BUY_FIRST: readonly Choice[] = ['trial', 'pack12', 'pack12_smtc'];
 const isChoice = (v: string | null): v is Choice => v === 'package' || v === 'single' || (BUY_FIRST as readonly string[]).includes(v ?? '');
@@ -54,7 +51,6 @@ export function ServerCheckoutPage() {
   const pricing = useLivePricing();
   const { rows: mine } = useMyBookings();
   const now = useNow(15_000);
-  const [mat, setMat] = useState<number | null>(() => Number(params.get('mat')) || null);
   const [choice, setChoice] = useState<Choice | null>(() => initialChoice(params.get('pass')));
   const [method, setMethod] = useState<'transfer' | 'desk'>('transfer');
   const [error, setError] = useState<unknown>(null);
@@ -83,7 +79,7 @@ export function ServerCheckoutPage() {
     return (c === 'trial' && !trialOffered(ent)) || (!!item && !audienceVisible(item, { live: true, affiliate }));
   };
   const kind: Choice | null = (hidden(choice) ? null : choice) ?? (ent.classBalance > 0 ? 'package' : null);
-  const submitKey = useSubmitKey(`${user.id}:${id}:${kind ?? ''}:${method}:${mat ?? ''}`);
+  const submitKey = useSubmitKey(`${user.id}:${id}:${kind ?? ''}:${method}`);
 
   if (!joined) {
     return (
@@ -97,17 +93,16 @@ export function ServerCheckoutPage() {
 
   const s = joined.session;
   const phase = classPhase(s, now);
-  const mats = usesMats(joined.modality);
   const existing = (mine as unknown as ServerBookingRow[]).find((b) => b.session_id === s.id && holdsPlace(b, now));
   const buyFirst = !!kind && BUY_FIRST.includes(kind);
   const holdMinutes = method === 'desk' ? policy.holdMinutesDesk : policy.holdMinutesTransfer;
 
   const confirm = async () => {
     if (inFlight.current || !kind || consentHeld) return;
-    if (buyFirst) { nav(purchaseReturnLink(kind, s.id, mats ? mat : null)); return; }
+    if (buyFirst) { nav(purchaseReturnLink(kind, s.id)); return; }
     inFlight.current = true; setBusy(true); setError(null);
     try {
-      const booking = await bookOnServer(data, { userId: user.id, sessionId: s.id, paidWith: kind === 'package' ? 'package' : 'single', matNumber: mats ? mat : null, paymentMethod: kind === 'single' ? method : null }, submitKey.take());
+      const booking = await bookOnServer(data, { userId: user.id, sessionId: s.id, paidWith: kind === 'package' ? 'package' : 'single', paymentMethod: kind === 'single' ? method : null }, submitKey.take());
       submitKey.settle();
       nav(`/app/booking/${booking.id}`, { replace: true });
     } catch (e) {
@@ -127,7 +122,6 @@ export function ServerCheckoutPage() {
       <ClassCard title={s.title} teacher={teacherName(joined)} room={roomName(joined)} startsAt={s.starts_at} endsAt={s.ends_at} tone={toneOf(joined)} booked={s.booked_count} capacity={s.capacity} level={s.level} />
       {existing && <Notice tone="info" action={<Button size="sm" variant="secondary" onClick={() => nav(`/app/booking/${existing.id}`)}>{t('customer.class.viewBooking')}</Button>}>{t('customer.home.booked')}</Notice>}
       {closed && <Notice tone="warn">{t(`customer.srv.phase.${phase}`)}</Notice>}
-      {mats && !closed && <MatPicker sessionId={s.id} capacity={s.capacity} taken={NO_TAKEN} value={mat} onChange={(n) => { setMat(n); setError(null); }} />}
 
       <section className="stack-sm">
         <h2 className="cust-h2">{t('customer.checkout.payWith')}</h2>
@@ -144,6 +138,9 @@ export function ServerCheckoutPage() {
         {buyFirst && <Notice tone="info" title={t('customer.srv.buyFirst.title')}>{t('customer.srv.buyFirst.body')}</Notice>}
       </section>
 
+      {/* Hoy 12 Nov (D5): a teacher's or studio's code adds classes to the balance, then the class books from it. */}
+      {!consentHeld && !closed && !existing && <VoucherCodeEntry onRedeemed={() => { setChoice('package'); setError(null); }} />}
+
       {kind === 'single' && (
         <section className="stack-sm">
           <h2 className="cust-h2">{t('customer.checkout.method')}</h2>
@@ -158,16 +155,15 @@ export function ServerCheckoutPage() {
 
       <div className="stack-sm cust-sticky">
         {refusal && (
-          <Notice tone={code === 'occurrence_full' || code === 'spot_taken' ? 'warn' : 'danger'} title={t('customer.srv.refused')}
-            action={code === 'occurrence_full' || code === 'occurrence_not_open' || code === 'daily_limit_reached' ? <Button size="sm" variant="secondary" onClick={() => nav('/app/schedule')}>{t('customer.class.backToSchedule')}</Button> : undefined}>
+          <Notice tone={code === 'occurrence_full' || code === 'person_overlap' ? 'warn' : 'danger'} title={t('customer.srv.refused')}
+            action={code === 'occurrence_full' || code === 'occurrence_not_open' || code === 'person_overlap' ? <Button size="sm" variant="secondary" onClick={() => nav('/app/schedule')}>{t('customer.class.backToSchedule')}</Button> : undefined}>
             {t(refusal.key, refusal.vars)}
           </Notice>
         )}
-        <Button block size="lg" loading={busy} disabled={consentHeld || busy || closed || !!existing || !kind || (mats && !mat && !buyFirst)} onClick={() => void confirm()}>
+        <Button block size="lg" loading={busy} disabled={consentHeld || busy || closed || !!existing || !kind} onClick={() => void confirm()}>
           {buyFirst ? t('customer.srv.buyFirst.cta') : kind === 'single' ? t(`customer.srv.cta.${method}`) : t('customer.checkout.confirm')}
         </Button>
         {!kind && <p className="xs muted" style={{ textAlign: 'center' }}>{t('customer.srv.pay.pick')}</p>}
-        {mats && !mat && !buyFirst && <p className="xs muted" style={{ textAlign: 'center' }}>{t('site.mat.hint')}</p>}
         <p className="xs muted" style={{ textAlign: 'center' }}>{t('customer.srv.cancelRule')}</p>
       </div>
     </div>

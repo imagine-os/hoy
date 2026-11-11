@@ -207,7 +207,7 @@ const png = () => new File([new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 
   const [pid2] = await M.batch(c2, M.transferOps({ person: k2.id, product: p2.single, today, reference: '', booking: b2.id, concept: 'Clase' }), M.newIdempotencyKey());
   c2.as('usr_desk'); q = await M.readQueue(c2); item = M.pendingItems(q, T0)[0];
   await M.batch(c2, M.reviewOps({ payment: item.payment, product: item.product, decision: 'decline', amountReceived: NaN, reason: 'No llegó la transferencia' }), M.newIdempotencyKey());
-  check('PG-04 reject stores the reason; the hold resumes for a new receipt', c2.db.payment.find((x) => x.id === pid2).data.status === 'declined' && c2.db.payment.find((x) => x.id === pid2).data.notes === 'No llegó la transferencia' && !c2.db.booking.find((x) => x.id === b2.id).data.hold_frozen_at);
+  check('PG-04 reject stores the reason; the hold resumes for a new receipt', c2.db.payment.find((x) => x.id === pid2).data.status === 'declined' && c2.db.payment.find((x) => x.id === pid2).data.status_reason === 'No llegó la transferencia' && !c2.db.booking.find((x) => x.id === b2.id).data.hold_frozen_at);
   // approve and check in at the door, one batch, payment first
   const { cos: c3, carla: k3, products: p3, held: h3 } = setup(); const b3 = h3('transfer'); c3.as('usr_cust');
   await M.batch(c3, M.transferOps({ person: k3.id, product: p3.single, today, reference: '', booking: b3.id, concept: 'Clase' }), M.newIdempotencyKey());

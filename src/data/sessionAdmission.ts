@@ -1,4 +1,5 @@
-import type { BaseRow, ClassSessionRow, ModalityRow, RoomRow } from './schema';
+import type { BaseRow, BookingRow, ClassSessionRow, ModalityRow, RoomRow } from './schema';
+import type { VoucherBookingRow } from './vouchers';
 import type { DataProvider } from './types';
 import { usesMats } from './mats';
 import { tenant } from '../tenant/tenant';
@@ -37,4 +38,23 @@ export async function requireSessionAdmission(data: DataProvider, sessionId: str
   const room = await data.get<RoomRow>('rooms', session.room_id);
   assertAdmissionContext(control);
   return { ...session, capacity: effectiveAdmissionCapacity(session, room, modality) };
+}
+
+export interface AdmissionRows { bookings?: readonly BaseRow[]; voucher_bookings?: readonly BaseRow[] }
+/** A person holds one booking per class. Several classes a day are allowed (Hoy 12 Nov, D9): the server refuses overlaps. */
+export function identifiedSessionAdmission(rows: AdmissionRows, target: ClassSessionRow, userId: string, excludeBookingId?: string): boolean {
+  return !!rows.bookings?.some(row => row.tenant_id === target.tenant_id && row.id !== excludeBookingId && row.user_id === userId && row.session_id === target.id && ['booked', 'checked_in', 'no_show'].includes(String(row.status)))
+    || !!(rows.voucher_bookings as readonly VoucherBookingRow[] | undefined)?.some(row => row.tenant_id === target.tenant_id && row.sessionId === target.id && row.status !== 'cancelled' && row.participants.some(person => person.userId === userId));
+}
+
+/** Fresh scoped transaction reads, fenced after every await. Browser-only; production needs an authorized RPC. */
+export async function requireBookingAdmission(data: DataProvider, target: ClassSessionRow, userId: string, control: AdmissionControl = {}, excludeBookingId?: string): Promise<void> {
+  assertAdmissionContext(control);
+  if (target.tenant_id !== tenant.id) throw new Error('session_unavailable');
+  const rows: AdmissionRows = {};
+  for (const table of ['bookings', 'voucher_bookings'] as const) {
+    rows[table] = await data.list<BookingRow>(table, { where: { tenant_id: target.tenant_id } });
+    assertAdmissionContext(control);
+  }
+  if (identifiedSessionAdmission(rows, target, userId, excludeBookingId)) throw new Error('booking_exists');
 }

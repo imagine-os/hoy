@@ -25,9 +25,12 @@ import { errorCode } from './desk/wire';
 import type { AttendanceTo } from './desk/deskCommands';
 import { maskPhone, personMatches, usePeople, type Person } from './people';
 import { S02 } from './specs';
-import { tenant } from '../../tenant/tenant';
 import { approvedPackageRows, packageState } from '../../data/packages';
 import { bookWithPackage } from '../../data/deskBooking';
+import { checkInOpen } from './desk/deskSale';
+import { checkinView } from './checkinSelection';
+import { useNow } from '../customer/hooks';
+import { SERVER_RULES } from '../customer/booking/bookingPolicy';
 import './staff.css';
 import { type Lang } from '../../i18n/types';
 import { useLiveUpdates } from '../../data/companyos/hooks';
@@ -69,16 +72,13 @@ export function CheckinPage() {
   const futureSessions = allSessions.filter(x => x.session.status === 'scheduled' && Date.parse(x.session.starts_at) > Date.now());
   const { rows: ledger } = useTable<ClassLedgerRow>('class_ledger');
   const { rows: payments } = useTable<PaymentRow>('payments');
-  const { rows: allBookings } = useTable<BookingRow>('bookings');
-  const now = Date.now();
-  const autoId = useMemo(() => {
-    const live = todayAll.find((x) => new Date(x.session.starts_at).getTime() - 30 * MS.min <= now && new Date(x.session.ends_at).getTime() >= now);
-    const next = todayAll.find((x) => new Date(x.session.starts_at).getTime() > now);
-    return (live ?? next ?? todayAll[todayAll.length - 1])?.session.id;
-  }, [todayAll, now]);
+  const now = useNow(15_000); // re-read so a class that ends while the screen is open stops offering "Llegó"
   const wanted = params.get('session');
-  const selected = allSessions.find((x) => x.session.id === wanted) ?? todayAll.find((x) => x.session.id === autoId);
+  const { selected, nextId } = useMemo(() => checkinView({ today: todayAll, all: allSessions, wantedId: wanted, now }), [todayAll, allSessions, wanted, now]);
   const selectedId = selected?.session.id;
+  // Nothing is written into the address for the class the clock picks: it keeps following the current or next class. A
+  // class staff chose (a tap, or `?session=`) stays; once it has ended and a later one is live or next, "next class" drops
+  // the choice and follows the clock again.
 
   const { rows: bookings, loading } = useTable<BookingRow>('bookings', { where: { session_id: selectedId ?? '__none__' } });
   const { rows: waitlist } = useTable<WaitlistRow>('waitlist', { where: { session_id: selectedId ?? '__none__', status: 'waiting' } });
@@ -96,7 +96,11 @@ export function CheckinPage() {
   const paymentFor = (b: BookingRow) => payments.find(p => p.status === 'pending' && ((p as PaymentRow & { for_id?: string }).for_id === b.id || p.payment_id === b.id || b.payment_id === p.id));
   const onRoster = useMemo(() => new Set(bookings.filter((b) => b.status !== 'cancelled').map((b) => b.user_id)), [bookings]);
   const walkIns = useMemo(() => (q.trim().length < 2 ? [] : people.filter((p) => p.role === 'customer' && !onRoster.has(p.id) && personMatches(p, q)).slice(0, 6)), [people, onRoster, q]);
-  const graceMs = settings.policies.lateGraceMin * MS.min;
+  // Production: Hoy has no late grace (owner 2026-11-11, F1b), so the screen promises none; the review build keeps the demo policy.
+  const graceMin = SERVER_RULES ? 0 : settings.policies.lateGraceMin;
+  const graceMs = graceMin * MS.min;
+  /** F1b hint: a class that has ended takes no check-in (the server refuses `check_in_closed`). */
+  const checkInOffered = !selected || !SERVER_RULES || checkInOpen(selected.session, now);
   const isLate = (b: BookingRow) => !!selected && !!b.checked_in_at && new Date(b.checked_in_at).getTime() > new Date(selected.session.starts_at).getTime() + graceMs;
 
   const setStatus = async (b: BookingRow, status: AttendanceTo, reason?: string) => {
@@ -129,12 +133,12 @@ export function CheckinPage() {
     const code = errorCode(error);
     if (server) return deskErrorText(code, t);
     if (code === 'booking_contact_required') return t('customer.book.contactRequired');
-    const known = ['session_full', 'session_unavailable', 'booking_exists', 'same_day_conflict', 'insufficient_classes', 'package_frozen', 'package_expired', 'disconnected'];
+    const known = ['session_full', 'session_unavailable', 'booking_exists', 'person_overlap', 'insufficient_classes', 'package_frozen', 'package_expired', 'disconnected'];
     return t(`staff.checkin.error.${known.includes(code) ? code : 'failed'}`);
   };
   const packageFor = (userId: string) => packageState(approvedPackageRows(ledger.filter(row => row.user_id === userId), payments));
   const unavailable = (userId: string) => {
-    // Production: the server decides capacity, balance, expiry and one class a day; only the class choice is checked here.
+    // Production: the server decides capacity, balance, expiry and overlaps; only the class choice is checked here.
     if (server) return !selected || selected.session.status !== 'scheduled' ? t('staff.checkin.package.unavailable') : null;
     if (selected && !sessionAdmissionAvailable(selected.session, selected.modality, selected.session.template_id ? { id: selected.session.template_id, active: selected.templateActive } : undefined)) return t('staff.checkin.error.session_unavailable');
     if (!selected || selected.session.status !== 'scheduled' || Date.parse(selected.session.starts_at) <= Date.now()) return t('staff.checkin.package.unavailable');
@@ -144,7 +148,6 @@ export function CheckinPage() {
     if (state.balance < 1) return t('staff.checkin.package.empty');
     const atClass = packageState(approvedPackageRows(ledger.filter(row => row.user_id === userId), payments), dateKey(new Date(selected.session.starts_at)));
     if (atClass.balance < 1) return t('staff.checkin.package.expired');
-    if (tenant.studio.perPersonPerDay === 1 && allBookings.some(b => b.user_id === userId && b.status !== 'cancelled' && b.status !== 'late_cancel' && allSessions.some(({ session: s }) => s.id === b.session_id && isSameDay(s.starts_at, selected.session.starts_at)))) return t('staff.checkin.error.same_day_conflict');
     return null;
   };
   const packageLabel = (userId: string) => {
@@ -195,7 +198,7 @@ export function CheckinPage() {
   const onSearchKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Escape') { setQ(''); return; }
     if (e.key !== 'Enter' || !q.trim()) return;
-    if (expected[0]) setStatus(expected[0].b, 'checked_in');
+    if (expected[0]) { if (!checkInOffered) setError(t('staff.checkin.ended')); else setStatus(expected[0].b, 'checked_in'); }
     else if (walkIns.length === 1) walkIn(walkIns[0]);
   };
 
@@ -217,6 +220,7 @@ export function CheckinPage() {
       <section className="stack-sm">
         <label className="stack-sm"><span className="small">{t('staff.checkin.future.label')}</span><Select aria-label={t('staff.checkin.future.label')} value={selectedId ?? ''} onChange={e => setParams({ session: e.target.value })}><option value="">{t('staff.checkin.future.choose')}</option>{futureSessions.map(({ session: s }) => <option key={s.id} value={s.id}>{formatDate(s.starts_at, lang)} · {formatTime(s.starts_at, lang)} · {s.title} ({s.booked_count}/{s.capacity})</option>)}</Select></label>
         <p className="xs muted">{t(server ? 'desk.server.rules' : 'staff.checkin.package.demo')}</p>
+        {nextId && <div className="row"><Button variant="tonal" size="sm" icon="arrow-right" onClick={() => setParams((prev) => { const next = new URLSearchParams(prev); next.delete('session'); return next; })}>{t('staff.checkin.nextClass')}</Button></div>}
         <div className="row-between wrap"><div className="eyebrow">{t('staff.checkin.today')}</div><span className="xs muted">{t('staff.checkin.strip.hint')}</span></div>
         {can('payments.read') && figures.pendingPayments > 0 && <p className="xs" role="status"><Link to="/staff/transfers">{t('desk.figures.pending')}: {figures.pendingPayments}</Link></p>}
         {todayAll.length === 0 ? <EmptyState compact title={t('staff.checkin.noClasses')} body={t('staff.checkin.noClasses.body')} /> : (
@@ -240,7 +244,7 @@ export function CheckinPage() {
         <div className="row-between wrap">
           <div>
             <div className="row wrap"><h2 className="checkin-title">{selected.session.title}</h2><span className="muted small">{formatTime(selected.session.starts_at, lang)} · {selected.teacher?.display_name}</span>{full && <Badge tone="danger">{t('core.common.full')}</Badge>}</div>
-            <div className="xs muted">{t('staff.checkin.arrivals', { n: counter.arrived, total: counter.holding })} · {t('staff.checkin.grace', { n: settings.policies.lateGraceMin })}</div>
+            <div className="xs muted">{t('staff.checkin.arrivals', { n: counter.arrived, total: counter.holding })}{graceMin > 0 && <> · {t('staff.checkin.grace', { n: graceMin })}</>}</div>
           </div>
           <div className="checkin-cap"><CapacityMeter booked={selected.session.booked_count} capacity={selected.session.capacity} /></div>
         </div>
@@ -257,9 +261,10 @@ export function CheckinPage() {
         {error && <EmptyState compact tone="error" title={t('core.common.error')} body={error} action={<Button size="sm" variant="secondary" onClick={() => setError(null)}>{t('core.common.retry')}</Button>} />}
         {loading && bookings.length === 0 && <EmptyState compact tone="loading" title={t('core.common.loading')} />}
         {!loading && roster.length === 0 && waitlist.length === 0 && <EmptyState compact title={q ? t('staff.checkin.noMatch') : t('staff.checkin.emptyRoster')} body={q ? t('staff.checkin.noMatch.body') : undefined} />}
+        {canWrite && !checkInOffered && <p className="xs muted" role="status">{t('staff.checkin.ended')}</p>}
         <Group title={t('staff.checkin.expected')} n={expected.length}>
           {expected.map(({ b, p }) => <RosterRow key={b.id} name={p?.name ?? b.user_id} initials={p?.initials} phone={maskPhone(p?.phone)} plan={planLabel(p, b, lang, t)} status="booked" showStatus={false} flag={p?.notes ?? undefined}
-            actions={canWrite && <><Button size="sm" variant="tonal" disabled={!!busy} loading={busy === b.id} onClick={() => setStatus(b, 'checked_in')} icon="check">{t('staff.checkin.checkin')}</Button><Button size="sm" variant="outline" disabled={!!busy} onClick={() => setStatus(b, 'no_show')} icon="user-x">{t('staff.checkin.noShow')}</Button></>} />)}
+            actions={canWrite && <>{checkInOffered && <Button size="sm" variant="tonal" disabled={!!busy} loading={busy === b.id} onClick={() => setStatus(b, 'checked_in')} icon="check">{t('staff.checkin.checkin')}</Button>}<Button size="sm" variant="outline" disabled={!!busy} onClick={() => setStatus(b, 'no_show')} icon="user-x">{t('staff.checkin.noShow')}</Button></>} />)}
         </Group>
         <Group title={t('staff.checkin.arrived')} n={arrived.length}>
           {canWrite && arrived.length > 0 && !undoAllowed && <p className="xs muted" role="status">{t('staff.checkin.undoPolicy')}</p>}
@@ -272,7 +277,7 @@ export function CheckinPage() {
             actions={canWrite && b.status === 'no_show' && (server
               // The server has no No-show → Arrived move: undo the no-show (with a reason), then mark Arrived.
               ? <Button size="sm" variant="outline" disabled={!!busy} onClick={() => setUndo({ id: b.id, reason: '' })} icon="undo">{t('desk.noShow.backToBooked')}</Button>
-              : <Button size="sm" variant="tonal" disabled={!!busy} loading={busy === b.id} onClick={() => setStatus(b, 'checked_in')} icon="check">{t('staff.checkin.checkin')}</Button>)} />)}
+              : checkInOffered ? <Button size="sm" variant="tonal" disabled={!!busy} loading={busy === b.id} onClick={() => setStatus(b, 'checked_in')} icon="check">{t('staff.checkin.checkin')}</Button> : null)} />)}
           {missed.map(({ b }) => undo?.id === b.id ? <Fragment key={`undo-${b.id}`}>{undoForm(b)}</Fragment> : null)}
         </Group>}
         {heldRows.length > 0 && <Group title={t('desk.held.title')} n={heldRows.length}>

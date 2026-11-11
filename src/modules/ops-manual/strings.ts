@@ -72,7 +72,6 @@ export const strings: StringTable = {
   'manual.live.tenant.city': { es: 'Ciudad', en: 'City' },
   'manual.live.tenant.mats': { es: 'Mats por clase', en: 'Mats per class' },
   'manual.live.tenant.classesPerDay': { es: 'Clases por día entre semana', en: 'Classes per weekday' },
-  'manual.live.tenant.perPerson': { es: 'Clases por persona por día', en: 'Classes per person per day' },
   'manual.live.tenant.rooms': { es: 'Salas', en: 'Rooms' },
   'manual.live.tenant.seatsPerDay': { es: 'Cupos por día entre semana', en: 'Seats per weekday' },
   'manual.live.policy.title': { es: 'Políticas vigentes', en: 'Policies in force' },

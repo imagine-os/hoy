@@ -311,3 +311,6 @@ export function VoucherDeskPage() {
     </div>
   );
 }
+
+// M-14 · teacher codes (Hoy 12 Nov): its own file, served from this chunk with the other voucher pages.
+export { TeacherCodesPage } from './TeacherCodesPage';

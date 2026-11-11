@@ -73,7 +73,7 @@ they would in their app.
 ## 4. Walk-ins
 1. If there is room, check them in and take payment (see [Sales and plans](10-ventas-y-planes.md)).
 2. If there is no room, offer the next class of the day or the waitlist.
-3. Remember the rule: one person, one class a day.
+3. Remember the rule: a person can take several classes a day, but never two at the same time.
 4. Prices are never typed or negotiated: you pick them in Register & pay.
 
 **What to say:** "That one's full. There's room at 9:30 — shall I hold it for you? Or I can put you on the

@@ -54,7 +54,8 @@ try {
  await reject(/session_full/);
  await data.remove('bookings',fullBooking.id);await data.update('class_sessions',target.id,{capacity:4});
  const conflictSession=await data.insert('class_sessions',{...target,id:'qa_rs_conflict',starts_at:target.starts_at,ends_at:day(4.1)});
- const conflict=await data.insert('bookings',{user_id:userId,session_id:conflictSession.id,status:'checked_in',paid_with:'comp'});await reject(/same_day_conflict/);
+ // Hoy 12 Nov (D9): another class the same day is allowed, so it no longer blocks a move.
+ const conflict=await data.insert('bookings',{user_id:userId,session_id:conflictSession.id,status:'checked_in',paid_with:'comp'});
  await data.update('bookings',conflict.id,{status:'cancelled'});
  await assert.rejects(data.atomic(tx=>rescheduleBooking(tx,{...input,now:Date.parse(original.starts_at)-12*3600000+1})),/reschedule_cutoff/);
  await assert.rejects(data.atomic(tx=>rescheduleBooking(tx,{...input,userId:'qa_other'})),/booking_unavailable/);

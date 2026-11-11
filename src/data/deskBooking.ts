@@ -1,6 +1,5 @@
 import { requireExistingBookingContact } from './bookingContact';
-import { requireDailyAdmission } from './dailyAdmission';
-import { requireSessionAdmission, assertAdmissionContext, type AdmissionControl } from './sessionAdmission';
+import { requireSessionAdmission, requireBookingAdmission, assertAdmissionContext, type AdmissionControl } from './sessionAdmission';
 import type { DataProvider } from './types';
 import type { BookingRow, ClassLedgerRow, PaymentRow } from './schema';
 import { approvedPackageRows, packageState, packageLots, selectPackagePurchase } from './packages';
@@ -16,7 +15,7 @@ export async function bookWithPackage(data: DataProvider, input: { userId: strin
   const bookings = await data.list<BookingRow>('bookings', { where: { user_id: input.userId } });
   const active = bookings.filter(b => b.status !== 'cancelled' && b.status !== 'late_cancel');
   if (active.some(b => b.session_id === session.id)) throw new Error('booking_exists');
-  await requireDailyAdmission(data, session, input.userId, input.control);
+  await requireBookingAdmission(data, session, input.userId, input.control);
   // MockProvider's booking insertion also checks actual occupancy, voucher seats and duplicates.
   if (session.booked_count >= session.capacity) throw new Error('session_full');
   const rows = await data.list<ClassLedgerRow>('class_ledger', { where: { user_id: input.userId } });
