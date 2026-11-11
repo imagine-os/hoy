@@ -15,6 +15,7 @@ import { ClassCard } from '../../../components/organism/ClassCard/ClassCard';
 import { ListGroup, ListRow } from '../../../components/molecule/ListRow/ListRow';
 import { useMyInvites, useSessionJoined } from '../hooks';
 import { policy } from '../policy';
+import { appBase } from '../../../config/appBase';
 import { PageHead, toneOf, roomName, shareText, teacherName } from '../ui';
 
 /** C-16 Invite a guest — make word of mouth mechanical. Every send is a row in `invites`. */
@@ -27,7 +28,7 @@ export function InvitePage() {
   const { rows: invites, code, send } = useMyInvites();
   const [to, setTo] = useState('');
   const [flash, setFlash] = useState<string | null>(null);
-  const link = `${window.location.origin}${window.location.pathname}#/auth/sign-up?invite=${code}`;
+  const link = `${appBase()}#/auth/sign-up?invite=${code}`;
   const context = joined ? t('customer.invite.text.class', { name: user.name.split(' ')[0], title: joined.session.title, when: `${formatDate(joined.session.starts_at, lang)} ${formatTime(joined.session.starts_at, lang)}`, studio: tenant.name }) : t('customer.invite.text.general', { name: user.name.split(' ')[0], studio: tenant.name });
 
   const record = async (channel: 'whatsapp' | 'email' | 'link', target: string) => {

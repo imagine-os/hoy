@@ -13,13 +13,14 @@ import { Badge } from '../../../components/atom/Badge/Badge';
 import { useCosVouchers, useKeyedSubmit } from './hooks';
 import { PAYMENT_TABLE, VOUCHER_CHANGES, createVoucher, voucherState, type CosVoucher } from './model';
 import { listVoucherLots, teacherCodeBody, teacherCodeErrors, teacherCodeLink, teacherFunnel, withUnknownCoaches, type TeacherCodeForm, type VoucherLot } from './teacherCodes';
+import { appBase as sharedAppBase } from '../../../config/appBase';
 import '../vouchers.css';
 
 const LIVE = [PAYMENT_TABLE, VOUCHER_CHANGES];
 const day = (value: string | null | undefined, lang: 'es' | 'en') =>
   value ? formatDate(/^\d{4}-\d{2}-\d{2}$/.test(value) ? fromDateKey(value) : value, lang, { day: 'numeric', month: 'long', year: 'numeric' }) : '';
 /** The app's address as the browser has it (hash routing): `https://host/base`, without the hash. */
-const appBase = () => (typeof window === 'undefined' ? '' : `${window.location.origin}${window.location.pathname}`);
+const appBase = () => (typeof window === 'undefined' ? '' : sharedAppBase());
 
 interface Teacher { id: string; name: string; active: boolean }
 function useTeachers(): { teachers: Teacher[]; loading: boolean } {

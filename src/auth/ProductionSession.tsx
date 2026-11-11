@@ -13,6 +13,7 @@ import { cosJson } from './cosRequest';
 import { clearLocalTraces } from './localTraces';
 import { useI18n } from '../i18n/I18nProvider';
 import { ViewAsBanner } from '../components/molecule/ViewAsBanner/ViewAsBanner';
+import { appBase } from '../config/appBase';
 import { EmptyState } from '../components/molecule/EmptyState/EmptyState';
 
 /**
@@ -44,7 +45,7 @@ export default function ProductionSession({ children }: { children: ReactNode })
 
   if (!config) return <SessionContext.Provider value={visitorSession(failed ? 'error' : 'loading', retry)}>{children}</SessionContext.Provider>;
   return (
-    <ClerkProvider publishableKey={config.clerkPublishableKey} prefetchUI={false} afterSignOutUrl={`${window.location.pathname}#/auth/sign-in`}
+    <ClerkProvider publishableKey={config.clerkPublishableKey} prefetchUI={false} afterSignOutUrl={`${appBase()}#/auth/sign-in`}
       routerPush={clerkPush} routerReplace={clerkReplace}>
       <ClerkSession config={config}>{children}</ClerkSession>
     </ClerkProvider>

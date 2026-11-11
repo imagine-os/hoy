@@ -468,9 +468,9 @@ await test('public reads: signed out, everything else stays 401 and nothing reac
   upstreamReply = okUpstream;
   seen.length = 0;
   const refusedQueries = [
-    // Lane H2 forwards setting, hours_override and booking too: the public_site policies narrow them to the public
-    // settings record, the holiday hours without their note, and a booking's class and mat.
-    ...['person', 'payment', 'credit_lot', 'credit_entry', 'member', 'invoice', 'waitlist_entry', 'comms_log', 'staff_note', 'form_submission', 'policy_acceptance', 'file', 'feature_flag', 'voucher'].map((entity) => JSON.stringify({ entity })),
+    // Lane H2 forwards setting and hours_override too: the public_site policies narrow them to the public
+    // settings record and the holiday hours without their note. Bookings are not public (decision R4).
+    ...['person', 'payment', 'credit_lot', 'credit_entry', 'member', 'invoice', 'waitlist_entry', 'comms_log', 'staff_note', 'form_submission', 'policy_acceptance', 'booking', 'file', 'feature_flag', 'voucher'].map((entity) => JSON.stringify({ entity })),
     '{}', 'not json', '[]', 'null', JSON.stringify({ entity: ['occurrence'] }), JSON.stringify({ entity: { $ne: null } }), JSON.stringify({ entity: 'Occurrence' }),
     JSON.stringify({ entity: 'occurrence', entity2: 'x' }).replace('entity2', 'entity'), // a repeated key: the parser keeps the last one
   ];
