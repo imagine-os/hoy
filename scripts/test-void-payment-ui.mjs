@@ -338,7 +338,7 @@ try {
   scenario = 'customer';
   ({ ctx, page } = await signedIn('cust@example.test'));
   await go(page, '/app/receipts');
-  check('My purchase notes: the voided payment reads Anulado and still opens its note', /Anulado/.test(await page.locator('body').innerText()) && (await page.locator('a[href="#/app/receipts/pay_ok"]').count()) === 1);
+  check('My purchase notes: the voided payment reads Anulado and still opens its note', /Anulado/.test(await page.locator('body').innerText()) && (await page.locator('a[href$="#/app/receipts/pay_ok"]').count()) === 1);
   await go(page, '/app/receipts/pay_ok');
   const customerMark = await page.locator('[data-testid="receipt-voided"]').innerText().catch(() => '');
   check('Customer\'s receipt: reads voided, without the reason, and has no Void', /anulada/i.test(customerMark) && !(await page.locator('body').innerText()).includes('onerror') && (await page.locator(VOID).count()) === 0, customerMark);

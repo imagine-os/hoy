@@ -29,12 +29,12 @@ try {
   assert.deepEqual(ids([session('held')], [], [promotional('held', [{ name: 'Holder', userId: 'holder' }])]), [], 'holder voucher booking cannot be duplicated');
   assert.deepEqual(ids([session('open')], [regular('open', 'holder', { status: 'cancelled' }), regular('open', 'holder', { status: 'late_cancel' }), regular('open', 'holder', { tenant_id: 'other' })], [promotional('open', [{ name: 'Holder', userId: 'holder' }], { status: 'cancelled' }), promotional('open', [{ name: 'Holder', userId: 'holder' }], { tenant_id: 'other' })]), ['open'], 'cancelled and foreign-tenant bookings do not block a class');
   const daySessions=[session('day-target'),session('day-prior',{starts_at:'2026-10-15T18:00:00Z'})];
-  for(const status of ['booked','checked_in','no_show'])assert.deepEqual(ids(daySessions,[regular('day-prior','holder',{status})]),[],'holder daily regular admission must be hidden');
-  assert.deepEqual(ids(daySessions,[],[promotional('day-prior',[{name:'Holder',userId:'holder'}])]),[],'holder daily voucher admission must be hidden');
-  assert.deepEqual(ids(daySessions,[regular('day-prior','holder',{status:'cancelled'})]),['day-target','day-prior'],'cancelled prior admission does not consume the studio day');
-  assert.deepEqual(ids(daySessions,[regular('day-prior','holder',{tenant_id:'other'})]),['day-target','day-prior'],'foreign prior admission does not consume the studio day');
+  for(const status of ['booked','checked_in','no_show'])assert.deepEqual(ids(daySessions,[regular('day-prior','holder',{status})]),['day-target'],'D9: no daily limit, so a class the same day stays selectable (only the class already held is hidden)');
+  assert.deepEqual(ids(daySessions,[],[promotional('day-prior',[{name:'Holder',userId:'holder'}])]),['day-target'],'D9: a voucher admission earlier the same day does not hide another class');
+  assert.deepEqual(ids(daySessions,[regular('day-prior','holder',{status:'cancelled'})]),['day-target','day-prior'],'a cancelled prior admission hides nothing');
+  assert.deepEqual(ids(daySessions,[regular('day-prior','holder',{tenant_id:'other'})]),['day-target','day-prior'],'a foreign prior admission hides nothing');
   const boundarySessions=[session('day-target',{starts_at:'2026-10-16T04:30:00Z'}),session('day-prior',{starts_at:'2026-10-16T05:30:00Z'})];
-  assert.deepEqual(ids(boundarySessions,[regular('day-prior','holder')]),['day-target'],'different Bogota day remains bookable across UTC midnight boundaries');
+  assert.deepEqual(ids(boundarySessions,[regular('day-prior','holder')]),['day-target'],'the other class is the one held, whatever the Bogota day boundary');
   const used = [promotional('previous', [{ name: 'One' }, { name: 'Two' }], { voucherId: 'voucher', status: 'attended' })];
   assert.equal(remaining(voucher, used), 3, 'per-booking caps do not consume a lifetime allowance');
   const lifetime = { ...voucher, capScope: 'lifetime' };

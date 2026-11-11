@@ -210,7 +210,7 @@ try {
   const card = page.locator('[data-route-error]');
   check('a page that throws shows the error card', (await card.count()) === 1, (await text(page)).slice(0, 400));
   check('the error card offers Retry and Home', (await card.getByRole('button', { name: 'Reintentar' }).count()) === 1 && (await card.getByText('Ir al inicio').count()) >= 1, await card.innerText().catch(() => 'missing'));
-  check('the app shell stays around the card (the sidebar menu is there)', (await page.locator('a[href="#/admin/finance"]').count()) >= 1);
+  check('the app shell stays around the card (the sidebar menu is there)', (await page.locator('a[href$="#/admin/finance"]').count()) >= 1);
   // Retry mounts the page again from scratch: it opens on its first tab (Classes), and the same bad row on Upcoming
   // dates throws again, so the card comes back instead of a blank screen.
   await card.getByRole('button', { name: 'Reintentar' }).click({ timeout: 3000 }).catch(() => {});
@@ -224,7 +224,7 @@ try {
   const href = await other.getAttribute('href', { timeout: 3000 }).catch(() => null);
   await other.click({ timeout: 3000 }).catch(() => {});
   await page.waitForTimeout(1200);
-  check('the menu still works: another page opens from the sidebar and the card is gone', !!href && route(page) === href.replace(/^#/, '') && route(page) !== '/admin/class-schedule' && (await page.locator('[data-route-error]').count()) === 0, `${href} → ${route(page)}`);
+  check('the menu still works: another page opens from the sidebar and the card is gone', !!href && route(page) === href.replace(/^.*#/, '') && route(page) !== '/admin/class-schedule' && (await page.locator('[data-route-error]').count()) === 0, `${href} → ${route(page)}`);
   // Home from the card opens the role's home (Administration: /admin).
   await go(page, '/admin/class-schedule');
   await tab(page, 'Próximas fechas');

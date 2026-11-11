@@ -149,7 +149,7 @@ try {
     const pctx = await newContext(browser, {});
     const p = await pctx.newPage();
     p.on('pageerror', (e) => errors.push(`prod: ${e.message}`));
-    await p.goto(`${prod.base}/#/site?version=archive`); await p.locator('.site-main').waitFor(); await p.waitForTimeout(800);
+    await p.goto(`${prod.base}/#/site/about?version=archive`); await p.locator('.site-main').waitFor(); await p.waitForTimeout(800);
     check('production: no version picker on the public site', (await p.locator('.site-actions select, .site-nav-tools select').count()) === 0);
     check('production: ?version=archive is ignored (Latest only)', (await p.locator('.site').getAttribute('data-site-version')) === 'latest');
     check('production: no testing-hub or version-history link in the footer', (await p.locator('.site-foot a[href*="#/hub"], .site-foot a[href*="github.com"]').count()) === 0);
@@ -160,14 +160,19 @@ try {
     await p.goto(`${prod.base}/#/site/schedule`); await p.locator('.site-main').waitFor(); await p.waitForTimeout(800);
     const promptText = 'Inicia sesión para ver los horarios y reservar';
     check('production: the signed-out schedule has no sign-in prompt in place of the timetable', (await p.getByText(promptText).count()) === 0);
-    await p.goto(`${prod.base}/#/site`); await p.locator('.site-main').waitFor(); await p.waitForTimeout(800);
-    const agenda = await p.locator('.sanctuary-agenda').innerText();
+    // The home is the root path now (D11): the root shows Coming Soon until the launch setting is on, so read it live.
+    const hctx = await newContext(browser, { launch: { siteLive: true } });
+    // Production reads the go-live setting from the tenant's config (app-config.json), not from the visitor's storage.
+    await hctx.route('**/app-config.json', (r) => r.fulfill({ contentType: 'application/json', body: JSON.stringify({ apiBase: '/api/cos', tenant: 'hoy', launch: { siteLive: true } }) }));
+    const hp = await hctx.newPage();
+    await hp.goto(`${prod.base}/#/site`); await hp.locator('.site-main').waitFor(); await hp.waitForTimeout(800);
+    const agenda = await hp.locator('.sanctuary-agenda').innerText();
     check('production: the signed-out home agenda has no sign-in prompt', !agenda.includes(promptText), agenda);
-    await pctx.close();
+    await hctx.close(); await pctx.close();
     const tctx = await newContext(browser, { launch: { siteLive: true, publicDocuments: ['/manual'] } });
     const tp = await tctx.newPage();
     await tp.goto(`${prod.base}/`); await tp.locator('.coming-soon').waitFor();
-    check('production: a visitor\'s own localStorage cannot flip go-live', ['', '/'].includes(route(tp)) && (await tp.locator('.site-main').count()) === 0);
+    check('production: a visitor\'s own localStorage cannot flip go-live', (new URL(tp.url()).pathname === '/' && !new URL(tp.url()).hash) /* the address stays at the root (routeOf reads / as the site home since D11) */ && (await tp.locator('.site-main').count()) === 0);
     // H-2: the production build has no manual or docs at all (not in the bundle, no route), so nothing can open them.
     await tp.goto(`${prod.base}/#/manual`); await tp.waitForTimeout(1500);
     check('production: the manual does not exist, whatever a visitor\'s localStorage says', !route(tp).startsWith('/manual'), route(tp));

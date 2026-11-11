@@ -229,7 +229,7 @@ try {
     assert.deepEqual(toData(adapters.transfer_receipts, { user_id: 'p1', booking_id: 'b1', amount_received: 38000 }, 'create'),
       { status: 'pending', method: 'transfer', provider: 'manual', date: toDay(new Date()), concept: 'Transferencia', person: 'p1', amount: 38000, for_entity: 'booking', for_id: 'b1' });
     assert.equal(toData(adapters.payments, { amount: 1, method: 'cash' }, 'create').concept, 'Compra', 'payments require a concept');
-    assert.deepEqual(toData(adapters.transfer_receipts, { status: 'rejected', review_reason: 'no llegó' }, 'update'), { status: 'declined', notes: 'no llegó' });
+    assert.deepEqual(toData(adapters.transfer_receipts, { status: 'rejected', review_reason: 'no llegó' }, 'update'), { status: 'declined', status_reason: 'no llegó' }); // FIX lane: a rejection reason is the payment's status_reason
   });
   await test('mapping: credit entries → class_ledger (grant row = lot, lot fields, reasons)', () => {
     const lot = { id: 'lot1', source: 'purchase', valid_until: '2026-12-31', frozen_from: null, frozen_until: null, product: 'pr1', payment: 'pay1' };
