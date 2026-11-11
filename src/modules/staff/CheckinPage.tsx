@@ -28,6 +28,7 @@ import { S02 } from './specs';
 import { approvedPackageRows, packageState } from '../../data/packages';
 import { bookWithPackage } from '../../data/deskBooking';
 import { checkInOpen } from './desk/deskSale';
+import { checkinView } from './checkinSelection';
 import { useNow } from '../customer/hooks';
 import { SERVER_RULES } from '../customer/booking/bookingPolicy';
 import './staff.css';
@@ -72,20 +73,12 @@ export function CheckinPage() {
   const { rows: ledger } = useTable<ClassLedgerRow>('class_ledger');
   const { rows: payments } = useTable<PaymentRow>('payments');
   const now = useNow(15_000); // re-read so a class that ends while the screen is open stops offering "Llegó"
-  const autoId = useMemo(() => {
-    const live = todayAll.find((x) => new Date(x.session.starts_at).getTime() - 30 * MS.min <= now && new Date(x.session.ends_at).getTime() >= now);
-    const next = todayAll.find((x) => new Date(x.session.starts_at).getTime() > now);
-    return (live ?? next ?? todayAll[todayAll.length - 1])?.session.id;
-  }, [todayAll, now]);
   const wanted = params.get('session');
-  const selected = allSessions.find((x) => x.session.id === wanted) ?? todayAll.find((x) => x.session.id === autoId);
+  const { selected, nextId } = useMemo(() => checkinView({ today: todayAll, all: allSessions, wantedId: wanted, now }), [todayAll, allSessions, wanted, now]);
   const selectedId = selected?.session.id;
-  // The 15-second clock moves `autoId` to the next class when the current one ends: put the class staff are looking at
-  // in the address once one is shown, so marking no-shows after the end keeps its roster (and the "class ended" note).
-  useEffect(() => {
-    if (wanted || !autoId) return;
-    setParams((prev) => { const next = new URLSearchParams(prev); next.set('session', autoId); return next; }, { replace: true });
-  }, [wanted, autoId, setParams]);
+  // Nothing is written into the address for the class the clock picks: it keeps following the current or next class. A
+  // class staff chose (a tap, or `?session=`) stays; once it has ended and a later one is live or next, "next class" drops
+  // the choice and follows the clock again.
 
   const { rows: bookings, loading } = useTable<BookingRow>('bookings', { where: { session_id: selectedId ?? '__none__' } });
   const { rows: waitlist } = useTable<WaitlistRow>('waitlist', { where: { session_id: selectedId ?? '__none__', status: 'waiting' } });
@@ -227,6 +220,7 @@ export function CheckinPage() {
       <section className="stack-sm">
         <label className="stack-sm"><span className="small">{t('staff.checkin.future.label')}</span><Select aria-label={t('staff.checkin.future.label')} value={selectedId ?? ''} onChange={e => setParams({ session: e.target.value })}><option value="">{t('staff.checkin.future.choose')}</option>{futureSessions.map(({ session: s }) => <option key={s.id} value={s.id}>{formatDate(s.starts_at, lang)} · {formatTime(s.starts_at, lang)} · {s.title} ({s.booked_count}/{s.capacity})</option>)}</Select></label>
         <p className="xs muted">{t(server ? 'desk.server.rules' : 'staff.checkin.package.demo')}</p>
+        {nextId && <div className="row"><Button variant="tonal" size="sm" icon="arrow-right" onClick={() => setParams((prev) => { const next = new URLSearchParams(prev); next.delete('session'); return next; })}>{t('staff.checkin.nextClass')}</Button></div>}
         <div className="row-between wrap"><div className="eyebrow">{t('staff.checkin.today')}</div><span className="xs muted">{t('staff.checkin.strip.hint')}</span></div>
         {can('payments.read') && figures.pendingPayments > 0 && <p className="xs" role="status"><Link to="/staff/transfers">{t('desk.figures.pending')}: {figures.pendingPayments}</Link></p>}
         {todayAll.length === 0 ? <EmptyState compact title={t('staff.checkin.noClasses')} body={t('staff.checkin.noClasses.body')} /> : (

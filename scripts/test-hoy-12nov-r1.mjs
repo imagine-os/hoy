@@ -56,9 +56,6 @@ export { productionStrings as voucherStrings } from './src/modules/vouchers/prod
     assert.doesNotMatch(s.match(/PUBLIC_ENTITIES = new Set\(\[[^\]]*\]/)[0], /booking/);
     assert.doesNotMatch(s, /class and mat/);
   });
-  await check('check-in screen pins the shown class in ?session= so the clock cannot move it', async () => {
-    const s = await read('src/modules/staff/CheckinPage.tsx');
-    assert.match(s, /if \(wanted \|\| !autoId\) return;[\s\S]{0,200}next\.set\('session', autoId\)/);
-  });
+  // The check-in screen's class choice is covered by scripts/test-hoy-12nov-r2.mjs (review round 2, L1).
   console.log(checks.map((c) => `ok   ${c}`).join('\n'));
 } finally { await rm(dir, { recursive: true, force: true }); }
