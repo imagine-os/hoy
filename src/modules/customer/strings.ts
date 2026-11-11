@@ -542,6 +542,7 @@ export const strings: StringTable = {
   'customer.history.pay.pending': { es: 'Pendiente', en: 'Pending' },
   'customer.history.pay.approved': { es: 'Aprobado', en: 'Approved' },
   'customer.history.pay.declined': { es: 'Rechazado', en: 'Declined' },
+  'customer.pay.declinedReason': { es: 'Motivo del rechazo: {reason}', en: 'Reason for the rejection: {reason}' },
   'customer.history.pay.refunded': { es: 'Reembolsado', en: 'Refunded' },
   'customer.history.pay.voided': { es: 'Anulado', en: 'Voided' },
 

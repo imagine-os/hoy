@@ -18,14 +18,13 @@ export function deskTrialBlock(product: { kind?: unknown; slug?: string | null }
 }
 
 /**
- * REC-06: "Sell and check in" offers only today's classes that have not started yet (an unreadable start is not offered).
- * The grace after the start is 0 here. Open question (review r2): whether the desk may still sell and check in during the
- * check-in cut-off after the start (bookings `late_grace_minutes`). The booking policy this app reads
- * (`useBookingPolicy`: reschedule and hold minutes) doesn't carry it, so it is not used; the server's
+ * REC-06 / REC-05: "Sell and check in" offers today's classes that have not started yet, and (owner 2026-11-11, F1) those that
+ * started less than `graceMin` minutes ago (bookings `late_grace_minutes`, 15 for Hoy; `useBookingPolicy().lateGraceMinutes`).
+ * Without a grace (0 or omitted) only future classes are offered. An unreadable start is not offered; the server's
  * `occurrence_not_open` stays the authority.
  */
-export function notStarted<T extends { session: { starts_at: string } }>(list: T[], now: number): T[] {
-  return list.filter((x) => { const at = Date.parse(x.session.starts_at); return Number.isFinite(at) && at > now; });
+export function notStarted<T extends { session: { starts_at: string } }>(list: T[], now: number, graceMin = 0): T[] {
+  return list.filter((x) => { const at = Date.parse(x.session.starts_at); return Number.isFinite(at) && at + Math.max(0, graceMin) * 60000 > now; });
 }
 
 /**

@@ -321,7 +321,7 @@ const payments = entity({
     /** The desk approves with the amount received: it becomes the payment's amount (with a reason when it differs). */
     amount_paid: { field: 'amount', from: (v, r) => (r.data.status === 'approved' ? num(v) : null), to: (v) => (v == null ? undefined : v) },
     method: { field: 'method', ...PAYMENT_METHOD }, provider: { field: 'provider', ...PAYMENT_PROVIDER },
-    provider_ref: { field: 'provider_ref' }, status: { field: 'status' }, note: { field: 'notes' },
+    provider_ref: { field: 'provider_ref' }, status: { field: 'status' }, note: { field: 'notes' }, status_reason: { field: 'status_reason' },
     reference: { field: 'reference' }, concept: { field: 'concept' }, price_override_reason: { field: 'price_override_reason' },
     for_entity: { field: 'for_entity' }, for_id: { field: 'for_id' }, date: { field: 'date', kind: 'day' },
     /**
@@ -343,7 +343,7 @@ const transferReceipts = entity({
     product_id: { field: 'product', from: str }, amount_received: { field: 'amount', from: num },
     status: { field: 'status', ...RECEIPT_STATUS },
     booking_id: { field: 'for_id', from: (v, r) => (r.data.for_entity === 'booking' ? str(v) : null) },
-    review_reason: { derive: (r) => str(r.data.price_override_reason) ?? str(r.data.notes) },
+    review_reason: { derive: (r) => str(r.data.status === 'declined' ? r.data.status_reason : null) ?? str(r.data.price_override_reason) ?? str(r.data.notes) },
     reviewed_at: { derive: (r) => (r.data.status && r.data.status !== 'pending' ? toInstant(r.updatedAt) : null) },
     session_id: { derive: () => null }, mat_number: { derive: () => null }, product_name: { derive: () => null },
     classes: { derive: () => null }, expires_at: { derive: () => null }, image_data_url: { derive: () => null },
@@ -360,7 +360,7 @@ const transferReceipts = entity({
     if ('amount_received' in p) d.amount = p.amount_received;
     if ('booking_id' in p) { d.for_entity = p.booking_id ? 'booking' : null; d.for_id = p.booking_id ?? null; }
     if ('status' in p) d.status = RECEIPT_STATUS.to!(p.status, p);
-    if ('review_reason' in p) d[p.status === 'approved' ? 'price_override_reason' : 'notes'] = p.review_reason;
+    if ('review_reason' in p) d[p.status === 'approved' ? 'price_override_reason' : 'status_reason'] = p.review_reason;
     return d;
   },
 });

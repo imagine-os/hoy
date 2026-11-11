@@ -1,3 +1,4 @@
+import { declinedReasonText } from '../declinedReason';
 import { LaunchPaymentReceipt } from '../../../components/organism/LaunchPaymentReceipt/LaunchPaymentReceipt';
 import { useCustomerRows } from '../useCustomerRows';
 import { readLaunchReceipt } from '../../../data/launchReceipts';
@@ -76,7 +77,7 @@ export function HistoryPage() {
             {paymentLoading && <SkeletonRows count={3} />}
             {!paymentLoading && !paymentError && payments.length === 0 && <EmptyState compact title={t('customer.history.payments.empty')} />}
             {!paymentLoading && !paymentError && payments.map((p) => (
-              <ListRow key={p.id} icon={p.provider === 'wompi' ? 'credit-card' : 'cash'} title={readLaunchReceipt(p)?.item ? bi(readLaunchReceipt(p)!.item!) : planName(p.plan_id)} subtitle={`${formatDate(p.paid_at ?? p.created_at, lang)} · ${t(`customer.pay.method.${p.method}`)} · ${p.provider === 'wompi' ? 'Wompi' : t('customer.pay.manual')}`}
+              <ListRow key={p.id} icon={p.provider === 'wompi' ? 'credit-card' : 'cash'} title={readLaunchReceipt(p)?.item ? bi(readLaunchReceipt(p)!.item!) : planName(p.plan_id)} subtitle={`${formatDate(p.paid_at ?? p.created_at, lang)} · ${t(`customer.pay.method.${p.method}`)} · ${p.provider === 'wompi' ? 'Wompi' : t('customer.pay.manual')}${declinedReasonText(p) ? ` · ${t('customer.pay.declinedReason', { reason: declinedReasonText(p)! })}` : ''}`}
                 trailing={<span className="stack-sm" style={{ alignItems: 'flex-end' }}><strong>{formatCOP(p.amount, lang)}</strong><Badge tone={toneForStatus(p.status)}>{t(`customer.history.pay.${p.status}`)}</Badge></span>} onClick={() => setReceiptId(p.id)} />
             ))}
           </ListGroup>

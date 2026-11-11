@@ -210,7 +210,7 @@
           "channel": "email",
           "locale": "",
           "subject": "No pudimos confirmar tu pago",
-          "body": "Hola {{person.name}}:\n\nRevisamos tu pago de {{event.amount}} COP y no pudimos confirmarlo.\n\nSi era para una reserva, ábrela en la app para ver si todavía puedes enviar un comprobante nuevo. Si crees que es un error, escríbenos.\n\nVer mis reservas: {{links.base}}/#/app\n\nEquipo HOY\ninfo@hoyhumanclub.com",
+          "body": "Hola {{person.name}}:\n\nRevisamos tu pago de {{event.amount}} COP y no pudimos confirmarlo.\n\nMotivo: {{event.reason}}\n\nSi era para una reserva, ábrela en la app para ver si todavía puedes enviar un comprobante nuevo. Si crees que es un error, escríbenos.\n\nVer mis reservas: {{links.base}}/#/app\n\nEquipo HOY\ninfo@hoyhumanclub.com",
           "active": true
         },
         {

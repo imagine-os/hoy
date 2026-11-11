@@ -14,6 +14,7 @@ import { Field } from '../../../components/molecule/Field/Field';
 import { Chip } from '../../../components/atom/Chip/Chip';
 import { Toggle } from '../../../components/atom/Toggle/Toggle';
 import { EmptyState } from '../../../components/molecule/EmptyState/EmptyState';
+import { useBookingPolicy } from '../../customer/booking/bookingPolicy';
 import { useTodaySessions } from '../../website/hooks';
 import { maskPhone, personMatches, usePeople } from '../people';
 import { DESK_CONSENTS, type DeskMethod, type SaleResult } from './deskCommands';
@@ -38,12 +39,13 @@ export function DeskSalePage() {
   const keys = useActionKeys();
   const [params] = useSearchParams();
   const { people } = usePeople();
-  // REC-06: only today's classes that haven't started (the server refuses a started one: occurrence_not_open).
+  // REC-06: today's classes that haven't started or started less than the grace ago (F1; the server refuses a started one: occurrence_not_open).
   const todayAll = useTodaySessions();
   // Re-checked every 30 s, so a class that starts while the form is open drops out of the list.
   const [, tick] = useState(0);
   useEffect(() => { const timer = setInterval(() => tick((n) => n + 1), 30_000); return () => clearInterval(timer); }, []);
-  const today = notStarted(todayAll, Date.now());
+  const grace = useBookingPolicy().lateGraceMinutes;
+  const today = notStarted(todayAll, Date.now(), grace);
   const data = useData();
   const { rows: plans } = useTable<PlanRow>('plans', { where: { active: true } });
   const priceDay = dateKey(new Date());

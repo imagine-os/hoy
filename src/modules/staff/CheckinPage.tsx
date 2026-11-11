@@ -27,6 +27,7 @@ import { maskPhone, personMatches, usePeople, type Person } from './people';
 import { S02 } from './specs';
 import { approvedPackageRows, packageState } from '../../data/packages';
 import { bookWithPackage } from '../../data/deskBooking';
+import { useBookingPolicy, SERVER_RULES } from '../customer/booking/bookingPolicy';
 import './staff.css';
 import { type Lang } from '../../i18n/types';
 import { useLiveUpdates } from '../../data/companyos/hooks';
@@ -94,7 +95,9 @@ export function CheckinPage() {
   const paymentFor = (b: BookingRow) => payments.find(p => p.status === 'pending' && ((p as PaymentRow & { for_id?: string }).for_id === b.id || p.payment_id === b.id || b.payment_id === p.id));
   const onRoster = useMemo(() => new Set(bookings.filter((b) => b.status !== 'cancelled').map((b) => b.user_id)), [bookings]);
   const walkIns = useMemo(() => (q.trim().length < 2 ? [] : people.filter((p) => p.role === 'customer' && !onRoster.has(p.id) && personMatches(p, q)).slice(0, 6)), [people, onRoster, q]);
-  const graceMs = settings.policies.lateGraceMin * MS.min;
+  const policyGrace = useBookingPolicy().lateGraceMinutes;
+  const graceMin = SERVER_RULES ? policyGrace : settings.policies.lateGraceMin;
+  const graceMs = graceMin * MS.min;
   const isLate = (b: BookingRow) => !!selected && !!b.checked_in_at && new Date(b.checked_in_at).getTime() > new Date(selected.session.starts_at).getTime() + graceMs;
 
   const setStatus = async (b: BookingRow, status: AttendanceTo, reason?: string) => {
@@ -237,7 +240,7 @@ export function CheckinPage() {
         <div className="row-between wrap">
           <div>
             <div className="row wrap"><h2 className="checkin-title">{selected.session.title}</h2><span className="muted small">{formatTime(selected.session.starts_at, lang)} · {selected.teacher?.display_name}</span>{full && <Badge tone="danger">{t('core.common.full')}</Badge>}</div>
-            <div className="xs muted">{t('staff.checkin.arrivals', { n: counter.arrived, total: counter.holding })} · {t('staff.checkin.grace', { n: settings.policies.lateGraceMin })}</div>
+            <div className="xs muted">{t('staff.checkin.arrivals', { n: counter.arrived, total: counter.holding })} · {t('staff.checkin.grace', { n: graceMin })}</div>
           </div>
           <div className="checkin-cap"><CapacityMeter booked={selected.session.booked_count} capacity={selected.session.capacity} /></div>
         </div>

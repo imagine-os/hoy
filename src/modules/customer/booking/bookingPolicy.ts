@@ -21,9 +21,11 @@ export interface BookingPolicy {
   holdMinutesTransfer: number;
   /** `hold_minutes_desk`: a single class paid at reception is held this long (J2). */
   holdMinutesDesk: number;
+  /** `late_grace_minutes` (owner 2026-11-11, F1): booking and check-in stay open this long after the class starts. */
+  lateGraceMinutes: number;
 }
 
-export const BOOKING_POLICY_DEFAULTS: BookingPolicy = { rescheduleHours: RESCHEDULE_CUTOFF_HOURS, holdMinutesTransfer: 15, holdMinutesDesk: 60 };
+export const BOOKING_POLICY_DEFAULTS: BookingPolicy = { rescheduleHours: RESCHEDULE_CUTOFF_HOURS, holdMinutesTransfer: 15, holdMinutesDesk: 60, lateGraceMinutes: 15 };
 
 const listeners = new Set<() => void>();
 let current: BookingPolicy = BOOKING_POLICY_DEFAULTS;

@@ -98,7 +98,7 @@ export const LAUNCH_EMAILS: LaunchEmail[] = [
     name: { es: 'Pago rechazado', en: 'Payment rejected' },
     trigger: { es: 'Recepción rechaza un pago (el comprobante de una reserva o la compra de un paquete)', en: 'Reception declines a payment (a booking’s receipt or a package purchase)' },
     subject: 'No pudimos confirmar tu pago',
-    body: 'Hola {{person.name}}:\n\nRevisamos tu pago de {{event.amount}} COP y no pudimos confirmarlo.\n\nSi era para una reserva, ábrela en la app para ver si todavía puedes enviar un comprobante nuevo. Si crees que es un error, escríbenos.\n\nVer mis reservas: {{links.base}}/#/app',
+    body: 'Hola {{person.name}}:\n\nRevisamos tu pago de {{event.amount}} COP y no pudimos confirmarlo.\n\nMotivo: {{event.reason}}\n\nSi era para una reserva, ábrela en la app para ver si todavía puedes enviar un comprobante nuevo. Si crees que es un error, escríbenos.\n\nVer mis reservas: {{links.base}}/#/app',
     automations: [auto({ name: 'payment_rejected', event: 'payment.declined', filter: { from: 'pending' }, record_entity: 'payment', recipient: 'event.person', category: 'payments',
       _note: 'payments 2.7.0: payment.declined { id, person, amount, product, from, reason } once, when a pending payment (a booking receipt or a package) is declined. A payment the desk records already declined (a card refused at the counter), a void, a delete or a re-point sends nothing.' })],
   }),

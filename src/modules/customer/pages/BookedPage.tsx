@@ -1,4 +1,5 @@
 import { customerDirections } from '../directions';
+import { declinedReasonFor } from '../declinedReason';
 import { bookingPaymentStatus } from '../bookingPaymentStatus';
 import { useContact, pendingSuffix } from '../../admin/settings';
 import { useCustomerRows } from '../useCustomerRows';
@@ -127,6 +128,8 @@ export function BookedPage({ change = false }: { change?: boolean }) {
   const inside = insideCancelWindow(s.starts_at, now);
   const paymentStatus = SERVER_RULES ? serverPaymentStatus(server, now) : bookingPaymentStatus(booking, ledger.rows, payments.rows);
   const bookingBase = `/app/booking/${booking.id}`;
+  /** F2: why reception rejected the receipt for this booking (plain text, rendered as a text node). */
+  const declinedReason = SERVER_RULES ? declinedReasonFor(payments.rows as never, booking.id) : null;
 
   const addToCalendar = () => downloadIcs({ title: `${s.title} · ${tenant.name}`, startsAt: s.starts_at, endsAt: s.ends_at, location: `${tenant.name} · ${roomName(joined)}`, description: `${teacherName(joined)}` });
   const share = async () => { const r = await shareText(t('customer.booked.shareText', { title: s.title, when: `${formatDate(s.starts_at, lang)} ${formatTime(s.starts_at, lang)}`, name: tenant.name }), window.location.href); if (r !== 'failed') setFlash({ tone: 'success', text: r === 'copied' ? t('customer.class.linkCopied') : t('customer.class.shared') }); };
@@ -163,7 +166,7 @@ export function BookedPage({ change = false }: { change?: boolean }) {
       <div className="stack-sm">
         <ClassCard title={s.title} teacher={teacherName(joined)} room={roomName(joined)} startsAt={s.starts_at} endsAt={s.ends_at} tone={toneOf(joined)} booked={s.booked_count} capacity={s.capacity} level={s.level} onClick={() => nav(`/app/class/${s.id}`)} />
         <Card eyebrow={t('customer.booked.payment.title')} className="stack-sm">
-          {ledger.loading || payments.loading ? <p role="status">{t('core.common.loading')}</p> : ledger.error || payments.error ? <Notice tone="danger" action={<Button onClick={() => { ledger.retry(); payments.retry(); }}>{t('customer.support.retry')}</Button>}>{t('customer.support.readError')}</Notice> : <><Badge tone={paymentStatus === 'confirmed' ? 'success' : 'neutral'}>{t(`customer.booked.payment.${paymentStatus}`)}</Badge>{paymentStatus === 'unknown' && <p className="small muted">{t('customer.booked.payment.unknownBody')}</p>}</>}
+          {ledger.loading || payments.loading ? <p role="status">{t('core.common.loading')}</p> : ledger.error || payments.error ? <Notice tone="danger" action={<Button onClick={() => { ledger.retry(); payments.retry(); }}>{t('customer.support.retry')}</Button>}>{t('customer.support.readError')}</Notice> : <><Badge tone={paymentStatus === 'confirmed' ? 'success' : 'neutral'}>{t(`customer.booked.payment.${paymentStatus}`)}</Badge>{paymentStatus === 'unknown' && <p className="small muted">{t('customer.booked.payment.unknownBody')}</p>}{declinedReason && <Notice tone="danger">{t('customer.pay.declinedReason', { reason: declinedReason })}</Notice>}</>}
         </Card>
         <Card eyebrow={t('customer.more.visit')} className="stack-sm"><p className="small">{contact.address}, {contact.city}{pendingSuffix(contact, 'address', lang)}</p><a className="btn btn-secondary btn-md" href={customerDirections(contact)} target="_blank" rel="noreferrer">{t('customer.more.visit')} →</a></Card>
       </div>

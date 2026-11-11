@@ -92,7 +92,7 @@ export function reviewOps(i: ReviewInput): BatchOp[] {
   const guard = { field: 'status', value: 'pending' };
   if (i.decision === 'decline') {
     if (reason.length < 3) throw new CosError('reason_required');
-    return [{ op: 'update', entity: 'payment', id: i.payment.id, data: { status: 'declined', notes: reason.slice(0, 500) }, ifMatch: guard }];
+    return [{ op: 'update', entity: 'payment', id: i.payment.id, data: { status: 'declined', status_reason: reason.slice(0, 500) }, ifMatch: guard }];
   }
   if (!Number.isSafeInteger(i.amountReceived) || i.amountReceived <= 0) throw new CosError('invalid_amount');
   const differs = !!i.product && i.amountReceived !== i.product.data.price;
