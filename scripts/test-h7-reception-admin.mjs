@@ -213,10 +213,12 @@ try {
     assert.ok(cos.calls.every(c => c.path === '/batch' && /^[A-Za-z0-9_-]{8,128}$/.test(c.key)), 'every batch has a valid key');
   });
 
-  await row('AD-01 classes, schedule, teachers and rooms: :00 starts, 50-minute classes, room capacity with numbered mats, publish/unpublish, a teacher is a person + coach', () => {
+  await row('AD-01 classes, schedule, teachers and rooms: any start minute (Hoy\'s real timetable starts at :10 and 9:30, owner 12 Nov), 50-minute classes, room capacity, publish/unpublish, a teacher is a person + coach', () => {
     const d = { title: 'Alineación', weekday: 1, start_time: '07:00', resource: 'room16', coach: 'c1', capacity: 16, valid_from: '2026-11-01', valid_until: '', active: true, modality: 'alineacion' };
     assert.deepEqual(m.scheduleProblems(d, 16), []);
-    assert.deepEqual(m.scheduleProblems({ ...d, start_time: '07:30' }, 16), ['on_the_hour']);
+    for (const start_time of ['07:10', '09:30', '06:10', '23:59']) assert.deepEqual(m.scheduleProblems({ ...d, start_time }, 16), [], `${start_time} is a valid start`);
+    for (const start_time of ['7:10', '24:00', '07:60', '07-10', '']) assert.deepEqual(m.scheduleProblems({ ...d, start_time }, 16), ['start_time'], `${start_time} is refused`);
+    assert.equal(m.createScheduleOps({ ...d, start_time: '07:10' })[0].data.start_time, '07:10', 'the start minute is kept as entered');
     assert.deepEqual(m.scheduleProblems({ ...d, capacity: 9 }, 8), ['capacity'], 'the 8-mat room takes at most 8');
     assert.deepEqual(m.scheduleProblems({ ...d, title: ' ', coach: '', resource: '' }, undefined), ['title', 'resource', 'coach']);
     assert.deepEqual(m.createScheduleOps(d)[0].data, { title: 'Alineación', kind: 'class', weekday: 1, start_time: '07:00', duration_minutes: 50, resource: 'room16', coach: 'c1', capacity: 16, valid_from: '2026-11-01', valid_until: null, active: true, modality: 'alineacion' });

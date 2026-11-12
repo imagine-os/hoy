@@ -1,7 +1,7 @@
 {
   "name": "hoyos",
   "private": true,
-  "version": "0.25.0",
+  "version": "1.0.0",
   "type": "module",
   "description": "HoyOS \u2014 operations system for HOY Wellness Center (multi-tenant ready)",
   "scripts": {
@@ -34,6 +34,7 @@
     "test:fix-12nov": "node scripts/test-hoy-12nov-fix.mjs",
     "test:r1-12nov": "node scripts/test-hoy-12nov-r1.mjs",
     "test:r2-12nov": "node scripts/test-hoy-12nov-r2.mjs",
+    "test:any-start-time": "node scripts/test-any-start-time.mjs",
     "test:seo:ui": "node scripts/test-seo-ui.mjs",
     "test:vouchers": "node --experimental-strip-types scripts/test-vouchers.mjs",
     "test:teacher-codes": "node scripts/test-teacher-codes.mjs",

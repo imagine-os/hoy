@@ -135,6 +135,8 @@ jobs:
         run: node scripts/test-hoy-12nov-r1.mjs
       - name: "Review round 2 fixes (Hoy 12 Nov: one title table for server and browser, check-in follows the clock, decline hint)"
         run: node scripts/test-hoy-12nov-r2.mjs
+      - name: Classes start at any minute (Hoy 12 Nov, owner)
+        run: node scripts/test-any-start-time.mjs
       - name: Release wiring (company-os.json, release notes, these CI steps)
         run: node scripts/test-release-wiring.mjs
       - name: The signed-out website reads live data behind the real Hoy server (production build)
