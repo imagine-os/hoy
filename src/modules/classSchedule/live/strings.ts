@@ -7,6 +7,7 @@ export const liveScheduleStrings: StringTable = {
   'live.tab.teachers': { es: 'Profesores', en: 'Teachers' },
   'live.tab.rooms': { es: 'Salones', en: 'Rooms' },
   'live.intro': { es: 'Cada clase dura 50 minutos. Lo que guardas aquí aparece en el sitio, la app y la recepción.', en: 'Each class lasts 50 minutes. What you save here shows on the website, the app and the front desk.' },
+  'live.applyRoom': { es: 'Aplicar a esta fecha: {room} · {n} tapetes', en: 'Apply to this date: {room} · {n} mats' },
   'live.new': { es: 'Nueva', en: 'New' },
   'live.edit': { es: 'Editar', en: 'Edit' },
   'live.save': { es: 'Guardar', en: 'Save' },

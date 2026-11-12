@@ -78,7 +78,7 @@ export function LiveSchedulePage() {
       {q.error && <EmptyState compact tone="error" title={t('live.loadError')} body={deskErrorText(q.error, t)} action={<Button size="sm" onClick={q.reload}>{t('core.common.retry')}</Button>} />}
       {q.loading && !rows && <EmptyState compact tone="loading" title={t('core.common.loading')} />}
       {rows && tab === 'classes' && <Classes rows={rows.schedules} rooms={rooms} coaches={coaches} roomName={roomName} coachName={coachName} weekday={weekday} canWrite={canWrite} canEditImage={canEditImage} busy={busy} photoBusy={photoBusy} setPhotoBusy={setPhotoBusy} run={run} />}
-      {rows && tab === 'dates' && <Dates rows={rows.occurrences} roomName={roomName} coachName={coachName} canWrite={canWrite} busy={busy} run={run} lang={lang} />}
+      {rows && tab === 'dates' && <Dates rows={rows.occurrences} schedules={rows.schedules} rooms={rooms} roomName={roomName} coachName={coachName} canWrite={canWrite} busy={busy} run={run} lang={lang} />}
       {rows && tab === 'teachers' && <Teachers rows={coaches} canWrite={canEditTeachers} busy={busy} photoBusy={photoBusy} setPhotoBusy={setPhotoBusy} run={run} />}
       {rows && tab === 'rooms' && <Rooms rows={rooms} canWrite={canWrite} busy={busy} run={run} />}
       <p className="xs muted">{t('live.faq')}</p>
@@ -149,14 +149,25 @@ function Classes({ rows, rooms, coaches, roomName, coachName, weekday, canWrite,
   );
 }
 
-function Dates({ rows, roomName, coachName, canWrite, busy, run, lang }: { rows: CosRow[]; roomName: (id: unknown) => string; coachName: (id: unknown) => string; canWrite: boolean; busy: boolean; run: Run; lang: 'es' | 'en' }) {
+function Dates({ rows, schedules, rooms, roomName, coachName, canWrite, busy, run, lang }: { rows: CosRow[]; schedules: CosRow[]; rooms: CosRow[]; roomName: (id: unknown) => string; coachName: (id: unknown) => string; canWrite: boolean; busy: boolean; run: Run; lang: 'es' | 'en' }) {
   const { t } = useI18n();
   const [cancel, setCancel] = useState<{ id: string; reason: string; key: string } | null>(null);
   if (!rows.length) return <EmptyState compact title={t('live.dates.empty')} />;
   return <div className="stack-sm">{rows.map(o => {
     const booked = num(o.booked_count), cancelled = o.status === 'cancelled';
+    const schedule = schedules.find(s => s.id === idOf(o.schedule));
+    const room = schedule && rooms.find(r => r.id === idOf(schedule.resource));
+    const capacity = schedule ? num(schedule.capacity) : 0;
+    const canApply = canWrite && o.status === 'scheduled' && Date.parse(str(o.starts_at)) > Date.now() &&
+      o.booked_count === 0 && room && Number.isInteger(capacity) && capacity > 0 && capacity <= num(room.capacity) &&
+      (room.id !== idOf(o.resource) || capacity !== num(o.capacity));
     return <Card key={o.id} data-occurrence={o.id} padding="sm" title={str(o.title)} eyebrow={formatDateTime(str(o.starts_at), lang)} actions={canWrite && !cancelled && o.status === 'scheduled' && <Button size="sm" variant="outline" onClick={() => setCancel({ id: o.id, reason: '', key: newActionKey() })}>{t('live.cancel')}</Button>}>
       <p className="small">{coachName(o.coach)} · {roomName(o.resource)} · {booked}/{num(o.capacity)} {cancelled && <Badge tone="danger">{t('live.cancelled')}</Badge>}</p>
+      {canApply && room && <Button size="sm" variant="outline" disabled={busy} onClick={() => {
+        if (Date.parse(str(o.starts_at)) <= Date.now()) return;
+        void run([{ op: 'update', entity: 'occurrence', id: o.id, ifMatch: { field: 'booked_count', value: 0 },
+          data: { resource: room.id, capacity } }], newActionKey(), t('live.saved'));
+      }}>{t('live.applyRoom', { room: str(room.name), n: capacity })}</Button>}
       {cancel?.id === o.id && <div className="stack-sm">
         <p className="xs">{t('live.cancel.body', { n: booked })}</p>
         <Field label={t('live.cancel.reason')} required>{id => <Input id={id} value={cancel.reason} onChange={e => setCancel({ ...cancel, reason: e.target.value })} autoFocus />}</Field>
