@@ -5,8 +5,8 @@ import { COACH_FIELDS, SCHEDULE_FIELDS, coachBio, coachPhotoUrl, coachPhotoValue
  * AD-01 / AD-02 · class, schedule, teacher and room writes in Company OS terms (bookings `schedule`, `occurrence`,
  * `resource`; people `person` + `coach`). Pure builders, so the named tests read exactly what is sent.
  *
- * Hoy's classes run from :00 to :50 (50 minutes, on the hour); rooms hold 16 and 8 mats, so a class takes its room's
- * capacity and numbered spots by default.
+ * Hoy's classes last 50 minutes and may start at any minute (the real timetable starts at :10 and 9:30; owner,
+ * 12 Nov 2026). A class takes its room's capacity by default.
  */
 export const CLASS_MINUTES = 50;
 export const WEEKDAYS = [1, 2, 3, 4, 5, 6, 0] as const; // Monday first; 0 = Sunday, as Company OS stores it
@@ -18,15 +18,14 @@ export interface CoachProfile { bio: { es: string; en: string }; specialties: st
 /** `photoAtOpen`: the `photo` the record held when the form opened, as stored: a save is refused if it has changed since. */
 export interface CoachDraft { name: string; email?: string; phone?: string; active: boolean; profile?: CoachProfile; photoAtOpen?: unknown }
 
-export type ScheduleProblem = 'title' | 'weekday' | 'start_time' | 'on_the_hour' | 'resource' | 'coach' | 'capacity' | 'valid_from' | 'modality';
+export type ScheduleProblem = 'title' | 'weekday' | 'start_time' | 'resource' | 'coach' | 'capacity' | 'valid_from' | 'modality';
 
-/** Checks a class before it is sent: the server checks types and references; the :00 start is Hoy's rule. */
+/** Checks a class before it is sent; the server checks types and references. */
 export function scheduleProblems(d: ScheduleDraft, roomCapacity: number | undefined): ScheduleProblem[] {
   const out: ScheduleProblem[] = [];
   if (!d.title.trim()) out.push('title');
   if (!Number.isInteger(d.weekday) || d.weekday < 0 || d.weekday > 6) out.push('weekday');
   if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(d.start_time)) out.push('start_time');
-  else if (!d.start_time.endsWith(':00')) out.push('on_the_hour');
   if (!d.resource) out.push('resource');
   if (!d.coach) out.push('coach');
   if (!Number.isInteger(d.capacity) || d.capacity < 1 || (roomCapacity != null && d.capacity > roomCapacity)) out.push('capacity');
