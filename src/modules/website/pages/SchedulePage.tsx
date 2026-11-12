@@ -1,6 +1,7 @@
 import { requireSessionAdmission, sessionAdmissionAvailable } from '../../../data/sessionAdmission';
 import { sessionUnavailableReason } from '../../../data/sessionAvailability';
 import { Notice } from '../../../components/molecule/Notice/Notice';
+import { useSettings } from '../../admin/settings';
 import { useSiteEdition } from '../edition';
 import { studioPhoto } from '../photography';
 import { SessionEditorial } from '../../../components/molecule/SessionEditorial/SessionEditorial';
@@ -37,7 +38,9 @@ export function SchedulePage() {
   const [params, setParams] = useSearchParams();
   const { sections, isVisible } = useLayout(siteSpecs.schedule);
   const [picked, setPicked] = useState<string | null>(null);
-  const all = useSessionsJoined();
+  const sessions = useSessionsJoined();
+  const { settings } = useSettings();
+  const all = settings.features.showCancelledPublicClasses ? sessions : sessions.filter(({ session }) => session.status !== 'cancelled');
   const { rows: modalitiesAll } = useTable<ModalityRow>('modalities', { where: { active: true } });
   // Lane Y1: the class's own room (the rooms are public), never a fixed name.
   const { rows: rooms } = useTable<RoomRow>('rooms');
