@@ -6,6 +6,7 @@ import { EmailPreview } from '../components/organism/EmailPreview/EmailPreview';
 import { useCosQueries, flatRows, type CosRow } from '../modules/staff/desk/useCos';
 import { batch, createActionKeys, type BatchOp } from '../modules/staff/desk/wire';
 import { LAUNCH_SAMPLE, renderSample } from './launchEmails';
+import { EmailTestPanel } from '../components/organism/EmailTestPanel/EmailTestPanel';
 
 type Copy = { subject: string; body: string };
 const copy = (r: CosRow): Copy => ({ subject: String(r.subject ?? ''), body: String(r.body ?? '') });
@@ -74,5 +75,6 @@ export function TemplateEditor({ template }: { template: string }) {
         {canEdit && !draft && <Button variant="outline" onClick={() => start(copy(r))}>{t('emailEdit.reuse')}</Button>}
       </details>)}
     </details>
+    {role === 'super_admin' && <EmailTestPanel request={query.request} source={{...copy(draft && base ? base : live),id:live.id,body_html:live.body_html}} draft={draft} version={version} defaultRecipient={user.email} />}
   </div>;
 }
