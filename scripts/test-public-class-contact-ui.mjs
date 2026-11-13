@@ -9,7 +9,7 @@ try {
  const page=await browser.newPage({viewport:{width,height:1000}}); const errors=[];page.on('pageerror',e=>errors.push(e.message));
  for(const route of ['','classes/ligereza','classes','contact']) {
  await page.goto(`${base}/#/site/${route}?motion=off&video=off`);await page.locator('.site').waitFor();
- if(!route){const portrait=page.locator('.source-philosophy-photo');await portrait.waitFor();assert((await portrait.getAttribute('src')).endsWith('philosophy-warm.png'));await portrait.evaluate(e=>e.decode());}
+ if(!route){const portrait=page.locator('.source-philosophy-photo');await portrait.waitFor();await portrait.scrollIntoViewIfNeeded();assert((await portrait.getAttribute('src')).endsWith('philosophy-warm.png'));await portrait.evaluate(e=>e.decode());}
  else if(route.startsWith('classes')){await page.locator('.classarch-arch.has-photo').first().waitFor();assert(await page.locator('.classarch-arch.natural-photo').count()>=7);}
  else {
  await page.locator('input[type=tel]').fill('+44 7700 900123');await page.locator('textarea').fill('Test message');
