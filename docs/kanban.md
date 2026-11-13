@@ -930,3 +930,6 @@ Protected-capture clarification: M14 schedule/pay screenshots remain local/ignor
 
 ### Content questions, not changed
 - Sara Estrada's duplicate biography and Jennifer's missing portrait require approved source content from Jas.
+
+## Public finale imagery — 2026-11-13
+- In review: reconstructed ring diptych matching Aleja’s reference, 20% blue overlay and mobile no-occlusion layout. No CMS changes. Build, responsive screenshots and two integrated reviews required before merge. Private/affiliate photos remain source-verification dependencies.

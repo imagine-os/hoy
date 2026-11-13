@@ -36,8 +36,9 @@ try{
  }
  for(const name of ['finale-red-slats','facility-equipment']){
   const a=catalog.find(a=>a.id===`images/studio-2026/${name}.webp`);assert(a);
-  assert.deepEqual(a.usages.map(u=>[u.path,u.state]).sort(),[['/site','live'],['/site?version=photos','draft']]);
+  assert.equal(a.usages.filter(u=>u.state==='live').length,0,'retired finale is not live');
  }
+ const rings=catalog.find(a=>a.id==='images/studio-2026/finale-rings-reconstructed.png');assert.equal(rings.source,'concept');assert.deepEqual(rings.usages.map(u=>[u.path,u.state]).sort(),[['/site','live'],['/site?version=photos','draft']]);
  const finale=catalog.find(a=>a.id==='images/studio-2026/finale-red-slats.webp');assert.equal(finale.width/finale.height,2/3);assert.equal(finale.variants.length,3);
  const base={id:'qa_photo' ,tenant_id:'hoy',created_at:'2026-10-26',updated_at:'2026-10-26',slot_key:'site.classes.fuego',kind:'photo',ratio:'2 / 3',label:{es:'QA',en:'QA'},alt:{es:'QA',en:'QA'},brief:{es:'',en:''},tone:null,url:'https://example.test/override.jpg',credit:null,status:'ready',sort:0};
  const get=(slots,id)=>buildMediaLibrary(slots,[],[]).find(a=>a.id===id);

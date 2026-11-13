@@ -1089,20 +1089,7 @@
       "facility",
       "equipment"
     ],
-    "usages": [
-      {
-        "label": "Home",
-        "path": "/site",
-        "state": "live",
-        "evidence": "src/modules/website/pages/HomePage.tsx: owner-selected primary finale photo pair shared by Latest and Photos."
-      },
-      {
-        "label": "Home",
-        "path": "/site?version=photos",
-        "state": "draft",
-        "evidence": "src/modules/website/pages/HomePage.tsx: owner-selected primary finale photo pair shared by Latest and Photos."
-      }
-    ]
+    "usages": []
   },
   {
     "id": "images/studio-2026/facility-heater.webp",
@@ -1220,18 +1207,39 @@
       "red",
       "slats"
     ],
+    "usages": []
+  },
+  {
+    "id": "images/studio-2026/finale-rings-reconstructed.png",
+    "url": "images/studio-2026/finale-rings-reconstructed.png",
+    "thumbnail": "images/studio-2026/finale-rings-reconstructed.png",
+    "name": "Finale rings reconstructed",
+    "source": "concept",
+    "kind": "image",
+    "orientation": "landscape",
+    "width": 1374,
+    "height": 1145,
+    "variants": [
+      "images/studio-2026/finale-rings-reconstructed.png"
+    ],
+    "tags": [
+      "concept",
+      "finale",
+      "rings",
+      "reconstructed"
+    ],
     "usages": [
       {
         "label": "Home",
         "path": "/site",
         "state": "live",
-        "evidence": "src/modules/website/pages/HomePage.tsx: owner-selected primary finale photo pair shared by Latest and Photos."
+        "evidence": "src/modules/website/pages/HomePage.tsx: AI-reconstructed ring portraits from client reference screenshots, authorized by owner; not original studio photography."
       },
       {
         "label": "Home",
         "path": "/site?version=photos",
         "state": "draft",
-        "evidence": "src/modules/website/pages/HomePage.tsx: owner-selected primary finale photo pair shared by Latest and Photos."
+        "evidence": "src/modules/website/pages/HomePage.tsx: AI-reconstructed ring portraits from client reference screenshots, authorized by owner; not original studio photography."
       }
     ]
   },

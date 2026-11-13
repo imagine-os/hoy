@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import {readFileSync,existsSync} from 'node:fs';
+const home=readFileSync('src/modules/website/pages/HomePage.tsx','utf8');
+const css=readFileSync('src/modules/website/photography.css','utf8');
+assert(home.includes('finale-rings-reconstructed.png'));
+assert(!home.includes("studioPhotoProps('finale-red-slats'"));
+assert(css.includes('opacity:.2'));
+assert(css.includes('grid-area:2 / 1'));
+assert(home.includes("photoOverrides.get('site.home.philosophy')"));
+assert(home.includes('photoOverrides.get(`site.plans.${photoId}`)'));
+assert(existsSync('public/images/studio-2026/finale-rings-reconstructed.png'));
+console.log('PASS finale source, explicit 20% overlay, mobile no-occlusion, existing CMS precedence');

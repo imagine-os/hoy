@@ -19,7 +19,7 @@ import { siteSpecs } from '../specs';
 import { useClassPhotos, useTodaySessions, useReadyPhotoSlots } from '../hooks';
 import { useSiteEdition } from '../edition';
 import { siteImage, siteVideo, siteLoops } from '../artwork';
-import { studioPhoto, studioPhotoProps, teacherStudioPhoto, philosophyStudioPhoto, usesCurrentStudioPhotos } from '../photography';
+import { studioPhotoProps, teacherStudioPhoto, philosophyStudioPhoto, usesCurrentStudioPhotos } from '../photography';
 import { homePlanPhotos } from '../../../data/studioPhotography';
 import { ClassicHomePage } from './ClassicHomePage';
 
@@ -104,10 +104,9 @@ function SanctuaryHome() {
     Testimonials: () => quotes.length > 0 ? <section className="container sanctuary-section sanctuary-quotes" data-reveal>{quotes.map(r => <blockquote key={r.id}><span className="sanctuary-quote-mark" aria-hidden>“</span><p>{r.comment}</p><footer>{t('site.testimonials.member')}</footer></blockquote>)}</section> : null,
     FirstStep: () => <section className={`sanctuary-finale${sourcePhotos ? ' option1-finale' : ''}`} data-reveal>
       {sourcePhotos ? <>
-        <img {...studioPhotoProps('facility-equipment', true)} alt="" aria-hidden="true" className="option1-finale-background" />
-        <div className="option1-finale-frame"><div className="option1-finale-arch">
-          <img {...studioPhotoProps('finale-red-slats', true)} srcSet={`${studioPhoto('finale-red-slats', 480)} 480w, ${studioPhoto('finale-red-slats')} 960w, ${studioPhoto('finale-red-slats', 1600)} 1600w`} alt={t('site.photos.finaleSlats')} />
-        </div></div>
+        <div className="option1-finale-portraits">
+          <img src={`${import.meta.env.BASE_URL}images/studio-2026/finale-rings-reconstructed.png`} width={1374} height={1145} loading="lazy" decoding="async" alt={t('site.photos.finaleRings')} />
+        </div>
       </> : <AmbientScene {...siteLoops.ritual} video={videoEnabled ? siteLoops.ritual.video : undefined} alt={t('site.new.ritualAlt')} className="sanctuary-finale-scene" motion={motion} />}
       <div className="sanctuary-finale-card"><p className="eyebrow">{t('site.new.visit')}</p><h2>{t('site.new.endTitle')}<br /><em>{t('site.new.endEm')}</em></h2><p>{t('site.new.endBody')}</p><Link className="sanctuary-button" to="/site/schedule">{t('site.new.book')}<Icon name="arrow-right" /></Link></div>
     </section>,

@@ -12,6 +12,7 @@ export const strings: StringTable = {
   'site.edition.photos': { es: 'Fotos · vista previa', en: 'Photos · preview' },
   'site.photos.notice': { es: 'Vista previa con las fotos del estudio. La versión pública actual sigue disponible en Latest.', en: 'Preview with the studio photographs. The current public edition remains available in Latest.' },
   'site.photos.finaleSlats': { es: 'Pared de listones del estudio iluminada en rojo', en: 'Studio slat wall illuminated in red' },
+  'site.photos.finaleRings': { es: 'Recreación de dos mujeres practicando con aros de Pilates, basada en la referencia del estudio', en: 'Reconstructed image of two women practicing with Pilates rings, based on the studio reference' },
   'site.photos.studioHero': { es: 'El estudio real con luz roja, espejos y colchonetas preparadas para la práctica', en: 'The real studio with red lighting, mirrors and mats prepared for practice' },
   'site.photos.hero': { es: 'Movimiento en grupo en el estudio {brand}', en: 'Group movement in the {brand} studio' },
   'site.photos.philosophy': { es: 'Carolina Cifuentes en una postura de movimiento', en: 'Carolina Cifuentes in a movement pose' },
