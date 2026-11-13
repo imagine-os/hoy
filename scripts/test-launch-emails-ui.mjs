@@ -34,7 +34,7 @@ const PK = `pk_test_${Buffer.from(`${HOST}$`).toString('base64')}`;
 const FAKE_CLERK = readFileSync(new URL('./fixtures/fake-clerk.js', import.meta.url), 'utf8');
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.png': 'image/png', '.svg': 'image/svg+xml', '.mp4': 'video/mp4', '.woff2': 'font/woff2' };
 const ACCOUNTS = { user_admin: { emails: [{ id: 'ea_admin', email: 'admin@example.test', verified: true }], primary: 'ea_admin' } };
-const MEMBERS = { user_admin: { name: 'Olga Admin', email: 'admin@example.test', roleKeys: ['administrator'] } };
+const MEMBERS = { user_admin: { name: 'Olga Admin', email: 'admin@example.test', roleKeys: ['super_admin'] } };
 /** One fictional comms_log row, served if the build reads delivery status from Company OS (`POST /query`). */
 const LOG_ROW = { id: 'log_1', created_at: '2026-11-01T13:00:00Z', data: { channel: 'email', message_key: 'booking_released', address: 'ana@example.test', status: 'bounced', error: null } };
 const queries = [];
