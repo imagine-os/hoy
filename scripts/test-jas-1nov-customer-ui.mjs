@@ -476,7 +476,7 @@ try {
     api.calendarCancelled = true;
     await page.waitForTimeout(22_000);
     await page.locator('.session-calendar').waitFor({ state: 'visible' });
-    await page.locator('.session-calendar .calendar-empty').waitFor({ state: 'visible' });
+    await page.locator('.session-calendar .calendar-empty').first().waitFor({ state: 'visible' });
     check(`canceled poll ${lang}/${width}: canceled session removed after refresh`, api.cancelledReads > 0 && !(await page.locator('.session-calendar').innerText()).includes('Pulso'));
     check(`canceled poll ${lang}/${width}: no writes`, api.batches.length === batchCount);
     api.calendarCancelled = false;
