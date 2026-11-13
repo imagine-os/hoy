@@ -13,4 +13,4 @@ Files: HomePage.tsx, photography.css, strings.ts, finale-rings-reconstructed.png
 
 No CMS, customer, backend, pricing, admin settings, authentication or data changes. Private/affiliate plan-card originals are a separate source-verification dependency.
 
-Verification: pending build, browser screenshots and two independent integrated reviews. Rollback: revert this isolated commit; original assets remain intact.
+Verification: regular/production builds and source regressions pass; two independent reviews completed. Actual runner QA identified and fixed desktop card clearance at 901px. Expanded width testing also revealed existing tablet header language/theme controls overflowing past the viewport; the existing hamburger navigation now starts at 1150px for the current sanctuary edition, with a menu-open assertion. Final-head browser screenshots remain the release gate. Rollback: revert this isolated commit; original assets remain intact.

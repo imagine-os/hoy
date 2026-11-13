@@ -9,6 +9,7 @@ try {
  const page=await browser.newPage({viewport:{width,height:1000}});
  await page.addInitScript(lang=>localStorage.setItem('hoyos.lang',lang),lang);
  await page.goto(`${process.env.QA_BASE||'http://127.0.0.1:5510'}/#/site?motion=off&video=off&lang=${lang}`);
+ if(width===901) { await page.locator('.site-burger').click(); assert(await page.locator('.site-nav.is-open').isVisible(),'tablet menu remains reachable'); await page.locator('.site-burger').click(); }
  const finale=page.locator('.option1-finale'); await finale.waitFor(); await finale.scrollIntoViewIfNeeded(); assert.equal(await page.locator('html').getAttribute('lang'),lang);
  const img=finale.locator('img'); await img.evaluate(e=>e.decode());
  assert((await img.getAttribute('src')).endsWith('finale-rings-reconstructed.png'));
