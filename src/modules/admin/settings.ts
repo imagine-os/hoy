@@ -43,7 +43,7 @@ export interface StudioSettings {
   quietHours: { from: string; to: string };
   tax: { ivaPct: number; pricesIncludeIva: boolean; dianResolution: string; eInvoicing: boolean };
   integrations: Record<'wompi' | 'whatsapp' | 'email' | 'calendar', 'pending' | 'connected' | 'error'>;
-  features: { multipleLocations: boolean; noShowFee: boolean; holidayCalendar: boolean; walkInRegistration: boolean; autoCheckinOnSale: boolean; showCancelledPublicClasses: boolean };
+  features: { multipleLocations: boolean; noShowFee: boolean; holidayCalendar: boolean; walkInRegistration: boolean; autoCheckinOnSale: boolean; showCancelledPublicClasses: boolean; hideUnpublishedPublicClasses: boolean };
   /** M-08c — payout account and the Wompi environment. Secrets are never stored here (see the page notice). */
   payments: { bankName: string; accountType: 'savings' | 'checking'; accountNumber: string; accountHolder: string; qrImageUrl: string | null; breBKey: string; wompiEnv: 'sandbox' | 'production' };
   /** M-08d — sender identity for WhatsApp and email (quiet hours live in `quietHours`). */
@@ -81,7 +81,7 @@ export const DEFAULT_SETTINGS: StudioSettings = {
   quietHours: { from: '21:00', to: '07:00' },
   tax: { ivaPct: DEFAULT_IVA_PCT, pricesIncludeIva: true, dianResolution: '', eInvoicing: false },
   integrations: { wompi: 'pending', whatsapp: 'pending', email: 'pending', calendar: 'pending' },
-  features: { multipleLocations: false, noShowFee: false, holidayCalendar: true, walkInRegistration: true, autoCheckinOnSale: true, showCancelledPublicClasses: true },
+  features: { multipleLocations: false, noShowFee: false, holidayCalendar: true, walkInRegistration: true, autoCheckinOnSale: true, showCancelledPublicClasses: true, hideUnpublishedPublicClasses: false },
   payments: { bankName: '', accountType: 'savings', accountNumber: '', accountHolder: tenant.legalName, qrImageUrl: null, breBKey: '', wompiEnv: 'sandbox' },
   comms: { whatsappSender: tenant.name, emailSender: tenant.legalName, emailReplyTo: tenant.contact.email },
   branding: { displayName: '', wordmarkVariant: 'auto', defaultLang: tenant.defaultLocale },

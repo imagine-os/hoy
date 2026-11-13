@@ -40,7 +40,9 @@ export function SchedulePage() {
   const [picked, setPicked] = useState<string | null>(null);
   const sessions = useSessionsJoined();
   const { settings } = useSettings();
-  const all = settings.features.showCancelledPublicClasses ? sessions : sessions.filter(({ session }) => session.status !== 'cancelled');
+  const all = sessions.filter(({ session, templateActive }) =>
+    (settings.features.showCancelledPublicClasses || session.status !== 'cancelled') &&
+    (!settings.features.hideUnpublishedPublicClasses || templateActive !== false));
   const { rows: modalitiesAll } = useTable<ModalityRow>('modalities', { where: { active: true } });
   // Lane Y1: the class's own room (the rooms are public), never a fixed name.
   const { rows: rooms } = useTable<RoomRow>('rooms');
