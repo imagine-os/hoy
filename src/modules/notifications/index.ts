@@ -4,6 +4,19 @@ import type { StringTable } from '../../i18n/types';
 /** H-9 — copy for the launch emails screen (production `/admin/emails`). No routes: the admin module owns the path. */
 export const routes: RouteDef[] = [];
 export const strings: StringTable = {
+  'emailEdit.live': { es: 'Versión publicada', en: 'Live version' },
+  'emailEdit.edit': { es: 'Editar correo', en: 'Edit email' },
+  'emailEdit.draft': { es: 'Borrador sin publicar', en: 'Unpublished draft' },
+  'emailEdit.subject': { es: 'Asunto', en: 'Subject' },
+  'emailEdit.body': { es: 'Mensaje', en: 'Message' },
+  'emailEdit.tokens': { es: 'Usa las variables de esta plantilla con sus llaves originales.', en: 'Use this template’s existing placeholders with their original braces.' },
+  'emailEdit.publish': { es: 'Publicar nueva versión', en: 'Publish new version' },
+  'emailEdit.close': { es: 'Descartar y volver a leer', en: 'Discard and reload' },
+  'emailEdit.history': { es: 'Historial de publicaciones', en: 'Publication history' },
+  'emailEdit.archived': { es: 'Versión anterior · archivada al publicar la siguiente', en: 'Previous version · archived when the next version was published' },
+  'emailEdit.reuse': { es: 'Usar como borrador', en: 'Use as draft' },
+  'emailEdit.unavailable': { es: 'No se pudo identificar la plantilla publicada.', en: 'Could not identify the live template.' },
+  'emailEdit.failed': { es: 'No se pudo confirmar la publicación. Copia tus cambios y vuelve a leer la versión publicada.', en: 'Publication could not be confirmed. Copy your edits and reload the live version.' },
   'notifications.launch.title': { es: 'Correos automáticos', en: 'Automated emails' },
   'notifications.launch.subtitle': { es: 'Los correos que {brand} envía solo, en español. Company OS los envía de 5 a 10 minutos después de cada evento.', en: 'The emails {brand} sends on its own, in Spanish. Company OS sends them 5 to 10 minutes after each event.' },
   'notifications.launch.boundary': { es: 'Esta app no envía correos ni marca ninguno como enviado. El estado de entrega es el que informa Company OS.', en: 'This app sends no email and marks none as sent. The delivery status is the one Company OS reports.' },

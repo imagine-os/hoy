@@ -10,6 +10,7 @@ import { EmptyState } from '../components/molecule/EmptyState/EmptyState';
 import { DataTable } from '../components/organism/DataTable/DataTable';
 import { EmailPreview } from '../components/organism/EmailPreview/EmailPreview';
 import { LAUNCH_EMAILS, LAUNCH_SAMPLE, renderSample, type LaunchEmail } from './launchEmails';
+import { TemplateEditor } from './TemplateEditor';
 import { DELIVERY_STATUSES, cosRequest, readDeliveryLog, type DeliveryRow } from './deliveryLog';
 
 /** comms statuses by meaning: only a provider-confirmed delivery is green; held or queued is waiting; anything lost is red. */
@@ -19,7 +20,7 @@ type LogState = { status: 'unavailable' } | { status: 'loading' } | { status: 'e
 
 /**
  * M-04 in the production build (H-9): the launch emails as Company OS sends them, and their real delivery status.
- * No editor, no test send and no local "sent" record; the review build keeps the M-04 workbench.
+ * Super admins can publish changes to stored Company OS templates; the review build keeps the M-04 workbench.
  */
 export function LaunchEmailsPage() {
   const { t, bi } = useI18n();
@@ -81,7 +82,8 @@ function TemplateCard({ email: e }: { email: LaunchEmail }) {
         </div>
         <p className="small"><span className="muted">{t('notifications.launch.trigger')}:</span> {bi(e.trigger)} · <span className="muted">{t(`notifications.launch.sender.${e.sender}`)}</span></p>
         {e.blocked && <Notice tone="warn" title={t('notifications.launch.blocked.body')}><ul>{e.blocked.blockers.map((b, i) => <li key={i} className="small">{bi(b.summary)}</li>)}</ul></Notice>}
-        {open && <EmailPreview envelope={t('notifications.launch.preview')} subject={renderSample(e.subject, LAUNCH_SAMPLE)} body={renderSample(e.body, LAUNCH_SAMPLE)} />}
+        {open && e.sender === 'company_os' && <TemplateEditor template={e.key} />}
+        {open && e.sender === 'clerk' && <EmailPreview envelope={t('notifications.launch.preview')} subject={renderSample(e.subject, LAUNCH_SAMPLE)} body={renderSample(e.body, LAUNCH_SAMPLE)} />}
       </div>
     </Card>
   );
