@@ -1,3 +1,4 @@
+import { classPhotoPresentation } from '../classPhotoPresentation';
 import { useSiteHref } from '../links';
 import { Fragment, useState, type ReactNode } from 'react';
 import { Link } from '../links';
@@ -18,8 +19,8 @@ import { siteSpecs } from '../specs';
 import { useClassPhotos, useTodaySessions, useReadyPhotoSlots } from '../hooks';
 import { useSiteEdition } from '../edition';
 import { siteImage, siteVideo, siteLoops } from '../artwork';
-import { studioPhoto, studioPhotoProps, teacherStudioPhoto, practiceStudioPhoto, philosophyStudioPhoto, usesCurrentStudioPhotos } from '../photography';
-import { editorialPhotoSlots, homePlanPhotos } from '../../../data/studioPhotography';
+import { studioPhoto, studioPhotoProps, teacherStudioPhoto, philosophyStudioPhoto, usesCurrentStudioPhotos } from '../photography';
+import { homePlanPhotos } from '../../../data/studioPhotography';
 import { ClassicHomePage } from './ClassicHomePage';
 
 export function HomePage() {
@@ -74,12 +75,12 @@ function SanctuaryHome() {
       <div className="sanctuary-hero-bottom container"><span className="sanctuary-scroll"><span aria-hidden>↓</span>{t('site.new.scroll')}</span>{!photoEdition && <button type="button" className="sanctuary-motion" onClick={() => setMotion(!motion)} aria-pressed={!motion}>{motion ? 'Ⅱ' : '▷'} <span>{t(motion ? 'site.new.ambient' : 'site.new.static')}</span></button>}</div>
     </section>,
     Philosophy: () => <section className={`sanctuary-philosophy${sourcePhotos ? ' source-philosophy' : ''}`} data-reveal><div className="container sanctuary-philosophy-grid">
-      <div className="sanctuary-philosophy-art"><>{philosophyPhoto ? <img src={philosophyPhoto} alt={bi(philosophyOverride?.alt || editorialPhotoSlots[0].alt)} className="sanctuary-portrait source-philosophy-photo" style={philosophyOverride ? { objectPosition: 'center' } : undefined} width={1536} height={1024} loading="lazy" decoding="async" /> : <AmbientScene {...siteLoops.philosophy} video={videoEnabled ? siteLoops.philosophy.video : undefined} alt={t('site.new.philosophyAlt')} className="sanctuary-portrait" motion={motion} />}</><span className="sanctuary-photo-caption">{t('site.new.scroll')}</span></div>
+      <div className="sanctuary-philosophy-art"><>{philosophyPhoto ? <img src={philosophyPhoto} alt={philosophyOverride ? bi(philosophyOverride.alt) : t('site.new.philosophyPhotoAlt')} className="sanctuary-portrait source-philosophy-photo" style={{ objectPosition: 'center' }} width={philosophyOverride ? 1536 : 1024} height={philosophyOverride ? 1024 : 1536} loading="lazy" decoding="async" /> : <AmbientScene {...siteLoops.philosophy} video={videoEnabled ? siteLoops.philosophy.video : undefined} alt={t('site.new.philosophyAlt')} className="sanctuary-portrait" motion={motion} />}</><span className="sanctuary-photo-caption">{t('site.new.scroll')}</span></div>
       <div className="sanctuary-philosophy-copy"><p className="eyebrow">{t('site.new.philosophyLabel')}</p><h2>{t('site.new.philosophyTitle')}<br /><em>{t('site.new.philosophyEm')}</em></h2><p className="muted">{t('site.new.philosophyBody', { name: tenant.name })}</p><Link className="sanctuary-text-link" to="/site/about">{t('site.philosophy.more')} <Icon name="arrow-right" /></Link></div>
     </div></section>,
     Classes: () => <section className={`sanctuary-section${sourcePhotos ? ' source-practice' : ''}`} data-reveal><div className="container">
       <div className="sanctuary-heading"><div><p className="eyebrow">{t('site.new.chapter2')}</p><h2>{t('site.new.classesTitle')}<br /><em>{t('site.new.classesEm')}</em></h2><p className="muted">{bi(classesIntro.methods)}</p></div><Link className="sanctuary-text-link" to="/site/classes">{t('site.classes.all')} <Icon name="arrow-right" /></Link></div>
-      <div className="sanctuary-arches">{classOrder.map((slug, index) => <ClassArch key={slug} slug={slug} index={index + 1} to={href(`/site/classes/${slug}`)} photoUrl={photos.get(slug) || practiceStudioPhoto(slug, version)} naturalPhoto={!photos.has(slug) && sourcePhotos} />)}</div>
+      <div className="sanctuary-arches">{classOrder.map((slug, index) => <ClassArch key={slug} slug={slug} index={index + 1} to={href(`/site/classes/${slug}`)} {...classPhotoPresentation(slug, photos, version)} />)}</div>
     </div></section>,
     TodayClasses: () => <section className="sanctuary-schedule" data-reveal><div className="container sanctuary-schedule-grid"><div className="sanctuary-schedule-intro"><p className="eyebrow">{t('site.new.chapter3')}</p><h2>{t('site.new.scheduleTitle')}</h2><Link className="sanctuary-button is-light" to="/site/schedule">{t('site.today.all')} <Icon name="arrow-right" /></Link></div>
       <div className="sanctuary-agenda"><div className="sanctuary-agenda-head"><span>{t('site.today.title')}</span><span>{formatDate(new Date(), lang, { day: 'numeric', month: 'short' })}</span></div>

@@ -919,3 +919,14 @@ Protected-capture clarification: M14 schedule/pay screenshots remain local/ignor
 
 - Customer area (C-xx): a login that holds the customer role but never signed up (invited staff, desk-invited customers: `GET /signup` `registered: false`) accepts the documents once in the same consent step, then goes on. Read once per session, never in frames or view-as; a failed or slow read opens the page as before. [Changelog](changelog/_pending/hoy-test-fixes-r2hoy2.md)
 - A platform operator signing in with their own login takes the studio sign-up like anyone (tested).
+
+- Public class/contact annotation fixes: shared class-photo fallbacks, international visitor phone hint, contact spacing and source philosophy portrait. Ready CMS content preserved. Local contract/typecheck/build checks; rendered review pending environment support.
+## Public copy clarity · 2026-11-13
+
+### Implemented on lane branch, pending integrated review/release
+- Remove universal schedule mat-count claim; direct visitors to each session's available places.
+- Clarify empty-date navigation and private-class WhatsApp quotation copy without changing CMS data or prices.
+- [Changelog](changelog/_pending/public-copy-20261113.md)
+
+### Content questions, not changed
+- Sara Estrada's duplicate biography and Jennifer's missing portrait require approved source content from Jas.

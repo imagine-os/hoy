@@ -32,7 +32,7 @@ try{
   await page.evaluate(({lang,dark})=>{localStorage.setItem('hoyos.lang',lang);localStorage.setItem('hoyos.theme',JSON.stringify({theme:dark?'dark':'light',skin:'styled'}));},{lang,dark});await page.setViewportSize({width,height:1000});await open(path,version);
   assert.deepEqual(await page.evaluate(()=>({lang:document.documentElement.lang,theme:document.documentElement.dataset.theme})),{lang,theme:dark?'dark':'light'});
   if(path===''){
-   assert((await page.locator('.source-philosophy-photo').getAttribute('src')).endsWith('/images/sanctuary/mountains.webp'));
+   assert((await page.locator('.source-philosophy-photo').getAttribute('src')).endsWith('/images/studio-2026/philosophy-warm.png'));
    assert((await page.locator('.source-practice').evaluate(e=>getComputedStyle(e).backgroundImage)).includes('practice-background-1280'));
    const blue=await page.locator('.source-practice').evaluate(async el=>{const url=[...getComputedStyle(el).backgroundImage.matchAll(/url\(["']?([^"')]+)["']?\)/g)][0][1];const img=new Image();img.src=url;await img.decode();const c=document.createElement('canvas');c.width=16;c.height=16;const ctx=c.getContext('2d');ctx.drawImage(img,0,0,16,16);const p=ctx.getImageData(0,0,16,16).data;let r=0,b=0;for(let i=0;i<p.length;i+=4){r+=p[i];b+=p[i+2];}return b/256>r/256+15;});assert(blue,'practice background is the selected blue composition, not its cream variant');
    const cards=page.locator('.source-practice .classarch-arch');assert.equal(await cards.count(),7);

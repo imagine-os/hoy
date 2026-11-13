@@ -105,7 +105,7 @@ const editorialUse=(asset,label,path,slot)=>{for(const [suffix,state] of [['','l
 for(const [id,name] of homePlanPhotoEntries)editorialUse(`images/studio-2026/${name}-960.webp`,'Home plan card','/site',`site.plans.${id}`);
 for(const [slug,name] of practicePhotoEntries)editorialUse(`images/studio-2026/${name}-960.webp`,'Home practice','/site',`site.classes.${slug}`);
 for(const [id,name] of planPhotoEntries)editorialUse(`images/studio-2026/${name}-960.webp`,'Plan photograph','/site/plans',`site.plans.${id}`);
-editorialUse('images/sanctuary/mountains.webp','Home philosophy','/site','site.home.philosophy');
+editorialUse('images/studio-2026/philosophy-warm.png','Home philosophy','/site','site.home.philosophy');
 for(const [suffix,state] of [['','live'],['?version=photos','draft']])add('images/studio-2026/practice-background-1280.webp','Home practice background','/site'+suffix,state,'src/modules/website/photography.css: current Home practice background.');
 const archiveBrand=await read(`${website}/archive/brand.ts`);
 const classNames=(archiveBrand.match(/export const classOrder[^=]*=\s*\[([^\]]+)\]/)?.[1].match(/'([^']+)'/g)??[]).map(x=>x.slice(1,-1));
