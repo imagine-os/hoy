@@ -38,6 +38,7 @@ const MEMBERS = { user_admin: { name: 'Olga Admin', email: 'admin@example.test',
 /** One fictional comms_log row, served if the build reads delivery status from Company OS (`POST /query`). */
 const LOG_ROW = { id: 'log_1', created_at: '2026-11-01T13:00:00Z', data: { channel: 'email', message_key: 'booking_released', address: 'ana@example.test', status: 'bounced', error: null } };
 const queries = [];
+const templateRows = [{ id: 'template_1', data: { key: 'booking_released', channel: 'email', locale: '', active: true, subject: 'Reserva liberada', body: 'Hola {{person.name}}' } }];
 
 async function serveProduction(port, dir) {
   const DIST = resolve(dir);
@@ -51,11 +52,28 @@ async function serveProduction(port, dir) {
       const user = /^Bearer fake\.([^.]+)\.[^.]+$/.exec(req.headers.authorization ?? '')?.[1] ?? null;
       if (!user) return json(res, 401, { error: 'unauthorized' });
       const route = path.slice(`/api/cos/t/${TENANT}`.length), m = MEMBERS[user];
-      if (route === '/me') return m ? json(res, 200, { tenant: { slug: TENANT }, user: { id: user, name: m.name, email: m.email }, roleKeys: m.roleKeys, isSuperAdmin: false, caps: [], entities: [] }) : json(res, 403, { error: 'no access to this tenant' });
+      if (route === '/me') return m ? json(res, 200, { tenant: { slug: TENANT }, user: { id: user, name: m.name, email: m.email }, roleKeys: m.roleKeys, isSuperAdmin: true, caps: [], entities: [] }) : json(res, 403, { error: 'no access to this tenant' });
+      if (route === '/batch' && req.method === 'POST') {
+        let input = '';
+        for await (const chunk of req) input += chunk;
+        const { ops } = JSON.parse(input);
+        const next = structuredClone(templateRows);
+        for (const op of ops) {
+          if (op.entity !== 'message_template') return json(res, 400, { error: 'wrong_entity' });
+          if (op.op === 'create') next.push({ id: 'archive_' + next.length, data: op.data });
+          else {
+            const row = next.find(r => r.id === op.id);
+            if (!row || row.data[op.ifMatch.field] !== op.ifMatch.value) return json(res, 409, { error: 'conflict' });
+            Object.assign(row.data, op.data);
+          }
+        }
+        templateRows.splice(0, templateRows.length, ...next);
+        return json(res, 200, { ids: ops.map(op => op.id || 'archive') });
+      }
       if (route === '/query' && req.method === 'POST') {
         const body = JSON.parse(await new Promise((r) => { let s = ''; req.on('data', (c) => { s += c; }); req.on('end', () => r(s)); }));
         queries.push(body);
-        return json(res, 200, { data: body.entity === 'comms_log' ? [LOG_ROW] : [] });
+        return json(res, 200, { data: body.entity === 'comms_log' ? [LOG_ROW] : body.entity === 'message_template' ? templateRows : [] });
       }
       return json(res, 404, { error: 'not_found' });
     }
@@ -129,6 +147,21 @@ try {
           await page.locator('[data-launch-email="booking_released"] button').click();
           const preview = await page.locator('[data-launch-email="booking_released"] .emailpreview').innerText();
           check(`production ${lang}: the preview is the Spanish copy with sample data, every placeholder filled`, /Hola Valentina/.test(preview) && !/\{\{|\{brand\}/.test(preview));
+          if (lang === 'en') {
+            const card = page.locator('[data-launch-email="booking_released"]');
+            await card.getByRole('button', { name: 'Edit email' }).click();
+            await card.getByLabel('Subject', { exact: true }).fill('Updated reservation');
+            check('typing leaves live copy unchanged', templateRows[0].data.subject === 'Reserva liberada');
+            await card.getByRole('button', { name: 'Publish new version' }).click();
+            await card.getByText('Live version · v2').waitFor();
+            await page.reload();
+            await page.locator('[data-launch-email="booking_released"] button').first().click();
+            await card.getByText('Live version · v2').waitFor();
+            await card.locator('summary').filter({ hasText: 'Publication history' }).click();
+            await card.locator('summary').filter({ hasText: 'v1 · Reserva liberada' }).click();
+            await card.getByRole('button', { name: 'Use as draft' }).click();
+            check('older version opens as a draft', await card.getByLabel('Subject', { exact: true }).inputValue() === 'Reserva liberada' && templateRows[0].data.subject === 'Updated reservation');
+          }
           check(`production ${lang}: no missing string keys`, !/⟨[\w.]+⟩/.test(text));
         }
         check(`${label} ${lang}: no page errors`, errors.length === 0, errors.join(' | '));
