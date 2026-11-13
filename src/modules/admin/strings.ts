@@ -907,6 +907,7 @@ export const strings: StringTable = {
   'admin.settings.feat.noShowFee': { es: 'Cargo por no asistir', en: 'No-show fee' },
   'admin.settings.feat.holidayCalendar': { es: 'Calendario de festivos', en: 'Holiday calendar' },
   'admin.settings.feat.walkInRegistration': { es: 'Registro walk-in en recepción', en: 'Walk-in registration at the desk' },
+  'admin.settings.feat.showCancelledPublicClasses': { es: 'Mostrar clases canceladas en el horario público', en: 'Show canceled classes on the public schedule' },
   'admin.settings.feat.autoCheckinOnSale': { es: 'Check-in automático al vender', en: 'Auto check-in on sale' },
   'admin.settings.features.note': { es: 'Estos interruptores son del estudio completo. Los de cada pantalla están abajo.', en: 'These switches are studio-wide. The per-screen ones are below.' },
 
