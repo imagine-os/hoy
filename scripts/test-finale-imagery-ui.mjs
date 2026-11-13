@@ -3,6 +3,7 @@ import {chromium} from 'playwright-core';
 import {mkdir} from 'node:fs/promises';
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',args:['--no-sandbox']});
 await mkdir('qa/finale',{recursive:true});
+const overflows=[];
 try {
  for(const width of [390,773,901,1280]) for(const lang of ['es','en']) {
  const page=await browser.newPage({viewport:{width,height:1000}});
@@ -17,8 +18,9 @@ try {
  assert.equal(await page.locator('.option1-finale-portraits').evaluate(e=>getComputedStyle(e,'::after').opacity),'0.2');
  if(width<=900) assert(c.y>=b.y+b.height,'mobile CTA must not cover portraits');
  else assert(c.y>=b.y+b.height*.51,'desktop CTA must clear ring and face');
- assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'horizontal overflow');
+ if(!await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)) overflows.push({width,lang,elements:await page.evaluate(()=>[...document.querySelectorAll('body *')].filter(e=>{const r=e.getBoundingClientRect();return r.width&&r.right>innerWidth+1&&getComputedStyle(e).visibility!=='hidden';}).slice(0,25).map(e=>({tag:e.tagName,cls:e.className,right:e.getBoundingClientRect().right,width:e.getBoundingClientRect().width})))});
  await finale.screenshot({path:`qa/finale/${lang}-${width}.png`}); await page.close();
  }
+ assert.deepEqual(overflows,[],'horizontal overflow diagnostics');
  console.log('PASS finale responsive ES/EN matrix, image loaded, 20% overlay, full portraits, mobile CTA below');
 } finally {await browser.close();}
