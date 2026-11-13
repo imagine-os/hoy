@@ -21,6 +21,7 @@ import { need, useAppNavHandlers } from '../actions';
 import { SERVER_RULES } from '../booking/bookingPolicy';
 import { holdsPlace, type ServerBookingRow } from '../booking/serverBooking';
 import { useLiveUpdates } from '../../../data/companyos/hooks';
+import { customerCalendarSessions } from '../calendarVisibility';
 
 const specDay = canvasSpecs['C-02'];
 const specWeek = canvasSpecs['C-02b'];
@@ -69,7 +70,7 @@ export function SchedulePage({ view: routeView }: SchedulePageProps) {
   const reads = [sessions, mods, team, rooms, templates, bookingsRead];
   const error = reads.some(r => r.error), loading = reads.some(r => r.loading);
   const retry = () => reads.forEach(r => r.retry());
-  const all = useMemo(() => sessions.rows.map(session => ({ session, modality: mods.rows.find(m => m.id === session.modality_id), teacher: team.rows.find(te => te.id === session.teacher_id), room: rooms.rows.find(r => r.id === session.room_id), templateActive: templateActiveOf(session.template_id, templates.rows) })), [sessions.rows, mods.rows, team.rows, rooms.rows, templates.rows]);
+  const all = useMemo(() => customerCalendarSessions(sessions.rows).map(session => ({ session, modality: mods.rows.find(m => m.id === session.modality_id), teacher: team.rows.find(te => te.id === session.teacher_id), room: rooms.rows.find(r => r.id === session.room_id), templateActive: templateActiveOf(session.template_id, templates.rows) })), [sessions.rows, mods.rows, team.rows, rooms.rows, templates.rows]);
   const modalities = mods.rows.filter(m => m.active);
   const visibleMods = modalities;
   const teachers = team.rows.filter(te => te.active);
