@@ -919,3 +919,7 @@ Protected-capture clarification: M14 schedule/pay screenshots remain local/ignor
 
 - Customer area (C-xx): a login that holds the customer role but never signed up (invited staff, desk-invited customers: `GET /signup` `registered: false`) accepts the documents once in the same consent step, then goes on. Read once per session, never in frames or view-as; a failed or slow read opens the page as before. [Changelog](changelog/_pending/hoy-test-fixes-r2hoy2.md)
 - A platform operator signing in with their own login takes the studio sign-up like anyone (tested).
+
+## Email test sends · pending Anu approval (2026-11-13)
+
+Separate frontend and Company OS branches implement chosen-address live/draft tests, sample data, keyed queueing and isolated history. No production deployment or customer edits. Review, validation and release prerequisites: [pending changelog](changelog/_pending/email-test-send-anu-review.md).
