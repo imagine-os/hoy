@@ -1,3 +1,5 @@
+import { useSiteEdition } from '../edition';
+import { classPhotoPresentation } from '../classPhotoPresentation';
 import { useSiteHref } from '../links';
 import { Fragment, type ReactNode } from 'react';
 import { Link, useParams } from '../links';
@@ -26,6 +28,7 @@ export function ClassDetailPage() {
   const { rows: modalities } = useTable<ModalityRow>('modalities', { where: { active: true } });
   const { rows: teachers } = useTable<TeacherRow>('teachers', { where: { active: true } });
   const photos = useClassPhotos();
+  const { version } = useSiteEdition();
   const c = brandClass(slug);
   const prices = useLivePricing();
   const trial = prices.item('trial');
@@ -54,7 +57,7 @@ export function ClassDetailPage() {
       <>
         <PageHead eyebrow={`${String(index + 1).padStart(2, '0')} · ${t(`site.classes.level.${c.intensity}`)}`} title={bi(c.name)} body={bi(c.tagline)} back={{ to: '/site/classes', label: t('site.classes.back') }} />
         <section className="container site-section site-classhero" style={{ paddingTop: 0 }}>
-          <ClassArch slug={slug as ClassSlug} index={index + 1} size="lg" photoUrl={photos.get(slug)} tagline={false} />
+          <ClassArch slug={slug as ClassSlug} index={index + 1} size="lg" {...classPhotoPresentation(slug as ClassSlug, photos, version)} tagline={false} />
           <div className="site-classhero-copy">
             <p className="eyebrow">{t('site.classes.concept')}</p>
             <p className="site-lead">{bi(c.concept)}</p>
@@ -114,7 +117,7 @@ export function ClassDetailPage() {
       <section className="container site-section">
         <p className="eyebrow">{t('site.classes.other')}</p>
         <div className="site-otherarches">
-          {classOrder.filter((s) => s !== slug).map((s) => <ClassArch key={s} slug={s} index={classOrder.indexOf(s) + 1} to={href(`/site/classes/${s}`)} photoUrl={photos.get(s)} />)}
+          {classOrder.filter((s) => s !== slug).map((s) => <ClassArch key={s} slug={s} index={classOrder.indexOf(s) + 1} to={href(`/site/classes/${s}`)} {...classPhotoPresentation(s, photos, version)} />)}
         </div>
       </section>
     ),

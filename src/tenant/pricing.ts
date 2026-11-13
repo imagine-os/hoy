@@ -146,8 +146,8 @@ export const FAMILY_RATIONALE: Record<PlanFamily, FamilyRationale> = {
     role: FAMILY_ROLE.privadas,
     subtitle: { es: 'Una clase solo para ti, o para ti y dos personas más.', en: 'A class just for you, or for you and two more people.' },
     why: {
-      es: 'Una clase privada se diseña para quien la toma: máximo 3 personas. El valor cubre la clase y cada persona adicional suma un valor fijo.',
-      en: 'A private class is designed for whoever takes it: 3 people at most. The price covers the class and each additional person adds a fixed amount.',
+      es: 'Una clase privada se diseña para quien la toma: máximo 3 personas. Escríbenos por WhatsApp para confirmar el precio según tu grupo.',
+      en: 'A private class is designed for whoever takes it: 3 people at most. Message us on WhatsApp to confirm the price for your group.',
     },
   },
   regalos: {

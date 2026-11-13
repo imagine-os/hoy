@@ -484,20 +484,7 @@
       "concept",
       "mountains"
     ],
-    "usages": [
-      {
-        "label": "Home philosophy",
-        "path": "/site",
-        "state": "live",
-        "evidence": "Verified editorial photo fallback; ready CMS photo takes priority. photo_slots:site.home.philosophy:fallback"
-      },
-      {
-        "label": "Home philosophy",
-        "path": "/site?version=photos",
-        "state": "draft",
-        "evidence": "Verified editorial photo fallback; ready CMS photo takes priority. photo_slots:site.home.philosophy:fallback"
-      }
-    ]
+    "usages": []
   },
   {
     "id": "images/sanctuary/philosophy.webp",
@@ -1358,6 +1345,39 @@
       "carolina"
     ],
     "usages": []
+  },
+  {
+    "id": "images/studio-2026/philosophy-warm.png",
+    "url": "images/studio-2026/philosophy-warm.png",
+    "thumbnail": "images/studio-2026/philosophy-warm.png",
+    "name": "Philosophy warm",
+    "source": "studio",
+    "kind": "image",
+    "orientation": "portrait",
+    "width": 1024,
+    "height": 1536,
+    "variants": [
+      "images/studio-2026/philosophy-warm.png"
+    ],
+    "tags": [
+      "studio",
+      "philosophy",
+      "warm"
+    ],
+    "usages": [
+      {
+        "label": "Home philosophy",
+        "path": "/site",
+        "state": "live",
+        "evidence": "Verified editorial photo fallback; ready CMS photo takes priority. photo_slots:site.home.philosophy:fallback"
+      },
+      {
+        "label": "Home philosophy",
+        "path": "/site?version=photos",
+        "state": "draft",
+        "evidence": "Verified editorial photo fallback; ready CMS photo takes priority. photo_slots:site.home.philosophy:fallback"
+      }
+    ]
   },
   {
     "id": "images/studio-2026/plan-single.webp",

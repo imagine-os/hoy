@@ -46,7 +46,7 @@ export function ContactPage() {
     PageHead: () => <PageHead title={t('site.contact.title')} body={t('site.contact.body')} />,
     ContactCards: () => (
       <section className="container site-section" style={{ paddingTop: 0 }}>
-        <div className="grid grid-3">
+        <div className="site-contact-cards">
           {cards.map(([label, value, href, field]) => (
             <Card key={label} eyebrow={label}>
               {href ? <a href={href} target="_blank" rel="noreferrer">{value}</a> : <span>{value}</span>}
@@ -61,7 +61,7 @@ export function ContactPage() {
             </Card>
           ))}
         </div>
-        <SavedPaymentInstructions />
+        <Card className="site-contact-payment"><SavedPaymentInstructions /></Card>
         <div className="stack-sm" style={{ marginTop: 'var(--sp-lg)' }}>
           <div className="row wrap">
             <a href={wa.link('frontDesk', t('site.contact.wa'))} target="_blank" rel="noreferrer">
@@ -100,8 +100,8 @@ export function ContactPage() {
             <Field label={t('site.contact.fName')}>
               {(id) => <Input id={id} maxLength={LIMITS.name} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} autoComplete="name" />}
             </Field>
-            <Field label={t('site.contact.fPhone')}>
-              {(id) => <Input id={id} maxLength={LIMITS.phone} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} inputMode="tel" autoComplete="tel" placeholder={`${tenant.dialCode} 3xx xxx xxxx`} />}
+            <Field label={t('site.contact.fPhone')} hint={t('site.contact.fPhoneHint')}>
+              {(id) => <Input id={id} maxLength={LIMITS.phone} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} type="tel" inputMode="tel" autoComplete="tel" placeholder={t('site.contact.fPhonePh')} />}
             </Field>
             <div className="site-form-full">
               <Field label={t('site.contact.fMessage')}>

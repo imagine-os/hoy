@@ -187,3 +187,10 @@
 .site-archive-notice p { margin: var(--stack-tight) 0 0; max-width: var(--measure); font-size: var(--fs-sm); }
 .site-archive-notice button { flex-shrink: 0; }
 @media (max-width: 600px) { .site-archive-notice > div { align-items: flex-start; flex-direction: column; } }
+
+/* Contact: readable cards and a distinct payment surface at every viewport. */
+.site-contact-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--w-sidebar)), 1fr)); gap: var(--sp-lg); }
+.site-contact-cards > .card { min-width: 0; overflow-wrap: anywhere; }
+.site-contact-payment { margin-top: var(--sp-xl); }
+.site-contact-payment .payment-instructions { gap: var(--sp-lg); }
+.site-contact-payment .payment-instructions-fields { gap: var(--sp-lg); }

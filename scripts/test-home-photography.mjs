@@ -15,7 +15,7 @@ try{
  assert.deepEqual(planPhotos,{pack12:'pricing-duo',pack12_smtc:undefined,trial:'plan-trial',single:'plan-single'});
  for(const version of ['latest','photos']){
   for(const [slug,name] of Object.entries(expected))assert.equal(practiceStudioPhoto(slug,version),`/hoy/images/studio-2026/${name}-960.webp`);
-  assert.equal(philosophyStudioPhoto(version),'/hoy/images/sanctuary/mountains.webp');
+  assert.equal(philosophyStudioPhoto(version),'/hoy/images/studio-2026/philosophy-warm.png');
   assert.equal(planStudioPhoto('pack12_smtc',version),undefined,'unmatched original stays held');
   for(const [id,name] of Object.entries(planPhotos))if(name)assert.equal(planStudioPhoto(id,version),`/hoy/images/studio-2026/${name}-960.webp`);
  }
