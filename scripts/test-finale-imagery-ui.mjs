@@ -11,6 +11,7 @@ try {
  const finale=page.locator('.option1-finale'); await finale.waitFor(); await finale.scrollIntoViewIfNeeded(); assert.equal(await page.locator('html').getAttribute('lang'),lang);
  const img=finale.locator('img'); await img.evaluate(e=>e.decode());
  assert((await img.getAttribute('src')).endsWith('finale-rings-reconstructed.png'));
+ await finale.screenshot({path:`qa/finale/${lang}-${width}.png`});
  const b=await img.boundingBox(), c=await finale.locator('.sanctuary-finale-card').boundingBox();
  assert(Math.abs(b.width/b.height-1374/1145)<.02,'artwork aspect ratio preserved');
  assert.equal(await page.locator('.option1-finale-portraits').evaluate(e=>getComputedStyle(e,'::after').opacity),'0.2');

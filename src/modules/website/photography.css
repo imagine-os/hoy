@@ -57,7 +57,7 @@
 .option1-finale-portraits { position:relative; grid-area:1 / 1; }
 .option1-finale-portraits img { display:block; width:100%; height:auto; }
 .option1-finale-portraits::after { content:""; position:absolute; inset:0; background:var(--brand-deepBlue); opacity:.2; pointer-events:none; }
-.site[data-edition="sanctuary"] .option1-finale .sanctuary-finale-card { grid-area:1 / 1; align-self:end; justify-self:end; width:42%; max-width:100%; min-width:0; margin:var(--sp-2xl); padding:var(--sp-2xl); }
+.site[data-edition="sanctuary"] .option1-finale .sanctuary-finale-card { grid-area:1 / 1; align-self:start; justify-self:end; width:42%; max-width:100%; min-width:0; margin:var(--sp-2xl); margin-top:46%; padding:var(--sp-2xl); }
 @media(max-width:900px) { .site[data-edition="sanctuary"] .option1-finale .sanctuary-finale-card { grid-area:2 / 1; width:auto; justify-self:stretch; margin:var(--sp-xl); } }
 
 /* Footer artwork treatment for current editions; historical editions retain their styling. */
