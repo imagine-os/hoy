@@ -52,14 +52,13 @@
 .site[data-site-version="photos"] .sanctuary-photo-caption { display:none; }
 .site[data-site-version="photos"] .photo-finale-image { flex-shrink:0; }
 
-/* Owner-selected primary finale pair; historical editions keep their existing treatment. */
-.site[data-edition="sanctuary"] .sanctuary-finale.option1-finale { display:grid; grid-template-columns:1fr 1fr; gap:var(--sp-3xl); min-height:0; padding:var(--section) var(--gutter); background:var(--brand-deepBlue); }
-.option1-finale-background { position:absolute; inset:0 0 0 auto; width:55%; height:100%; object-fit:cover; object-position:center; }
-.option1-finale-frame { position:relative; min-width:0; container-type:inline-size; }
-.option1-finale-arch { overflow:hidden; border-radius:50cqw 50cqw 0 0; box-shadow:var(--shadow-frame); }
-.option1-finale-arch img { display:block; width:100%; height:auto; }
-.site[data-edition="sanctuary"] .option1-finale .sanctuary-finale-card { width:100%; max-width:100%; min-width:0; }
-@media(max-width:700px) { .site[data-edition="sanctuary"] .sanctuary-finale.option1-finale { grid-template-columns:1fr; } .option1-finale-background { width:100%; } }
+/* Aleja's ring-portrait composition. Keep the complete artwork visible at every width. */
+.site[data-edition="sanctuary"] .sanctuary-finale.option1-finale { display:grid; grid-template-columns:1fr; gap:0; min-height:0; padding:0; background:var(--brand-deepBlue); }
+.option1-finale-portraits { position:relative; grid-area:1 / 1; }
+.option1-finale-portraits img { display:block; width:100%; height:auto; }
+.option1-finale-portraits::after { content:""; position:absolute; inset:0; background:var(--brand-deepBlue); opacity:.2; pointer-events:none; }
+.site[data-edition="sanctuary"] .option1-finale .sanctuary-finale-card { grid-area:1 / 1; align-self:end; justify-self:end; width:42%; max-width:100%; min-width:0; margin:var(--sp-2xl); padding:var(--sp-2xl); }
+@media(max-width:900px) { .site[data-edition="sanctuary"] .option1-finale .sanctuary-finale-card { grid-area:2 / 1; width:auto; justify-self:stretch; margin:var(--sp-xl); } }
 
 /* Footer artwork treatment for current editions; historical editions retain their styling. */
 .site:is([data-site-version="latest"],[data-site-version="photos"]) .site-foot {
