@@ -13,7 +13,7 @@ export interface ClassArchProps {
   to?: string;
   /** The studio's own photograph for the class, once uploaded (M-02d). It fills the arch under a tone wash. */
   photoUrl?: string | null;
-  /** Preserve the supplied 2:3 studio composition; CMS uploads retain the default crop. */
+  /** Use the supplied 2:3 studio frame; larger variants cover-fill their frame without gutters. */
   naturalPhoto?: boolean;
   /** Show the class's first-person line under the name (lg shows it by default). */
   tagline?: boolean;

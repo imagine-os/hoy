@@ -1476,6 +1476,12 @@
     ],
     "usages": [
       {
+        "label": "Component library",
+        "path": "/dev/components",
+        "state": "live",
+        "evidence": "src/components/molecule/ClassArch/ClassArch.meta.ts: literal asset reference. This is a code placement, not a runtime visibility guarantee."
+      },
+      {
         "label": "Home practice",
         "path": "/site",
         "state": "live",

@@ -933,3 +933,6 @@ Protected-capture clarification: M14 schedule/pay screenshots remain local/ignor
 
 ## Public finale imagery — 2026-11-13
 - In review: reconstructed ring diptych matching Aleja’s reference, 20% blue overlay and mobile no-occlusion layout. No CMS changes. Build, responsive screenshots and two integrated reviews required before merge. Private/affiliate photos remain source-verification dependencies.
+
+## Public image frames · 2026-11-13
+- In review: class arches, staff portraits and booking banner fill without gutters; CMS content preserved. [Changelog](changelog/0207-public-image-frames.md). Responsive QA and two independent reviews are release gates.
