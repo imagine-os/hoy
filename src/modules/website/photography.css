@@ -31,11 +31,9 @@
 .photo-facilities-grid { margin-top:var(--sp-xl); display:grid; grid-template-columns:2fr 1fr 1fr; gap:var(--sp-md); align-items:center; }
 .photo-facilities-grid img { width:100%; height:auto; }
 .photo-booking-banner { margin-top:var(--sp-xl); }
-.photo-booking-banner img { display:block; width:100%; height:clamp(12rem,30vw,25rem); object-fit:contain; background:var(--color-surface); }
-.site[data-site-version="photos"] .site-teacher .mediaslot img,
-.site[data-site-version="latest"] .teacher-studio-photo img { object-fit:contain; }
+.photo-booking-banner img { display:block; width:100%; height:clamp(12rem,30vw,25rem); object-fit:cover; object-position:center; background:var(--color-surface); }
 /* Each teacher card measures its top radius from its own width, not its height.
-   Natural source proportions fill the verified portrait frame without gutters or cover crops. */
+   The 2:3 frame preserves the selected studio portraits; uploaded portraits cover the same frame. */
 .site-teacher-frame { display:contents; }
 .site[data-edition="sanctuary"] .site-teacher-frame { container-type:inline-size; display:grid; min-width:0; }
 .site[data-edition="sanctuary"] .site-teacher-frame .site-teacher { border-top-left-radius:50cqw; border-top-right-radius:50cqw; }
@@ -71,3 +69,10 @@
 .site:is([data-site-version="latest"],[data-site-version="photos"]) .site-foot a:hover { color:var(--brand-yellow); }
 .site:is([data-site-version="latest"],[data-site-version="photos"]) .site-foot a:focus-visible { outline-color:var(--brand-yellow); }
 .site:is([data-site-version="latest"],[data-site-version="photos"]) .site-foot .site-footer-brand:hover .wordmark-vector { color:var(--brand-yellow); }
+
+/* Current public staff portraits fill their frame; keep heads centered within the arch.
+   Presentation only: owner-selected URLs and Content entries are never rewritten. */
+.site:is([data-site-version="latest"],[data-site-version="photos"]) .site-teacher .mediaslot,
+.site:is([data-site-version="latest"],[data-site-version="photos"]) .site-teacher .site-teacher-monogram { aspect-ratio:2/3 !important; flex-shrink:0; }
+.site:is([data-site-version="latest"],[data-site-version="photos"]) .site-teacher .mediaslot-media { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:50% 35%; }
+.site:is([data-site-version="latest"],[data-site-version="photos"]) .teacher-studio-photo .mediaslot-media { object-position:center; }
