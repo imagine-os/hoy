@@ -4,11 +4,12 @@ export const practicePhotos = {
   solido: 'practice-solido', centro: 'practice-centro', alineacion: 'practice-pulso', pulso: 'practice-alineacion',
 } as const;
 export const planPhotos: Record<string, string | undefined> = {
-  pack12: 'pricing-duo', pack12_smtc: undefined, trial: 'plan-trial', single: 'plan-single',
+  pack12: 'pricing-duo', pack12_smtc: undefined, trial: 'plan-trial', single: 'plan-single', private: 'private-acroyoga',
 };
 /** Home cards use their selected artwork without changing the Plans fallbacks. */
-export const homePlanPhotos = { trial: 'warrior-blue', pack12: 'pricing-duo' } as const;
+export const homePlanPhotos = { trial: 'warrior-blue', pack12: 'pricing-duo', private: 'private-acroyoga' } as const;
 export const editorialPhotoSlots = [
+  { key: 'site.plans.private', label: { es: 'Planes · clases privadas', en: 'Plans · private classes' }, alt: { es: 'Dos personas practicando acroyoga en el estudio: una persona sostiene a la otra con los pies', en: 'Two people practicing acroyoga in the studio, one balancing on the other’s feet' } },
   { key: 'site.home.philosophy', label: { es: 'Inicio · paisaje de filosofía', en: 'Home · philosophy landscape' }, alt: { es: 'Amanecer sobre montañas y un valle con neblina', en: 'Sunrise over mountains and a misty valley' } },
   { key: 'site.plans.pack12', label: { es: 'Planes · paquete general', en: 'Plans · general package' }, alt: { es: 'Dos personas en una postura de yoga en pareja frente a una pared de listones', en: 'Two people in a partner yoga pose in front of a slatted wall' } },
   { key: 'site.plans.pack12_smtc', label: { es: 'Planes · paquete de afiliados', en: 'Plans · affiliate package' }, alt: { es: 'Práctica de yoga en pareja', en: 'Partner yoga practice' } },

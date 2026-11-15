@@ -12,7 +12,7 @@ try{
  const outfile=join(scratch,'upgrade.mjs');
  await build({stdin:{contents:"export {MockProvider,SEED_VERSION} from './src/data/MockProvider';export {editorialPhotoSlots} from './src/data/studioPhotography';",resolveDir:process.cwd(),loader:'ts'},bundle:true,platform:'node',format:'esm',define:{'import.meta.env.BASE_URL':'"/"'},outfile,logLevel:'silent'});
  const {MockProvider,SEED_VERSION,editorialPhotoSlots}=await import(pathToFileURL(outfile));
- // Start with a real persisted provider database, then remove only the five rows absent before this release.
+ // Start with a real persisted provider database, then remove only the six editorial rows, including the new private-class slot.
  new MockProvider();
  const old=JSON.parse(storage.get('hoyos.db.v1')),keys=editorialPhotoSlots.map(s=>s.key);
  old.db.media_assets=old.db.media_assets.filter(r=>!keys.includes(r.slot_key));
@@ -20,13 +20,14 @@ try{
  old.db.content_articles[0].title={es:'Contenido conservado',en:'Preserved content'};
  old.db.users[0].upgrade_canary='keep-user-data';
  assert.equal(old.version,SEED_VERSION);
+ assert.equal(keys.length,6,'five existing editorial slots plus the new private-class slot');
  const before=structuredClone(old.db);
  storage.set('hoyos.db.v1',JSON.stringify(old));
  const provider=new MockProvider(),onStorage=listeners.at(-1);
  const read=()=>JSON.parse(storage.get('hoyos.db.v1'));
  const upgraded=read();
  for(const key of keys){const rows=upgraded.db.media_assets.filter(r=>r.slot_key===key);assert.equal(rows.length,1,`existing same-day cache must gain ${key}`);assert.equal(rows[0].status,'pending');assert.equal(rows[0].url,null);}
- assert.equal(upgraded.db.media_assets.length,before.media_assets.length+5);
+ assert.equal(upgraded.db.media_assets.length,before.media_assets.length+6);
  for(const [table,rows] of Object.entries(before))assert.deepEqual(upgraded.db[table].filter(r=>rows.some(old=>old.id===r.id)),rows,`${table}: existing rows preserved`);
  const stable=JSON.stringify(upgraded.db);
  new MockProvider();new MockProvider();assert.equal(JSON.stringify(read().db),stable,'repeated loads must be idempotent');
@@ -38,10 +39,10 @@ try{
  // Cross-tab snapshots from an older tab must not remove the newly available checklist slots.
  const changed=[];provider.subscribe('media_assets',event=>changed.push(event));
  onStorage({key:'hoyos.db.v1',newValue:JSON.stringify(old)});
- assert.equal(provider.peek('media_assets').filter(r=>keys.includes(r.slot_key)).length,5,'storage reload backfills the same five slots');
- assert.equal(read().db.media_assets.filter(r=>keys.includes(r.slot_key)).length,5,'cross-tab upgrade persisted');
+ assert.equal(provider.peek('media_assets').filter(r=>keys.includes(r.slot_key)).length,6,'storage reload backfills the same six slots');
+ assert.equal(read().db.media_assets.filter(r=>keys.includes(r.slot_key)).length,6,'cross-tab upgrade persisted');
  const once=JSON.stringify(read().db.media_assets);
  onStorage({key:'hoyos.db.v1',newValue:JSON.stringify(old)});assert.equal(JSON.stringify(read().db.media_assets),once,'repeated cross-tab snapshots remain idempotent');
  assert(changed.some(e=>e.type==='reset'));
- console.log('Editorial photo upgrade passed: old same-day database, exactly five additions, all existing rows preserved, custom CMS IDs/edits, repeated-load and cross-tab idempotency');
+ console.log('Editorial photo upgrade passed: old same-day database, exactly six additions, all existing rows preserved, custom CMS IDs/edits, repeated-load and cross-tab idempotency');
 }finally{await rm(scratch,{recursive:true,force:true});}

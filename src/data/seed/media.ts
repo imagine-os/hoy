@@ -83,7 +83,7 @@ const SLOTS: Slot[] = [
     brief: CLASS_BRIEFS[slug],
   })),
   ...editorialPhotoSlots.map((slot): Slot => ({
-    ...slot, kind: 'photo', ratio: slot.key === 'site.home.philosophy' ? '2 / 3' : '3 / 2',
+    ...slot, kind: 'photo', ratio: slot.key === 'site.home.philosophy' ? '2 / 3' : slot.key === 'site.plans.private' ? '410 / 659' : '3 / 2',
     brief: { es: 'Foto editorial verificada; una foto marcada lista tiene prioridad sobre la selección incluida.', en: 'Verified editorial photo; a photo marked ready takes priority over the packaged selection.' },
   })),
 ];

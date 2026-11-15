@@ -12,7 +12,7 @@ try{
  const {practicePhotos,planPhotos,practiceStudioPhoto,planStudioPhoto,philosophyStudioPhoto,mediaAssets,buildMediaLibrary}=await import(pathToFileURL(outfile));
  const expected={ligereza:'practice-ligereza',hibrido:'practice-hibrido',fuego:'practice-fuego',solido:'practice-solido',centro:'practice-centro',alineacion:'practice-pulso',pulso:'practice-alineacion'};
  assert.deepEqual(practicePhotos,expected);
- assert.deepEqual(planPhotos,{pack12:'pricing-duo',pack12_smtc:undefined,trial:'plan-trial',single:'plan-single'});
+ assert.deepEqual(planPhotos,{pack12:'pricing-duo',pack12_smtc:undefined,trial:'plan-trial',single:'plan-single',private:'private-acroyoga'});
  for(const version of ['latest','photos']){
   for(const [slug,name] of Object.entries(expected))assert.equal(practiceStudioPhoto(slug,version),`/hoy/images/studio-2026/${name}-960.webp`);
   assert.equal(philosophyStudioPhoto(version),'/hoy/images/studio-2026/philosophy-warm.png');
@@ -23,7 +23,7 @@ try{
   for(const slug of Object.keys(expected))assert.equal(practiceStudioPhoto(slug,version),undefined);
   assert.equal(philosophyStudioPhoto(version),undefined);assert.equal(planStudioPhoto('pack12',version),undefined);
  }
- for(const key of ['site.home.philosophy','site.plans.pack12','site.plans.pack12_smtc','site.plans.trial','site.plans.single']){
+ for(const key of ['site.home.philosophy','site.plans.pack12','site.plans.pack12_smtc','site.plans.trial','site.plans.single','site.plans.private']){
   const row=mediaAssets.find(a=>a.slot_key===key);assert(row);assert.equal(row.id,`med_${key.replace(/\./g,'_')}`);assert.equal(row.status,'pending');assert.equal(row.url,null);
  }
  const before=await readFile('src/data/mediaCatalog.generated.json','utf8');execFileSync(process.execPath,['scripts/gen-media-catalog.mjs']);assert.equal(await readFile('src/data/mediaCatalog.generated.json','utf8'),before,'catalogue drift');
@@ -49,5 +49,8 @@ try{
  const plans=buildMediaLibrary([{...base,slot_key:'site.plans.trial'}],[],[]);
  const override=plans.find(a=>a.url===base.url);assert.deepEqual(override.usages.map(u=>u.path).sort(),['/site/plans','/site/plans?version=photos']);
  assert(plans.find(a=>a.id==='images/studio-2026/plan-trial.webp').usages.every(u=>u.state==='inactive'));
+ const privateSlot=buildMediaLibrary([{...base,slot_key:'site.plans.private',alt:{es:'Acro QA',en:'Acro QA'}}],[],[]);
+ assert.deepEqual(privateSlot.find(a=>a.url===base.url).usages.map(u=>u.path).sort(),['/site','/site?version=photos','/site/plans','/site/plans?version=photos'].sort());
+ assert(privateSlot.find(a=>a.id==='images/studio-2026/private-acroyoga.webp').usages.every(u=>u.state==='inactive'),'ready private photo overrides both placements');
  console.log('Home photography passed: exact maps, held source, editions, stable CMS slots, override/draft/kind projection, catalogue and responsive assets');
 }finally{await rm(dir,{recursive:true,force:true});}
