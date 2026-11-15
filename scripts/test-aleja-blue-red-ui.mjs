@@ -9,10 +9,13 @@ await mkdir(output,{recursive:true});
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',headless:true,args:['--no-sandbox']});
 const results=[], errors=[];
 const routes=['','about','classes','classes/fuego','classes/hibrido','modalities','schedule','teachers','plans','faq','contact'];
+let navigation=0;
 async function open(page,origin,route,lang,theme) {
-  await page.goto(origin);
+  if(!page.url().startsWith(origin+'/')) await page.goto(origin);
   await page.evaluate(({lang,theme})=>{localStorage.setItem('hoyos.lang',lang);localStorage.setItem('hoyos.theme',JSON.stringify({theme,skin:'styled'}));localStorage.setItem('hoy.site.motion','off');},{lang,theme});
-  await page.goto(`${origin}/#/site${route?'/'+route:''}`);await page.reload();
+  // A new outer query forces one full document load, so locale/theme/CMS storage is
+  // reread every time. Avoid the previous three full loads per case; keep all assertions.
+  await page.goto(`${origin}/?qaCapture=${++navigation}#/site${route?'/'+route:''}`);
   await page.locator('.site').waitFor();
   await page.evaluate(async()=>{await document.fonts.ready;await Promise.all([...document.querySelectorAll('.site img')].map(async i=>{i.loading='eager';try{await i.decode();}catch{}}));});
 }
