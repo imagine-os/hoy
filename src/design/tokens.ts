@@ -153,6 +153,34 @@ export const semantic = {
   },
 } as const;
 
+/** Aleja’s 14 November public-site palette. Scoped to Latest/Photos, never admin or history. */
+export const websiteEditorial = {
+  light: {
+    'color-bg': '#2C4865', 'color-lane': '#27415C', 'color-surface': '#324F6D',
+    'color-surface-elevated': '#355674', 'color-surface-2': '#29435E',
+    'color-surface-3': '#3B5B79', 'color-surface-4': '#426381',
+  },
+  dark: {
+    'color-bg': '#1C3048', 'color-lane': '#192B41', 'color-surface': '#243D57',
+    'color-surface-elevated': '#2B4864', 'color-surface-2': '#20364E',
+    'color-surface-3': '#304E6A', 'color-surface-4': '#385976',
+  },
+  shared: {
+    'color-text': '#F1E7D2', 'color-ink': '#FBF7EF', 'color-primary': '#F1E7D2',
+    'color-primary-hover': '#FFFFFF', 'color-text-muted': '#D2DCE6', 'color-text-faint': '#D2DCE6',
+    'color-accent-fill': '#F1E7D2', 'color-accent-fill-hover': '#FBF7EF',
+    'color-text-on-primary': '#1C2E42', 'color-text-on-inverse': '#F1E7D2',
+    'color-border': 'rgba(241,231,210,.24)', 'color-border-strong': 'rgba(241,231,210,.42)',
+    'color-card-border': 'rgba(241,231,210,.24)', 'color-focus': '#F7F3B2',
+    'color-warn': '#F7F3B2', 'color-success': '#B7DEC1', 'color-danger': '#FFD0C4',
+    'site-red': '#8D414E', 'site-red-deep': '#633648',
+    'site-gradient-accent': 'linear-gradient(125deg,var(--color-lane) 15%,var(--color-bg) 52%,var(--site-red-deep) 100%)',
+    'gradient-site-footer': 'linear-gradient(35deg,var(--brand-ink),var(--brand-deepBlue) 55%,var(--site-red-deep))',
+    'site-gradient-photo': 'linear-gradient(180deg,rgba(28,46,66,.76),rgba(28,46,66,.56) 45%,rgba(28,46,66,.94))',
+    'site-gradient-hero': 'linear-gradient(105deg,rgba(99,54,72,.85),rgba(28,46,66,.90) 30%,rgba(28,46,66,.18) 85%)',
+  },
+} as const;
+
 /**
  * Depth — the canvas Detail layer "Depth" (multi-layer physical shadows), verbatim, written against the
  * rgb triplets so dark re-colours them. `card` = .surf2 tiles, `raised` = .surf panels/frames.
@@ -367,7 +395,7 @@ export const UI_SCALE: readonly { minWidth: number; ui: number; minText: number 
   { minWidth: BREAKPOINTS.hd, ui: 1.125, minText: 16 }, { minWidth: BREAKPOINTS.qhd, ui: 1.375, minText: 16 }, { minWidth: BREAKPOINTS.uhd, ui: 1.75, minText: 16 },
 ];
 
-export const tokens = { brand, palette, rgb, classTones, semantic, shadows, textures, materials, surfaces, hues, type, spacing, spacingLegacy, spacingSemantic, radii, motion, icons, layout: layoutTokens, breakpoints: breakpointVars };
+export const tokens = { brand, palette, websiteEditorial, rgb, classTones, semantic, shadows, textures, materials, surfaces, hues, type, spacing, spacingLegacy, spacingSemantic, radii, motion, icons, layout: layoutTokens, breakpoints: breakpointVars };
 
 function vars(obj: Record<string, string>): string {
   return Object.entries(obj).map(([k, v]) => `  --${k}: ${v};`).join('\n');
@@ -439,6 +467,14 @@ ${vars(semantic.dark)}
   --tex-surf-on: none;
   --color-card-border: rgba(241,231,210,.06);
   color-scheme: dark;
+}
+/* The public website uses its own palette; customer/staff/auth themes remain unchanged. */
+:root[data-skin="styled"] .site:is([data-site-version="latest"],[data-site-version="photos"]) {
+${vars(websiteEditorial.light)}
+${vars(websiteEditorial.shared)}
+}
+:root[data-skin="styled"][data-theme="dark"] .site:is([data-site-version="latest"],[data-site-version="photos"]) {
+${vars(websiteEditorial.dark)}
 }
 :root[data-skin="wireframe"] {
   --color-ground: #F6F5F2;

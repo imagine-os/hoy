@@ -1,0 +1,51 @@
+name: Aleja public blue-red review QA
+on:
+  push:
+    branches: [design/aleja-blue-red-20261114]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: node scripts/test-public-image-frames.mjs
+      - run: node scripts/test-home-photography.mjs && node scripts/test-media-model.mjs
+      - uses: actions/checkout@v4
+        with:
+          ref: cc6c8e63243e6289ef92fd585dfaf1c93ebcb6f0
+          path: .baseline
+      - name: Build unchanged live baseline
+        working-directory: .baseline
+        run: npm ci && npm run build
+      - name: Compare public content and inspect current responsive visuals
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/current.log 2>&1 &
+          (cd .baseline && npm run preview -- --host 127.0.0.1 --port 4174 > /tmp/baseline.log 2>&1) &
+          for i in $(seq 1 45); do curl -fsS http://127.0.0.1:4173/ >/dev/null && curl -fsS http://127.0.0.1:4174/ >/dev/null && break; sleep 1; done
+          node scripts/test-aleja-blue-red-ui.mjs
+          node scripts/test-public-image-frames-ui.mjs
+          node scripts/test-home-photo-cards-ui.mjs
+        env:
+          CHROMIUM_PATH: /usr/bin/google-chrome
+          QA_BASE: http://127.0.0.1:4173
+          QA_BASELINE: http://127.0.0.1:4174
+      - name: Production build
+        run: npm run build:production
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: aleja-blue-red-review-${{ github.sha }}
+          path: |
+            qa/aleja-blue-red
+            qa/public-image-frames
+            qa/home-photo-cards
+          retention-days: 14

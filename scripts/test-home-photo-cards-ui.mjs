@@ -23,7 +23,7 @@ try {
   }
   assert.equal(await cards.first().locator('h3').innerText(),lang==='es'?'Para empezar':'To begin');
   for(const [i,price] of [[0,'35000'],[1,'600000'],[2,'250000']])assert((await cards.nth(i).locator('.sanctuary-price').innerText()).replace(/[^0-9]/g,'').startsWith(price));
-  assert.equal(await cards.nth(2).locator('img').count(),0);assert(!(await cards.nth(2).getAttribute('class')).includes('is-photo'));
+  assert.equal(await cards.nth(2).locator('.private-class-photo').count(),1);assert(!(await cards.nth(2).getAttribute('class')).includes('is-photo'));
   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));assert.deepEqual(errors,[]);assert.deepEqual(writes,[]);
   const file=`home-${lang}-${width}-${dark?'dark':'light'}-${version}.jpg`;await page.locator('.sanctuary-plan-grid').screenshot({path:`${output}/${file}`});results.push({lang,width,dark,version,file});
   await cards.first().click();await page.waitForURL(u=>u.hash.includes('/site/plans'));await page.goBack();await cards.first().waitFor();await ctx.close();

@@ -21,6 +21,7 @@ import { useSiteEdition } from '../edition';
 import { siteImage, siteVideo, siteLoops } from '../artwork';
 import { studioPhotoProps, teacherStudioPhoto, philosophyStudioPhoto, usesCurrentStudioPhotos } from '../photography';
 import { homePlanPhotos } from '../../../data/studioPhotography';
+import { PrivateClassPhoto } from '../../../components/molecule/PrivateClassPhoto/PrivateClassPhoto';
 import { ClassicHomePage } from './ClassicHomePage';
 
 export function HomePage() {
@@ -96,10 +97,10 @@ function SanctuaryHome() {
       })}</div></div>
     </section>,
     ValueModel: () => <section className="sanctuary-plans" data-reveal><div className="container sanctuary-section"><div className="sanctuary-centered"><p className="eyebrow">{t('site.nav.plans')}</p><h2>{t('site.new.plansTitle')}</h2><p className="muted">{t('site.new.plansBody')}</p></div><div className="sanctuary-plan-grid">{families.map(({ fam, price, sub }, i) => {
-        const photoId = i === 0 ? 'trial' : i === 1 ? 'pack12' : undefined;
+        const photoId = i === 0 ? 'trial' : i === 1 ? 'pack12' : 'private';
         const override = sourcePhotos && photoId ? photoOverrides.get(`site.plans.${photoId}`) : undefined;
-        const photo = sourcePhotos && photoId ? { ...studioPhotoProps(homePlanPhotos[photoId], photoId === 'trial'), ...(override ? { src: override.url!, srcSet: undefined } : {}) } : undefined;
-        return <Link to={'/site/plans'} key={fam} className={`sanctuary-plan ${i === 1 ? 'is-blue' : ''} ${photo ? 'is-photo' : ''}`}>{photo && <img {...photo} alt="" className="sanctuary-plan-photo" />}<p className="eyebrow">0{i + 1} / {t(`site.new.planLabel${i}`)}</p><h3>{i === 0 ? t('site.new.trialCardTitle') : i === 1 && pack ? bi(pack.name) : bi(FAMILY_LABEL[fam])}</h3>{price != null && <p className="sanctuary-price">{formatCOP(price, lang)}<small>{sub}</small></p>}<span className="sanctuary-plan-cta">{t('site.plans.all')}<Icon name="arrow-right" /></span></Link>;
+        const photo = sourcePhotos && i !== 2 ? { ...studioPhotoProps(homePlanPhotos[photoId], photoId === 'trial'), ...(override ? { src: override.url!, srcSet: undefined } : {}) } : undefined;
+        return <Link to={'/site/plans'} key={fam} className={`sanctuary-plan ${i === 1 ? 'is-blue' : ''} ${photo ? 'is-photo' : ''} ${sourcePhotos && i === 2 ? 'has-private-photo' : ''}`}>{sourcePhotos && i === 2 && <PrivateClassPhoto src={override?.url || undefined} alt={override ? bi(override.alt) : undefined} />}<div className="sanctuary-plan-copy">{photo && <img {...photo} alt="" className="sanctuary-plan-photo" />}<p className="eyebrow">0{i + 1} / {t(`site.new.planLabel${i}`)}</p><h3>{i === 0 ? t('site.new.trialCardTitle') : i === 1 && pack ? bi(pack.name) : bi(FAMILY_LABEL[fam])}</h3>{price != null && <p className="sanctuary-price">{formatCOP(price, lang)}<small>{sub}</small></p>}<span className="sanctuary-plan-cta">{t('site.plans.all')}<Icon name="arrow-right" /></span></div></Link>;
       })}</div><div className="sanctuary-centered sanctuary-plans-more"><Link className="sanctuary-text-link" to="/site/plans">{t('site.value.all')} <Icon name="arrow-right" /></Link></div></div></section>,
     Testimonials: () => quotes.length > 0 ? <section className="container sanctuary-section sanctuary-quotes" data-reveal>{quotes.map(r => <blockquote key={r.id}><span className="sanctuary-quote-mark" aria-hidden>“</span><p>{r.comment}</p><footer>{t('site.testimonials.member')}</footer></blockquote>)}</section> : null,
     FirstStep: () => <section className={`sanctuary-finale${sourcePhotos ? ' option1-finale' : ''}`} data-reveal>

@@ -936,3 +936,7 @@ Protected-capture clarification: M14 schedule/pay screenshots remain local/ignor
 
 ## Public image frames · 2026-11-13
 - In review: class arches, staff portraits and booking banner fill without gutters; CMS content preserved. [Changelog](changelog/0207-public-image-frames.md). Responsive QA and two independent reviews are release gates.
+
+## Aleja public blue/navy direction · 14 November 2026
+
+- In review on isolated `design/aleja-blue-red-20261114` from live v1.2.4: scoped blue/navy website surfaces, selected red gradients, supplied complete acroyoga photo on Home/Plans. Content, prices, Santa María package, booking handlers and PR146 photo frames preserved. Hosted responsive matrix, two independent review rounds and existing-environment preview pending. Production release remains held for Justin. [Changelog](changelog/0208-aleja-blue-red.md).

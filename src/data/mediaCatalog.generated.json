@@ -1805,6 +1805,52 @@
     ]
   },
   {
+    "id": "images/studio-2026/private-acroyoga.webp",
+    "url": "images/studio-2026/private-acroyoga-960.webp",
+    "thumbnail": "images/studio-2026/private-acroyoga-480.webp",
+    "name": "Private acroyoga",
+    "source": "studio",
+    "kind": "image",
+    "orientation": "portrait",
+    "width": 820,
+    "height": 1318,
+    "variants": [
+      "images/studio-2026/private-acroyoga-480.webp",
+      "images/studio-2026/private-acroyoga-960.webp"
+    ],
+    "tags": [
+      "studio",
+      "private",
+      "acroyoga"
+    ],
+    "usages": [
+      {
+        "label": "Home plan card",
+        "path": "/site",
+        "state": "live",
+        "evidence": "Verified editorial photo fallback; ready CMS photo takes priority. photo_slots:site.plans.private:fallback"
+      },
+      {
+        "label": "Home plan card",
+        "path": "/site?version=photos",
+        "state": "draft",
+        "evidence": "Verified editorial photo fallback; ready CMS photo takes priority. photo_slots:site.plans.private:fallback"
+      },
+      {
+        "label": "Plan photograph",
+        "path": "/site/plans",
+        "state": "live",
+        "evidence": "Verified editorial photo fallback; ready CMS photo takes priority. photo_slots:site.plans.private:fallback"
+      },
+      {
+        "label": "Plan photograph",
+        "path": "/site/plans?version=photos",
+        "state": "draft",
+        "evidence": "Verified editorial photo fallback; ready CMS photo takes priority. photo_slots:site.plans.private:fallback"
+      }
+    ]
+  },
+  {
     "id": "images/studio-2026/teacher-andre-cardona.webp",
     "url": "images/studio-2026/teacher-andre-cardona-960.webp",
     "thumbnail": "images/studio-2026/teacher-andre-cardona-480.webp",
