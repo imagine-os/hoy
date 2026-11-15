@@ -940,3 +940,7 @@ Protected-capture clarification: M14 schedule/pay screenshots remain local/ignor
 ## Aleja public blue/navy direction · 14 November 2026
 
 - In review on isolated `design/aleja-blue-red-20261114` from live v1.2.4: scoped blue/navy website surfaces, selected red gradients, supplied complete acroyoga photo on Home/Plans. Content, prices, Santa María package, booking handlers and PR146 photo frames preserved. Hosted responsive matrix, two independent review rounds and existing-environment preview pending. Production release remains held for Justin. [Changelog](changelog/0208-aleja-blue-red.md).
+
+## Approved Aleja website release · 1.2.5
+
+- PR147 merged after Justin's approval. All scoped checks and full Auth regression passed on57d801c. Release metadata in review; Cut release and Deploy web(prod) must complete before the production claim. [Release record](changelog/0209-release-1.2.5.md).

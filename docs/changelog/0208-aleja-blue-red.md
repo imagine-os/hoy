@@ -1,6 +1,6 @@
 ---
 date: 2026-11-14
-version: pending (based on 1.2.4)
+version: 1.2.5
 prompt: docs/prompts/0208-aleja-blue-red.md
 intent: Follow Aleja’s supplied predominantly blue/navy direction with selected red gradients and use her acroyoga photo for private classes.
 decision: Current-public-edition tokens, restrained hero/card/footer accents, complete-photo private-class presentation on Home and Plans; preserve ready CMS overrides.
@@ -17,3 +17,8 @@ The attached acroyoga photo appears in the Home private-class card and the Plans
 Preflight: clean checkout; latest remote main and actual production `release.json`/`health` match cc6c8e6, v1.2.4, including PR146 frames. Open held PR141 and older feature work excluded. No concurrent blue/red branch or PR found. Existing test deployment predates current main and is not presented as this preview.
 
 Validation pending: review/production builds, baseline copy/price/link equality, public route/locale/viewport/theme captures, retained frame checks and two independent review rounds. Local Chromium is blocked by socket permissions; actual browser checks run on GitHub Actions. No production deployment or customer-data mutation is claimed.
+
+
+## Approved release
+
+Justin approved merge and release on 14 November. PR147 merged as b6627a3 from checked head57d801c. Final176 public cases, retained frame/Home regressions, full fake-Clerk Auth checks, two independent code-review rounds and final visual review passed. Existing test deployment verified source57d801c; production release follows Cut release and Deploy web (prod). No real purchase, live OAuth or payment transaction was performed.
