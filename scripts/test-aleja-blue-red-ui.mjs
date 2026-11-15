@@ -59,7 +59,7 @@ try {
       }
       await page.screenshot({path:`${output}/${name}.jpg`,fullPage:true});
       if(!route) for(const [section,selector] of [['plans','.sanctuary-plans'],['teachers','.sanctuary-teachers'],['finale','.sanctuary-finale']]) await page.locator(selector).screenshot({path:`${output}/${name}-${section}.jpg`});
-      results.push({name,colors,copyCompared:!!before,passed:true});
+      results.push({name,colors,copyCompared:!!before,passed:true});console.log(`PASS ${name}`);
     }
     // Navigation remains usable at mobile widths, without submitting any booking/payment.
     await open(page,base,'',lang,theme);

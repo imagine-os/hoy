@@ -4,7 +4,7 @@ import { studioPhoto } from '../../../modules/website/photography';
 import './PrivateClassPhoto.css';
 
 /** The supplied acroyoga composition stays complete; a published CMS photo still wins. */
-export function PrivateClassPhoto({ src, alt, sizes = '(max-width: 700px) 50vw, 25vw' }: { src?: string; alt?: string; sizes?: string }) {
+export function PrivateClassPhoto({ src, alt, sizes = '(max-width: 1200px) 50vw, 25vw' }: { src?: string; alt?: string; sizes?: string }) {
   const { bi } = useI18n();
   return <img className="private-class-photo" src={src || studioPhoto('private-acroyoga')}
     srcSet={src ? undefined : `${studioPhoto('private-acroyoga', 480)} 480w, ${studioPhoto('private-acroyoga')} 820w`}

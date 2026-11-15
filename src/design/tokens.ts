@@ -177,7 +177,7 @@ export const websiteEditorial = {
     'site-gradient-accent': 'linear-gradient(125deg,var(--color-lane) 15%,var(--color-bg) 52%,var(--site-red-deep) 100%)',
     'gradient-site-footer': 'linear-gradient(35deg,var(--brand-ink),var(--brand-deepBlue) 55%,var(--site-red-deep))',
     'site-gradient-photo': 'linear-gradient(180deg,rgba(28,46,66,.76),rgba(28,46,66,.56) 45%,rgba(28,46,66,.94))',
-    'site-gradient-hero': 'linear-gradient(105deg,rgba(99,54,72,.85),rgba(28,46,66,.90) 30%,rgba(28,46,66,.18) 85%)',
+    'site-gradient-hero': 'linear-gradient(105deg,rgba(99,54,72,.85),rgba(28,46,66,.90) 30%,rgba(28,46,66,.78) 85%)',
   },
 } as const;
 
