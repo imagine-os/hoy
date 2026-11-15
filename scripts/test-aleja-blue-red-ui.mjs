@@ -58,10 +58,12 @@ try {
         assert(geometry.loaded);assert.match(geometry.src,/private-acroyoga/);assert(Math.abs(geometry.ratio-geometry.native)<.006,`${name}: complete photo proportions`);
         assert(await page.locator('.sanctuary-plan-copy,.plans-private-copy').evaluateAll(els=>els.every(el=>el.scrollWidth<=el.clientWidth+1)),`${name}: private card copy fits`);
         assert(await page.locator('.has-private-photo,.plans-private-with-photo').evaluateAll(cards=>cards.every(card=>{const r=card.getBoundingClientRect();return [...card.querySelectorAll('.private-class-photo,.sanctuary-plan-copy,.plans-private-copy')].every(child=>{const c=child.getBoundingClientRect();return c.left>=r.left-1&&c.right<=r.right+1&&c.top>=r.top-1&&c.bottom<=r.bottom+1;});})),`${name}: private photo/copy stay within their card`);
-        await photos.screenshot({path:`${output}/${name}-private-photo.jpg`});
+        await photos.screenshot({path:`${output}/${name}-private-photo.jpg`,style:'.site-head{visibility:hidden}'});
       }
+      await page.evaluate(()=>new Promise(resolve=>{window.scrollTo(0,0);requestAnimationFrame(()=>requestAnimationFrame(resolve));}));
       await page.screenshot({path:`${output}/${name}.jpg`,fullPage:true});
-      if(!route) for(const [section,selector] of [['plans','.sanctuary-plans'],['teachers','.sanctuary-teachers'],['finale','.sanctuary-finale']]) await page.locator(selector).screenshot({path:`${output}/${name}-${section}.jpg`});
+      if(!route) for(const [section,selector] of [['plans','.sanctuary-plans'],['teachers','.sanctuary-teachers'],['finale','.sanctuary-finale']]) await page.locator(selector).screenshot({path:`${output}/${name}-${section}.jpg`,style:'.site-head{visibility:hidden}'});
+      if(route==='plans') await page.locator('.plans-secondary').screenshot({path:`${output}/${name}-private-and-gift.jpg`,style:'.site-head{visibility:hidden}'});
       results.push({name,colors,copyCompared:!!before,passed:true});console.log(`PASS ${name}`);
     }
     // Navigation remains usable at mobile widths, without submitting any booking/payment.

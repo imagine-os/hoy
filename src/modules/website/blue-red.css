@@ -36,6 +36,7 @@
 .plans-private-copy .pricerow { flex-wrap:wrap; }
 .plans-private-copy .btn { white-space:normal; line-height:1.4; max-width:100%; }
 .site:is([data-site-version="latest"],[data-site-version="photos"]) .plans-private-with-photo { background:var(--site-gradient-accent); }
+.site:is([data-site-version="latest"],[data-site-version="photos"]) .plans-secondary { align-items:start; }
 @media(max-width:1200px) {
   .site:is([data-site-version="latest"],[data-site-version="photos"]) .sanctuary-plan-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .sanctuary-plan.has-private-photo { grid-column:1 / -1; }
