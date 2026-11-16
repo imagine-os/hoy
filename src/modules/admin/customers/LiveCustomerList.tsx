@@ -1,3 +1,4 @@
+import { Link, useNavigate } from 'react-router-dom';
 import { useMemo, useState } from 'react';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { dateKey, formatDate } from '../../../i18n/format';
@@ -17,10 +18,11 @@ import { BALANCE_QUERIES, customerListRows, type QueryRow } from './customerBala
 /** AD-07 in the production build: every customer (a person with a member record), with package, classes left, expiry and vouchers. */
 export function LiveCustomerList() {
   const { t, lang } = useI18n();
+  const navigate = useNavigate();
   const desktop = useMinWidth('shell');
   const [search, setSearch] = useState('');
   const q = useCosQueries({
-    people: { entity: 'person', filter: { exists: 'member', via: 'person', where: { all: true } }, sort: [{ field: 'name', dir: 'asc' }] },
+    people: { entity: 'person', filter: { exists: 'member', via: 'person', where: { all: true } }, sort: [{ field: 'name', dir: 'asc' }, { field: 'id', dir: 'asc' }] },
     products: { entity: 'product' },
     ...BALANCE_QUERIES,
   } as never);
@@ -52,13 +54,13 @@ export function LiveCustomerList() {
       {!q.request && <EmptyState compact tone="error" title={t('core.common.error')} body={deskErrorText('disconnected', t)} />}
       {q.error && <EmptyState compact tone="error" title={t('core.common.error')} body={deskErrorText(q.error, t)} action={<Button size="sm" onClick={q.reload}>{t('core.common.retry')}</Button>} />}
       {q.loading && !q.rows ? <EmptyState tone="loading" title={t('core.common.loading')} /> : q.rows && rows.length === 0 ? <EmptyState title={t('admin.crm.emptySeg')} /> : (
-        desktop ? <DataTable<Row> columns={columns} rows={rows} rowKey={r => r.id} dense /> :
-        <div className="stack-sm">{rows.map(r => <Card key={r.id} padding="sm">
+        desktop ? <DataTable<Row> columns={columns} rows={rows} rowKey={r => r.id} onRowClick={r => navigate(`/admin/crm/${encodeURIComponent(r.id)}`)} dense /> :
+        <div className="stack-sm">{rows.map(r => <Link key={r.id} to={`/admin/crm/${encodeURIComponent(r.id)}`} className="crm-person-link"><Card padding="sm">
           <strong className="crm-name">{r.name}</strong>
           <div className="small">{r.plan_name || t('admin.crm.noPlan')}{r.frozen && <Badge tone="warn">{t('admin.crm.frozen')}</Badge>}</div>
           <div className="row wrap small"><span>{t('admin.crm.col.remaining')}: <strong>{r.remaining}</strong></span><span>{t('admin.crm.col.vouchers')}: {r.vouchers}</span></div>
           <div className="small muted">{t('admin.crm.col.expires')}: {r.expires ? formatDate(r.expires, lang) : '—'}</div>
-        </Card>)}</div>
+        </Card></Link>)}</div>
       )}
     </div>
   );

@@ -3,7 +3,9 @@ import { lazyPages } from '../../app/lazyPage';
 import type { RouteDef } from '../../specs/types';
 import type { Role } from '../../auth/roles';
 import { M01, M02, M03, M02a, M02b, M02c, M02d, M04, M05, M06, M07, M08a, M08b, M08c, M08d, M08e, M08f, M08g, M09, M09a, M09b, M09c, M10, M10a, M11, M12 } from './specs';
-export { strings } from './strings';
+import { strings as baseStrings } from './strings';
+import { clientStrings } from './customers/clientStrings';
+export const strings = { ...baseStrings, ...clientStrings };
 // Admin pages (M-xx): one chunk for staff who open /admin.
 const page = lazyPages(() => import('./pages'));
 

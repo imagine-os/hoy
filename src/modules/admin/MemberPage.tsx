@@ -1,3 +1,5 @@
+import { PRODUCTION_BUILD } from '../../config/launch';
+import { LiveCustomerDetail } from './customers/LiveCustomerDetail';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useI18n } from '../../i18n/I18nProvider';
@@ -33,6 +35,9 @@ const FILTERS: Filter[] = ['all', 'whatsapp', 'email', 'note', 'system'];
 
 /** M-06 detail — identity header, metric row, the unified conversation (WhatsApp, email, notes, system events) with its reply box, bookings, payments. */
 export function MemberPage() {
+  return PRODUCTION_BUILD ? <LiveCustomerDetail /> : <ReviewMemberPage />;
+}
+function ReviewMemberPage() {
   const { id } = useParams();
   const { t, lang, bi } = useI18n();
   const { can, user } = useSession();
