@@ -1,5 +1,19 @@
 import assert from 'node:assert/strict';
 import { build } from 'esbuild';
+import { readFile } from 'node:fs/promises';
+const routeBuild=await build({entryPoints:['src/modules/admin/customers/customerRoute.ts'],bundle:true,platform:'node',format:'esm',write:false});
+const routes=await import('data:text/javascript;base64,'+Buffer.from(routeBuild.outputFiles[0].text).toString('base64'));
+const self={userId:'login1',personId:'person1'};
+assert.deepEqual(routes.customerRouteIds('person1',self),{displayId:'login1',personId:'person1'});
+assert.deepEqual(routes.customerRouteIds('login1',self),{displayId:'login1',personId:'person1'});
+assert.deepEqual(routes.customerRouteIds('other1',self),{displayId:'other1',personId:'other1'});
+assert.deepEqual(routes.customerRouteIds('other1',null),{displayId:'other1',personId:'other1'});
+const reader=routes.createCustomerRouteReader();let finish;
+const old=reader.read({self:()=>new Promise(r=>finish=r)},'person1','login1');
+const next=await reader.read({self:async()=>({userId:'login2',personId:'person2'})},'person2','login2');
+finish(self);assert.equal(await old,null);assert.equal(next.personId,'person2');
+let finishCancelled;const cancelled=reader.read({self:()=>new Promise(r=>finishCancelled=r)},'person1','login1');reader.cancel();finishCancelled(self);assert.equal(await cancelled,null);
+await assert.rejects(reader.read({self:async()=>self},'person1','differentLogin'),/customer_identity/);
 const result = await build({entryPoints:['src/modules/admin/customers/customerDetail.ts'], bundle:true, platform:'node', format:'esm',write:false});
 const m = await import('data:text/javascript;base64,'+Buffer.from(result.outputFiles[0].text).toString('base64'));
 const person={id:'p1',data:{name:'Ana Example',phone:'+573001234567',email:'ana@example.test',dob:null,emergency_contact_name:null,emergency_contact_phone:null,user:'login1',private_field:'keep'}};
@@ -29,4 +43,10 @@ const noOp=await m.readCustomer(request,'p1');person.data.name='Changed elsewher
 const retryRead=await m.readCustomer(request,'p1'), retryForm={...m.customerForm(retryRead.person),name:'Retry Example'};let reserved=null, attempts=0,effects=0;
 const retryRequest=async(method,path,body,options)=>{if(path!=='/batch')return request(method,path,body,options);const fingerprint=JSON.stringify([body,options]);attempts++;if(reserved){assert.equal(fingerprint,reserved);return {ids:['p1']};}reserved=fingerprint;effects++;await request(method,path,body,options);throw Error('network_lost');};
 await assert.rejects(m.saveCustomer(retryRequest,retryRead,retryForm,'retry-key',()=>false),/network_lost/);await m.saveCustomer(retryRequest,retryRead,retryForm,'retry-key',()=>false);assert.equal(attempts,2);assert.equal(effects,1);
+// Regression: personal editing is additive. Existing production history/payment/void actions stay on MemberPage.
+const memberSource=await readFile('src/modules/admin/MemberPage.tsx','utf8');
+assert(!memberSource.includes('<ReviewMemberPage'), 'production must retain the original MemberPage surface');
+assert(memberSource.includes('<LiveCustomerDetail embedded personId={personId} />'), 'production personal editor is embedded additively');
+assert(memberSource.includes('return <MemberDetails') && memberSource.includes('id={route.ids.displayId}') && memberSource.includes('personId={route.ids.personId}'), 'resolved boundary must mount fresh legacy queries with both explicit ids');
+for(const retained of ["tab === 'bookings'","tab === 'payments' && canPayments",'voiding && <VoidPaymentDrawer',"tab === 'practice'",'<MessageThread'])assert(memberSource.includes(retained),retained+' remains reachable');
 console.log('PASS live customer detail: scoped membership, bounded writes, field conflicts, cancellation, validation, confirmed readback; fictional data only');

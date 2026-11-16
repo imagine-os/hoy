@@ -66,7 +66,7 @@ const OPEN = [
     .map((finding) => ({ finding, lane: 'Wave 3 (content entities)', approved: ROLE_HOMES_APPROVED, routes: ['/admin/content'], note: 'the Marketing home M-02: reads live; timetable rows save to schedule (lane Y5, timetableSave.ts, classes.write); every other save is refused content_later before anything is sent (contentRecovery.ts), bulk and recurrence are absent on Company OS' })),
   { finding: 'unknown events', lane: 'Wave 3', routes: ['/admin/settings/*', '/admin/class-schedule/*'], note: 'Events and RSVPs (reuse map); useMediaLibrary reads events for media use' },
   { finding: 'unknown reviews', lane: 'Wave 3', routes: ['/site/*'], note: 'Class reviews (reuse map); the site home reads reviews' },
-  { finding: 'unknown practice_goals', lane: 'Wave 2', routes: ['/admin/analytics', '/app'], note: 'Maintenance records, practice goals (reuse map); data/useAnalytics.ts' },
+  { finding: 'unknown practice_goals', lane: 'Wave 2', routes: ['/admin/analytics', '/admin/crm/:id', '/app'], note: 'Maintenance records, practice goals (reuse map); data/useAnalytics.ts' },
   { finding: 'sink activity_events', lane: 'Wave 2', routes: ['/app'], note: 'practice milestones and streaks (data/useAnalytics.ts, customer/HomePage.tsx): with practice goals' },
   // Lane H2 connected deletion_requests (a customer's privacy_request, forms); the signed-out page (W-09) still has no session.
   { finding: 'signed_out deletion_requests (write)', lane: 'unassigned (needs a submit-only forms identity and a Hoy server submit route, ADR 0042, as Between Gigs)', routes: ['/site/*'], note: 'website DeleteAccountPage (W-09) inserts a deletion request signed out: the Hoy server answers 401. A signed-in customer asks from /app/account (C-26, H1).' },

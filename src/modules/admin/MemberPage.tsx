@@ -4,7 +4,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useI18n } from '../../i18n/I18nProvider';
 import { useSession } from '../../auth/SessionProvider';
-import { useTable } from '../../data/DataContext';
+import { useData, useTable } from '../../data/DataContext';
+import { useCustomerRoute } from './customers/useCustomerRoute';
 import { useVoidAccess, VoidPaymentButton, VoidPaymentDrawer } from '../transfers/launch/VoidPaymentAction';
 import type { BaseRow, BookingRow, ClassSessionRow, MessageLogRow, PaymentRow, PlanRow } from '../../data/schema';
 import { isConversationRow, useAuthorOf, useMessaging } from '../../data/comms';
@@ -35,10 +36,18 @@ const FILTERS: Filter[] = ['all', 'whatsapp', 'email', 'note', 'system'];
 
 /** M-06 detail — identity header, metric row, the unified conversation (WhatsApp, email, notes, system events) with its reply box, bookings, payments. */
 export function MemberPage() {
-  return PRODUCTION_BUILD ? <LiveCustomerDetail /> : <ReviewMemberPage />;
+  const { id: routeId = '' } = useParams();
+  const { t } = useI18n();
+  const { can, user, role, viewAs } = useSession();
+  const data = useData();
+  const context = JSON.stringify([user.id,role,viewAs,can('members.write')]);
+  const route = useCustomerRoute(data,routeId,user.id,context,PRODUCTION_BUILD);
+  // Unmount every old query immediately during identity/context changes; no previous-provider rows may render.
+  if (route.loading) return <div className="stack"><EmptyState tone="loading" title={t('core.common.loading')} /></div>;
+  if (route.error || !route.ids) return <div className="stack"><Link to="/admin/crm">← {t('admin.crm.title')}</Link><EmptyState tone="error" title={t('admin.client.title')} body={t('admin.client.identity')} action={<Button onClick={route.retry}>{t('core.common.retry')}</Button>} /></div>;
+  return <MemberDetails key={`${routeId}:${context}`} id={route.ids.displayId} personId={route.ids.personId} />;
 }
-function ReviewMemberPage() {
-  const { id } = useParams();
+function MemberDetails({ id, personId }: { id: string; personId: string }) {
   const { t, lang, bi } = useI18n();
   const { can, user } = useSession();
   const audit = useAudit('admin');
@@ -117,6 +126,7 @@ function ReviewMemberPage() {
         </div>
         {can('members.write') && <Link to={`/staff/inbox/${person.id}`}><Button size="sm" variant="secondary" icon="inbox">{t('admin.member.conversation.openInbox')}</Button></Link>}
       </Card>
+      {PRODUCTION_BUILD && <LiveCustomerDetail embedded personId={personId} />}
       <Card><div className="row wrap">
         <span>{t('admin.crm.col.remaining')}: <strong>{stats?.pkg.left ?? 0}</strong></span>
         <span>{t('admin.crm.col.expires')}: {stats?.pkg.expiresAt ? formatDate(stats.pkg.expiresAt, lang) : '—'}</span>

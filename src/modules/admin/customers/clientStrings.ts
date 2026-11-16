@@ -2,6 +2,7 @@ import type { StringTable } from '../../../i18n/types';
 
 /** Copy for the production client detail page; kept separate from the legacy admin catalogue. */
 export const clientStrings: StringTable = {
+  'admin.client.identity': {es:'No se pudo verificar la identidad del cliente. Reintenta antes de continuar.',en:'The client identity could not be verified. Retry before continuing.'},
   'admin.client.title': {es:'Datos del cliente',en:'Client details'},
   'admin.client.name': {es:'Nombre completo',en:'Full name'},
   'admin.client.phone': {es:'Teléfono',en:'Phone'},

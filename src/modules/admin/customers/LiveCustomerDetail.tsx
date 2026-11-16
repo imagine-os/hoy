@@ -11,17 +11,24 @@ import { Input } from '../../../components/atom/Input/Input';
 import { Button } from '../../../components/atom/Button/Button';
 import { Notice } from '../../../components/molecule/Notice/Notice';
 import { EmptyState } from '../../../components/molecule/EmptyState/EmptyState';
+import { PRODUCTION_BUILD } from '../../../config/launch';
+import { useCustomerRoute } from './useCustomerRoute';
 import { readCustomer, saveCustomer, customerForm, customerErrors, type CustomerDetail, type CustomerForm } from './customerDetail';
 
 /** A production client is a Company OS person with a member facet; its URL carries the person id, never a login id. */
-export function LiveCustomerDetail() {
-  const { id = '' } = useParams();
+export function LiveCustomerDetail({ embedded = false, personId }: { embedded?: boolean; personId?: string }) {
+  const { id: routeId = '' } = useParams();
   const data = useData();
   const { user, role, can, viewAs } = useSession();
   const request = cosRequest(data);
-  return <CustomerDetailView key={`${id}:${user.id}:${role}:${viewAs ?? "live"}`} id={id} request={request} writable={!viewAs && can('members.write')} />;
+  const route = useCustomerRoute(data,personId ?? routeId,user.id,JSON.stringify([role,viewAs,can('members.write')]),PRODUCTION_BUILD&&!personId);
+  const { t } = useI18n();
+  if (route.loading) return <EmptyState tone="loading" title={t('core.common.loading')} />;
+  if (route.error || !route.ids) return <EmptyState tone="error" title={t('admin.client.title')} body={t('admin.client.identity')} action={<Button onClick={route.retry}>{t('core.common.retry')}</Button>} />;
+  const id = route.ids.personId;
+  return <CustomerDetailView key={`${id}:${user.id}:${role}:${viewAs ?? "live"}`} id={id} request={request} writable={!viewAs && can('members.write')} embedded={embedded} />;
 }
-function CustomerDetailView({ id, request, writable }: { id: string; request: CosRequest | null; writable: boolean }) {
+function CustomerDetailView({ id, request, writable, embedded }: { id: string; request: CosRequest | null; writable: boolean; embedded: boolean }) {
   const { t, lang } = useI18n();
   const [record, setRecord] = useState<CustomerDetail | null>(null);
   const [form, setForm] = useState<CustomerForm | null>(null);
@@ -56,14 +63,14 @@ function CustomerDetailView({ id, request, writable }: { id: string; request: Co
     return refusalCopy(code,lang);
   };
   const reload = <Button variant="secondary" onClick={() => setRevision(n=>n+1)} disabled={busy}>{t('core.common.retry')}</Button>;
-  const back = <Link to="/admin/crm">← {t('admin.crm.title')}</Link>;
+  const back = embedded ? null : <Link to="/admin/crm">← {t('admin.crm.title')}</Link>;
   if (loading) return <div className="stack">{back}<EmptyState tone="loading" title={t('core.common.loading')} /></div>;
   if (!record || !form) return <div className="stack">{back}<EmptyState tone="error" title={t('admin.client.title')} body={message(error ?? 'failed')} action={reload} /></div>;
   const invalid = customerErrors(form);
   return <div className="stack">
     {back}
-    <div className="page-head"><div><h1>{String(record.person.data.name ?? '')}</h1><p className="muted small">{t('admin.client.title')}</p></div></div>
-    <Card><form className="stack" onSubmit={async e => {
+    {!embedded && <div className="page-head"><div><h1>{String(record.person.data.name ?? '')}</h1><p className="muted small">{t('admin.client.title')}</p></div></div>}
+    <Card title={embedded ? t('admin.client.title') : undefined}><form className="stack" onSubmit={async e => {
       e.preventDefault();
       if (!request || !writable || saving.current || Object.keys(invalid).length) return;
       saving.current=true; setBusy(true); setError(null); setSaved(false);
