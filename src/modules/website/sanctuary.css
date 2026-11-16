@@ -235,9 +235,11 @@
 .site-teacher-line { font-family: var(--font-editorial); font-style: italic; font-size: 1.125rem; color: var(--color-text-muted); }
 @media(max-width:600px) { .site[data-edition="sanctuary"] .langtoggle { font-size:0.6875rem; } }
 @media(max-width:380px) {
- .site[data-edition="sanctuary"] .site-head-in { padding-left:var(--sp-lg); padding-right:var(--sp-lg); gap:var(--sp-sm); }
+ /* Keep the 120px mark and 44px controls: spend less space between them on the narrowest phones. */
+ .site[data-edition="sanctuary"] .site-head-in { padding-left:var(--sp-sm); padding-right:var(--sp-sm); gap:var(--sp-0); }
  .site[data-edition="sanctuary"] .site-brand-caption { display:none; }
- .site[data-edition="sanctuary"] .site-actions { gap:var(--sp-xs); }
+ .site[data-edition="sanctuary"] .site-actions { gap:var(--sp-0); }
+ .site[data-edition="sanctuary"] .site-burger { min-height:var(--h-ctl); }
  .site[data-edition="sanctuary"] .langtoggle { padding:var(--sp-2xs); }
  .site[data-edition="sanctuary"] .langtoggle button { padding:var(--sp-xs); }
 }
