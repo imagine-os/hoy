@@ -25,13 +25,21 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
+      - name: Bind review artifact to its source and build mode
+        run: node scripts/write-review-proof.mjs dist "$GITHUB_SHA" hoy
+      - uses: actions/upload-artifact@v4
+        with:
+          name: review-bundle-${{ github.sha }}
+          path: dist
+          retention-days: 1
+          if-no-files-found: error
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
 
   deploy:
-    needs: build
+    needs: [build, verify-subscriptions]
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -41,9 +49,9 @@ jobs:
         uses: actions/deploy-pages@v4
 
   verify-subscriptions:
-    needs: deploy
+    needs: build
     runs-on: ubuntu-latest
-    timeout-minutes: 6
+    timeout-minutes: 15
     permissions:
       contents: read
     steps:
@@ -53,44 +61,25 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Verify deployed subscription directory
+      - uses: actions/download-artifact@v4
+        with:
+          name: review-bundle-${{ github.sha }}
+          path: ${{ runner.temp }}/review-bundle
+      - name: Verify exact review artifact subscription directory locally
         run: node scripts/test-subscriptions-live.mjs hoy "${{ github.sha }}"
         env:
           CHROMIUM_PATH: /usr/bin/google-chrome
+          QA_REVIEW_DIST: ${{ runner.temp }}/review-bundle
+      - name: Verify exact review artifact native cursor
+        run: node scripts/test-website-native-cursor.mjs "$GITHUB_SHA"
+        env:
+          CHROMIUM_PATH: /usr/bin/google-chrome
+          QA_REVIEW_DIST: ${{ runner.temp }}/review-bundle
+          WEBSITE_BASE_URL: http://127.0.0.1:5490/
+          CURSOR_OUTPUT: qa/subscription-release/native-cursor
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: subscriptions-live-${{ github.sha }}
           retention-days: 14
           path: qa/subscription-release
-
-  verify-website:
-    needs: deploy
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
-      - name: Verify released primary website and previews
-        run: node scripts/test-website-live.mjs "${{ github.sha }}"
-        env:
-          CHROMIUM_PATH: /usr/bin/google-chrome
-          WEBSITE_BASE_URL: https://hoyhumanclub.com/
-      - name: Verify released native website cursor
-        run: node scripts/test-website-native-cursor.mjs "${{ github.sha }}"
-        env:
-          CHROMIUM_PATH: /usr/bin/google-chrome
-          WEBSITE_BASE_URL: https://hoyhumanclub.com/
-          CURSOR_OUTPUT: qa/website-release/native-cursor
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: website-live-${{ github.sha }}
-          retention-days: 14
-          path: qa/website-release

@@ -1,0 +1,82 @@
+name: Release verifier QA
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/pages.yml'
+      - '.github/workflows/deploy-prod.yml'
+      - '.github/workflows/release-verifiers-qa.yml'
+      - 'scripts/test-website-live.mjs'
+      - 'scripts/test-website-native-cursor.mjs'
+      - 'scripts/test-subscriptions-live.mjs'
+      - 'scripts/lib/release-verifier-contracts.mjs'
+      - 'scripts/write-review-proof.mjs'
+      - 'scripts/test-release-verifier-contracts.mjs'
+  workflow_dispatch:
+    inputs:
+      expected_release_commit:
+        description: Optional exact deployed production commit for public read-only website checks
+        type: string
+        required: false
+permissions:
+  contents: read
+jobs:
+  review-contracts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: node --test scripts/test-release-verifier-contracts.mjs
+      - run: npm run build
+      - name: Bind exact review artifact
+        run: node scripts/write-review-proof.mjs dist "$(git rev-parse HEAD)" hoy
+      - name: Verify isolated review artifact; no external requests
+        run: node scripts/test-subscriptions-live.mjs hoy "$(git rev-parse HEAD)"
+        env:
+          QA_REVIEW_DIST: dist
+          CHROMIUM_PATH: /usr/bin/google-chrome
+      - name: Verify exact review artifact native cursor
+        run: node scripts/test-website-native-cursor.mjs "$(git rev-parse HEAD)"
+        env:
+          CHROMIUM_PATH: /usr/bin/google-chrome
+          QA_REVIEW_DIST: dist
+          WEBSITE_BASE_URL: http://127.0.0.1:5490/
+          CURSOR_OUTPUT: qa/subscription-release/native-cursor
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: review-verifier-${{ github.event.pull_request.head.sha || github.sha }}
+          path: qa/subscription-release
+          retention-days: 3
+  production-read-only:
+    if: github.event_name == 'workflow_dispatch' && inputs.expected_release_commit != ''
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Verify the explicitly named deployed release, without changing it
+        run: |
+          node scripts/test-website-live.mjs "$EXPECTED_SOURCE"
+          node scripts/test-website-native-cursor.mjs "$EXPECTED_SOURCE"
+        env:
+          EXPECTED_SOURCE: ${{ inputs.expected_release_commit }}
+          WEBSITE_BASE_URL: https://hoyhumanclub.com/
+          CHROMIUM_PATH: /usr/bin/google-chrome
+          CURSOR_OUTPUT: qa/website-release/native-cursor
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: read-only-website-${{ github.run_id }}
+          path: qa/website-release
+          retention-days: 3

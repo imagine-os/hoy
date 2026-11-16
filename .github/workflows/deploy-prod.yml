@@ -285,10 +285,47 @@ jobs:
           # The go-live switches (lane Y2): SITE_LIVE and whether the read token is present, never a value.
           { railway variable list --service "$SERVICE" --environment "$RAILWAY_ENV" --json 2>/dev/null || echo 'unreadable'; } | node scripts/deploy-switches.mjs --production | tee -a "$GITHUB_STEP_SUMMARY"
 
+
+  # Public checks run only after Railway has completed the actual tagged production deployment.
+  verify-website:
+    needs: [guard, deploy]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.guard.outputs.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Verify released primary website and previews
+        run: node scripts/test-website-live.mjs "$EXPECTED_SOURCE"
+        env:
+          EXPECTED_SOURCE: ${{ needs.guard.outputs.sha }}
+          WEBSITE_BASE_URL: https://hoyhumanclub.com/
+          CHROMIUM_PATH: /usr/bin/google-chrome
+      - name: Verify released native website cursor
+        run: node scripts/test-website-native-cursor.mjs "$EXPECTED_SOURCE"
+        env:
+          EXPECTED_SOURCE: ${{ needs.guard.outputs.sha }}
+          WEBSITE_BASE_URL: https://hoyhumanclub.com/
+          CHROMIUM_PATH: /usr/bin/google-chrome
+          CURSOR_OUTPUT: qa/website-release/native-cursor
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: website-live-${{ needs.guard.outputs.sha }}
+          retention-days: 14
+          path: qa/website-release
+
   # The GitHub Release is the record of what is live: created on the tag's first deploy (notes from
   # the merged PRs), a dated line appended on every later one.
   release:
-    needs: deploy
+    needs: [deploy, verify-website]
     runs-on: ubuntu-24.04
     permissions:
       contents: write
