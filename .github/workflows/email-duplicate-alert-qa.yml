@@ -36,5 +36,7 @@ jobs:
         if: always()
         with:
           name: reception-email-advisory-${{ github.sha }}
-          path: docs/screenshots/S-04/*email-advisory.png
+          path: |
+            docs/screenshots/S-04/*email-advisory.png
+            docs/screenshots/S-04/email-advisory-failure.*
           retention-days: 3
