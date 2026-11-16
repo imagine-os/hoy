@@ -5,6 +5,7 @@ import {chromium} from 'playwright-core';
 import {SITE_PATHS} from '../server/seo.mjs';
 import {resolve,join} from 'node:path';
 import {serveDist} from './lib/launch-qa.mjs';
+import {nativeCursorSnapshot} from './lib/native-cursor-snapshot.mjs';
 import {localReviewBase,publishedSite,verifyReleaseProof,verifyReviewProof} from './lib/release-verifier-contracts.mjs';
 
 const base=new URL(process.env.WEBSITE_BASE_URL||'http://127.0.0.1:5490/');
@@ -28,14 +29,16 @@ async function native(page,label){
   const brand=page.locator('.site-brand');
   if(await brand.count())await brand.hover();
   else await page.mouse.move(80,180);
-  const state=await page.evaluate(()=>({overlays:document.querySelectorAll('.element-cursor,.element-cursor-dot,.element-cursor-ring').length,active:document.documentElement.classList.contains('element-cursor-active'),body:getComputedStyle(document.body).cursor}));
+  const snapshot=await page.waitForFunction(nativeCursorSnapshot,undefined,{timeout:10000});
+  const state=await snapshot.jsonValue();await snapshot.dispose();
   assert.equal(state.overlays,0,label+': decorative cursor nodes removed');
   assert.equal(state.active,false,label+': native cursor never hidden');
   assert.notEqual(state.body,'none');assert.ok(!state.body.includes('url('));
-  for(const selector of ['.site-brand','.site-nav a:visible','.site-actions button:visible','.coming-soon-login']){
-    const control=page.locator(selector).first();if(await control.count())assert.equal(await control.evaluate(el=>getComputedStyle(el).cursor),'pointer',label+': '+selector);
+  for(const control of state.controls){
+    assert.equal(control.connected,true,label+': attached '+control.selector);
+    assert.equal(control.cursor,'pointer',label+': '+control.selector);
   }
-  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
+  assert.ok(state.fits);
   results.push({label,...state});
 }
 try{
