@@ -1,3 +1,4 @@
+import {PRODUCTION_BUILD} from '../../config/launch';
 import { lazyPages } from '../../app/lazyPage';
 import type { RouteDef } from '../../specs/types';
 import type { Role } from '../../auth/roles';
@@ -5,11 +6,15 @@ import { S03, S03Class, S03Payroll, S03Profile } from './specs';
 export { strings } from './strings';
 // Teacher pages (S-03 family) load as one chunk on first visit.
 const page = lazyPages(() => import('./pages'));
+const livePage = lazyPages(() => import('./LiveClassPage'));
 
 const roles: Role[] = ['teacher', 'coordinator', 'admin'];
 const base = { roles, surface: 'teacher' as const, layout: 'mobile' as const };
 
-export const routes: RouteDef[] = [
+export const routes: RouteDef[] = PRODUCTION_BUILD ? [
+  { ...base, path: '/teach', element: page('TeacherHomePage'), spec: S03, nav: { labelKey: 'core.nav.classes', icon: 'classes', order: 1 } },
+  { ...base, path: '/teach/class/:id', element: livePage('LiveTeacherClassPage'), spec: S03Class },
+] : [
   { ...base, path: '/teach', element: page('TeacherHomePage'), spec: S03, nav: { labelKey: 'core.nav.classes', icon: 'classes', order: 1 } },
   { ...base, path: '/teach/class/:id', element: page('TeacherClassPage'), spec: S03Class },
   { ...base, roles: [...roles, 'finance'], path: '/teach/payroll', element: page('TeacherPayrollPage'), spec: S03Payroll, nav: { labelKey: 'core.nav.payroll', icon: 'payroll', order: 2 } },

@@ -1,3 +1,4 @@
+import {PRODUCTION_BUILD} from '../../config/launch';
 import { canvasSpecs } from '../../specs/canvasSpecs';
 import { defineSpec } from '../../specs/define';
 
@@ -25,6 +26,14 @@ export const S03Class = defineSpec({
   data: [...data, 'reviews'],
   states: ['Before start: roster only', 'After start: Close class (own class, or coordinator override)', 'Completed', 'Class not found', 'Ownership loading', 'Foreign / missing link / cross-tenant denied before detail mount', 'Contained read error / Retry', 'Reassignment revokes details and rejects stale writes'],
   notes: ['PF-01: tenant-scoped ownership gate precedes roster/reviews/notes reads. Teachers cannot use a stored preview pick. Admin/coordinator previews retained; server authorization remains backend work.', '0051 (studio FAQ): check-in happens only at reception (S-02 writes bookings.status checked_in); the teacher sees the roster update live and does not mark attendance. Closing the class sets class_sessions.status completed; no-shows are settled by the front desk.', 'Notes are audit_log rows (action session.note) so they appear in M-07.', 'Reviews are read-only here: the average, count and tags of the `reviews` rows for this session (C-10). Anonymous reviews never show who wrote them.'],
+  ...(PRODUCTION_BUILD ? {
+    purpose: {es:'Consultar la clase propia y los nombres y llegadas de sus inscritos, sin modificar datos.',en:'Read an own class and attendee names and arrivals without changing data.'},
+    layout: ['ClassHeader','ReadOnlyRosterNamesAndArrivals','ReceptionCheckinNotice','Retry'],
+    data: ['teachers','class_sessions','bookings','profiles'],
+    states: ['Loading','Owned class with attendees','Empty roster','Denied / unlinked / duplicate identity','Read error / retry','Reassigned / account / provider / view-as changed: conceal stale details'],
+    logic: ['Read-only production view. Ownership checked before and after scoped roster reads. Only names and arrival state are returned. No notes, completion, reviews, contacts or payment data.'],
+    notes: ['Production uses LiveTeacherClassPage; the richer review-only class editor remains separate. Backend v1.11.0 coach policies support own-class bookings and attendee names; live tenant policy application must be acceptance-tested.'],
+  } : {}),
 });
 
 /** /teach/payroll — the teacher's own statement, from payroll_runs / payroll_lines. */

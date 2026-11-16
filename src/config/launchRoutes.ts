@@ -41,7 +41,7 @@ export const LAUNCH_ROUTES: readonly string[] = [
   // Role homes (Hoy all-roles, lane C, 2026-10-31): every one of the 11 roles lands on a page the production build
   // registers (`ROLE_HOME`). Only the home itself: the rest of each area comes back in Waves 2–4 through the
   // route-connectivity check. Teacher (S-03), Marketing (M-02 content), Developer (the dev specs index, R-08).
-  '/teach', '/admin/content', '/dev',
+  '/teach', '/teach/class/:id', '/admin/content', '/dev',
   // The super admin's Hub with read-only "view as" (Hoy all-roles, lane D; Justin's HubPage since lane Y3): route roles
   // `super_admin` only.
   '/hub',
