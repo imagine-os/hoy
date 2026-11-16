@@ -1,3 +1,6 @@
+import { Notice } from '../../../components/molecule/Notice/Notice';
+import { DuplicateEmailNotice } from './DuplicateEmailNotice';
+import { createEmailSubmitGuard, emailFingerprint, type EmailMatch, type EmailCheck } from './emailDuplicateAlert';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
@@ -19,7 +22,7 @@ import { maskPhone, personMatches, usePeople } from '../people';
 import { DESK_CONSENTS, type DeskMethod, type SaleResult } from './deskCommands';
 import { deskErrorText } from './strings';
 import { useActionKeys, useDeskCommands } from './useDesk';
-import { errorCode } from './wire';
+import { cosRequest, errorCode } from './wire';
 import { chosenSession, deskTrialBlock, notStarted, startedChoice } from './deskSale';
 import '../staff.css';
 
@@ -33,7 +36,7 @@ const METHODS: { id: DeskMethod; label: string }[] = [{ id: 'cash', label: 'staf
  */
 export function DeskSalePage() {
   const { t, lang, bi } = useI18n();
-  const { can, user } = useSession();
+  const { can, user, role, viewAs, signedIn, status } = useSession();
   const desk = useDeskCommands();
   const keys = useActionKeys();
   const [params] = useSearchParams();
@@ -45,6 +48,11 @@ export function DeskSalePage() {
   useEffect(() => { const timer = setInterval(() => tick((n) => n + 1), 30_000); return () => clearInterval(timer); }, []);
   const today = notStarted(todayAll, Date.now());
   const data = useData();
+  const emailChoiceContext=JSON.stringify([user.id,role,viewAs]);
+  const [emailChoice,setEmailChoice]=useState<{provider:typeof data;context:string;person:EmailMatch}|null>(null);
+  const [emailAck,setEmailAck]=useState<{provider:typeof data;snapshot:string;value:string}|null>(null);
+  const [emailReview,setEmailReview]=useState<{provider:typeof data;snapshot:string;check:EmailCheck}|null>(null);
+  const emailSubmit=useRef(createEmailSubmitGuard());
   const { rows: plans } = useTable<PlanRow>('plans', { where: { active: true } });
   const priceDay = dateKey(new Date());
   const [mode, setMode] = useState<'new' | 'existing'>('new');
@@ -76,7 +84,8 @@ export function DeskSalePage() {
   const price = product?.price ?? 0;
   const amount = paidRaw === null || paidRaw.trim() === '' ? price : parseDigits(paidRaw);
   const differs = !!product && amount !== price;
-  const person = personId ? people.find(p => p.id === personId) : undefined;
+  const freshChoice=emailChoice?.provider===data&&emailChoice.context===emailChoiceContext&&emailChoice.person.id===personId?emailChoice.person:null;
+  const person = personId ? freshChoice??people.find(p => p.id === personId) : undefined;
   // PRO-04 (desk part): the chosen person's trial, read from their own lots and payments (assessLiveTrial). Display
   // only: the server's `trial_used` stays the authority. A walk-in or a failed read greys nothing out.
   const [trial, setTrial] = useState<{ personId: string; assessment: TrialAssessment } | null>(null);
@@ -96,26 +105,43 @@ export function DeskSalePage() {
   const valid = !!desk?.sell && whoOk && !!product && !productBlocked && amount >= 0 && (!quoted || amount > 0) && (!differs || reason.trim().length > 0) && (!needsReference || reference.trim().length > 0);
   const intent = [mode, personId, form, productId, amount, reason.trim(), method, needsReference ? reference.trim() : '', chosen, checkIn];
 
-  if (!can('payments.write')) return <div className="stack"><div className="page-head"><h1>{t('staff.register.title')}</h1></div><EmptyState tone="error" title={t('staff.register.noPermission')} body={t('staff.register.noPermission.body')} /></div>;
+  const submitSnapshot=JSON.stringify([user.id,role,viewAs,signedIn,status,can('members.read'),can('payments.write'),intent]);
+  emailSubmit.current.syncContext(cosRequest(data),submitSnapshot);
+  const replayPending=emailSubmit.current.hasPending();
+  const replayCurrent=emailSubmit.current.hasUncertain(cosRequest(data),submitSnapshot);
+  const liveIntent=useRef({provider:data,snapshot:submitSnapshot,allowed:signedIn&&status==='ready'&&!viewAs&&can('members.read')&&can('payments.write')});
+  liveIntent.current={provider:data,snapshot:submitSnapshot,allowed:signedIn&&status==='ready'&&!viewAs&&can('members.read')&&can('payments.write')};
+
+  if (!can('payments.write')) return <div className="stack"><div className="page-head"><h1>{t('staff.register.title')}</h1></div>{replayPending&&<Notice tone="warn">{t('desk.email.retryContext')}</Notice>}<EmptyState tone="error" title={t('staff.register.noPermission')} body={t('staff.register.noPermission.body')} /></div>;
 
   const complete = async () => {
-    if (!valid || busyRef.current || !desk?.sell || !product) return;
+    if (!valid || busyRef.current || !desk?.sell || !product || (replayPending&&!replayCurrent)) return;
+    const sell=desk.sell.bind(desk);
     busyRef.current = true; setBusy(true); setError(null);
     const intentKey = JSON.stringify(intent);
     const saleDay = saleDays.current.get(intentKey) ?? dateKey(new Date());
     saleDays.current.set(intentKey, saleDay);
     const action = [...intent, saleDay];
+    const writeKey=keys.keyFor(action);
     try {
-      const result = await desk.sell({
-        person: mode === 'existing' ? { id: person!.id } : { new: { name: form.name, phone: form.phone, email: form.email }, consents: DESK_CONSENTS },
+      const submitNormal = () => sell({
+        person: mode === 'existing' ? { id: freshChoice?.personId ?? person!.id } : { new: { name: form.name, phone: form.phone, email: form.email }, consents: DESK_CONSENTS },
         productId: product.id, price, amountReceived: amount, concept: bi({ es: product.name_es, en: product.name_en }), reference: needsReference ? reference : undefined, today: saleDay, reason: differs ? reason.trim() : undefined, method,
-        sessionId: chosen || undefined, checkIn: !!chosen && checkIn, key: keys.keyFor(action),
+        sessionId: chosen || undefined, checkIn: !!chosen && checkIn, key: writeKey,
       });
+      let result:SaleResult;
+      if(mode==='new'){
+        const request=cosRequest(data);if(!request)throw Error('disconnected');
+        const outcome=await emailSubmit.current.run({request,intentKey:submitSnapshot,idempotencyKey:writeKey,email:form.email,allowed:liveIntent.current.allowed,isCurrent:()=>liveIntent.current.provider===data&&liveIntent.current.snapshot===submitSnapshot&&liveIntent.current.allowed,acknowledged:emailAck?.provider===data&&emailAck.snapshot===submitSnapshot?emailAck.value:undefined,submit:submitNormal});
+        if(outcome.kind==='review'){setEmailReview({provider:data,snapshot:submitSnapshot,check:outcome.check});return;}
+        if(outcome.kind!=='submitted'){if(outcome.kind==='blocked')setError(t('desk.email.retryContext'));else if(outcome.kind==='obsolete')setError(t('desk.email.changed'));return;}
+        result=outcome.value;
+      }else result=await submitNormal();
       keys.done(action); saleDays.current.delete(intentKey);
       setDone({ ...result, name: mode === 'existing' ? person!.name : form.name.trim(), sessionId: chosen });
     } catch (e) { setError(deskErrorText(errorCode(e), t)); } finally { busyRef.current = false; setBusy(false); }
   };
-  const reset = () => { setDone(null); setReference(''); setForm({ name: '', phone: '', email: '', consent: false }); setPersonId(null); setQ(''); setMode('new'); setProductId(''); setPaidRaw(null); setReason(''); setSessionId(''); setCheckIn(true); setError(null); };
+  const reset = () => { setEmailAck(null);setEmailReview(null);setEmailChoice(null); setDone(null); setReference(''); setForm({ name: '', phone: '', email: '', consent: false }); setPersonId(null); setQ(''); setMode('new'); setProductId(''); setPaidRaw(null); setReason(''); setSessionId(''); setCheckIn(true); setError(null); };
 
   if (done) return (
     <div className="stack">
@@ -132,28 +158,30 @@ export function DeskSalePage() {
     <div className="stack">
       <div className="page-head"><div><h1>{t('staff.register.title')}</h1><p className="muted small">{t('staff.register.subtitle')}</p></div></div>
       <p className="xs muted">{t('desk.server.rules')}</p>
+      {replayPending&&<Notice tone="warn">{t(replayCurrent?'desk.email.retrySame':'desk.email.retryContext')}</Notice>}
       <div className="register">
         <div className="register-steps">
-          <Card eyebrow={t('staff.register.step1')} title={t('staff.register.who')} actions={<div className="row wrap" role="tablist"><Chip selected={mode === 'new'} onClick={() => setMode('new')}>{t('staff.register.new')}</Chip><Chip selected={mode === 'existing'} onClick={() => setMode('existing')}>{t('staff.register.existing')}</Chip></div>}>
+          <Card eyebrow={t('staff.register.step1')} title={t('staff.register.who')} actions={<div className="row wrap" role="tablist"><Chip disabled={busy||replayPending} selected={mode === 'new'} onClick={() => setMode('new')}>{t('staff.register.new')}</Chip><Chip disabled={busy||replayPending} selected={mode === 'existing'} onClick={() => setMode('existing')}>{t('staff.register.existing')}</Chip></div>}>
             {mode === 'new' ? (
               <div className="grid grid-2 register-form">
-                <Field label={t('staff.register.f.first')} required>{id => <Input id={id} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} autoFocus />}</Field>
-                <Field label={t('staff.register.f.whatsapp')} required>{id => <Input id={id} inputMode="tel" placeholder={`${tenant.dialCode} 300 000 0000`} value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} />}</Field>
-                <Field label={t('staff.register.f.email')}>{id => <Input id={id} type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />}</Field>
-                <div className="register-consent"><Toggle checked={form.consent} onChange={on => setForm({ ...form, consent: on })} label={t('desk.walkin.consent')} /><p className="xs muted">{t('staff.register.consent.hint', { staff: user.name })}</p></div>
+                <Field label={t('staff.register.f.first')} required>{id => <Input disabled={busy||replayPending} id={id} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} autoFocus />}</Field>
+                <Field label={t('staff.register.f.whatsapp')} required>{id => <Input disabled={busy||replayPending} id={id} inputMode="tel" placeholder={`${tenant.dialCode} 300 000 0000`} value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} />}</Field>
+                <Field label={t('staff.register.f.email')}>{id => <Input disabled={busy||replayPending} id={id} type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />}</Field>
+                <div className="register-consent"><DuplicateEmailNotice email={form.email} disabled={busy||replayPending} review={emailReview?.provider===data&&emailReview.snapshot===submitSnapshot?emailReview.check:null} onContinue={check=>{setEmailAck({provider:data,snapshot:submitSnapshot,value:emailFingerprint(check)});setEmailReview(null);}} onUseExisting={selected=>{if(busyRef.current||replayPending)return false;setEmailChoice({provider:data,context:emailChoiceContext,person:selected});setPersonId(selected.id);setMode('existing');return true;}} /></div>
+                <div className="register-consent"><Toggle disabled={busy||replayPending} checked={form.consent} onChange={on => setForm({ ...form, consent: on })} label={t('desk.walkin.consent')} /><p className="xs muted">{t('staff.register.consent.hint', { staff: user.name })}</p></div>
               </div>
             ) : person ? (
-              <div className="row-between"><span><strong>{person.name}</strong> <span className="xs muted">{maskPhone(person.phone)} · {person.email}</span></span><Button size="sm" variant="ghost" onClick={() => setPersonId(null)}>{t('core.common.edit')}</Button></div>
+              <div className="row-between"><span><strong>{person.name}</strong> <span className="xs muted">{maskPhone(person.phone)} · {person.email}</span></span><Button disabled={busy||replayPending} size="sm" variant="ghost" onClick={() => setPersonId(null)}>{t('core.common.edit')}</Button></div>
             ) : (
               <div className="stack-sm">
-                <Input value={q} onChange={e => setQ(e.target.value)} placeholder={t('staff.register.search.ph')} autoFocus aria-label={t('core.common.search')} />
-                {candidates.map(p => <button key={p.id} type="button" className="register-candidate" onClick={() => setPersonId(p.id)}><span className="grow"><span className="small">{p.name}</span><span className="xs muted"> · {maskPhone(p.phone)}</span></span></button>)}
+                <Input disabled={busy||replayPending} value={q} onChange={e => setQ(e.target.value)} placeholder={t('staff.register.search.ph')} autoFocus aria-label={t('core.common.search')} />
+                {candidates.map(p => <button key={p.id} type="button" disabled={busy||replayPending} className="register-candidate" onClick={() => setPersonId(p.id)}><span className="grow"><span className="small">{p.name}</span><span className="xs muted"> · {maskPhone(p.phone)}</span></span></button>)}
                 {q.trim().length >= 2 && candidates.length === 0 && <p className="small muted">{t('staff.register.search.none')}</p>}
               </div>
             )}
           </Card>
           <Card eyebrow={t('staff.register.step2')} title={t('staff.register.what')}>
-            <Select aria-label={t('staff.register.what')} value={productId} onChange={e => { setProductId(e.target.value); setPaidRaw(null); }}>
+            <Select disabled={busy||replayPending} aria-label={t('staff.register.what')} value={productId} onChange={e => { setProductId(e.target.value); setPaidRaw(null); }}>
               <option value="">—</option>
               {products.map(p => { const why = blocked(p); return <option key={p.id} value={p.id} disabled={!!why}>{bi({ es: p.name_es, en: p.name_en })} · {formatCOP(p.price, lang)}{why ? ` · ${t('desk.sale.trialUsed')}` : ''}</option>; })}
             </Select>
@@ -161,23 +189,23 @@ export function DeskSalePage() {
           </Card>
           <Card eyebrow={t('staff.register.step3')} title={t('staff.register.how')}>
             <div className="register-methods" role="radiogroup">
-              {METHODS.map(m => <button key={m.id} type="button" role="radio" aria-checked={method === m.id} className={`register-method ${method === m.id ? 'is-selected' : ''}`} onClick={() => setMethod(m.id)}><strong className="small">{t(m.label)}</strong></button>)}
+              {METHODS.map(m => <button key={m.id} type="button" role="radio" aria-checked={method === m.id} disabled={busy||replayPending} className={`register-method ${method === m.id ? 'is-selected' : ''}`} onClick={() => setMethod(m.id)}><strong className="small">{t(m.label)}</strong></button>)}
             </div>
-            {needsReference && <Field label={t('desk.sale.reference')} required>{id => <Input id={id} value={reference} onChange={e => setReference(e.target.value)} invalid={!reference.trim()} />}</Field>}
+            {needsReference && <Field label={t('desk.sale.reference')} required>{id => <Input disabled={busy||replayPending} id={id} value={reference} onChange={e => setReference(e.target.value)} invalid={!reference.trim()} />}</Field>}
           </Card>
         </div>
         <aside className="register-rail">
           <Card title={t('staff.register.summary')} raised>
             <div className="stack-sm">
               <div className="row-between register-total"><span>{t('staff.register.total')}</span><span>{formatCOP(price, lang)}</span></div>
-              <Field label={t('staff.register.paid')}>{id => <Input id={id} inputMode="numeric" value={paidRaw ?? String(price)} onChange={e => setPaidRaw(e.target.value)} />}</Field>
+              <Field label={t('staff.register.paid')}>{id => <Input disabled={busy||replayPending} id={id} inputMode="numeric" value={paidRaw ?? String(price)} onChange={e => setPaidRaw(e.target.value)} />}</Field>
               {quoted && amount <= 0 && <p className="xs muted" role="note">{t('desk.sale.quoted')}</p>}
-              {differs && <Field label={t('staff.register.note')} required>{id => <Input id={id} value={reason} onChange={e => setReason(e.target.value)} placeholder={t('staff.register.note.ph')} invalid={!reason.trim()} />}</Field>}
-              <Field label={t('staff.register.checkinTo')}>{id => <Select id={id} value={chosen} onChange={e => setSessionId(e.target.value)}><option value="">{t('staff.register.checkinTo.none')}</option>{today.map(({ session: s, teacher: te }) => <option key={s.id} value={s.id}>{formatTime(s.starts_at, lang)} · {s.title}{te ? ` · ${te.display_name}` : ''} ({s.booked_count}/{s.capacity})</option>)}</Select>}</Field>
-              {chosen && <Toggle size="sm" checked={checkIn} onChange={setCheckIn} label={t('staff.checkin.checkin')} />}
+              {differs && <Field label={t('staff.register.note')} required>{id => <Input disabled={busy||replayPending} id={id} value={reason} onChange={e => setReason(e.target.value)} placeholder={t('staff.register.note.ph')} invalid={!reason.trim()} />}</Field>}
+              <Field label={t('staff.register.checkinTo')}>{id => <Select disabled={busy||replayPending} id={id} value={chosen} onChange={e => setSessionId(e.target.value)}><option value="">{t('staff.register.checkinTo.none')}</option>{today.map(({ session: s, teacher: te }) => <option key={s.id} value={s.id}>{formatTime(s.starts_at, lang)} · {s.title}{te ? ` · ${te.display_name}` : ''} ({s.booked_count}/{s.capacity})</option>)}</Select>}</Field>
+              {chosen && <Toggle disabled={busy||replayPending} size="sm" checked={checkIn} onChange={setCheckIn} label={t('staff.checkin.checkin')} />}
               {startedChoice(todayAll, today, sessionId) && <p className="xs muted" role="note" data-desk-session-started>{t('desk.sale.sessionStarted')}</p>}
               {error && <EmptyState compact tone="error" title={t('core.common.error')} body={error} />}
-              <Button block size="lg" disabled={!valid} loading={busy} onClick={complete} icon="payment">{t('staff.register.cta')}</Button>
+              <Button block size="lg" disabled={!valid||(replayPending&&!replayCurrent)} loading={busy} onClick={complete} icon="payment">{t('staff.register.cta')}</Button>
               <p className="xs muted">{t('staff.register.audit', { staff: user.name })}</p>
             </div>
           </Card>

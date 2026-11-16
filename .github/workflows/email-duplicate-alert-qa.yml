@@ -1,0 +1,40 @@
+name: Reception email advisory QA
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - src/modules/staff/index.ts
+      - src/modules/staff/desk/emailDuplicateAlert.ts
+      - src/modules/staff/desk/DeskSalePage.tsx
+      - src/modules/staff/desk/emailDuplicateStrings.ts
+      - src/modules/staff/desk/DuplicateEmailNotice.tsx
+      - src/components/molecule/Notice/Notice.meta.ts
+      - scripts/test-email-duplicate-alert.mjs
+      - scripts/test-email-duplicate-alert-ui.mjs
+      - .github/workflows/email-duplicate-alert-qa.yml
+permissions:
+  contents: read
+jobs:
+  advisory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: node scripts/test-email-duplicate-alert.mjs
+      - run: npm run typecheck
+      - run: node scripts/test-email-duplicate-alert-ui.mjs
+        env:
+          CHROMIUM_PATH: /usr/bin/google-chrome
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reception-email-advisory-${{ github.sha }}
+          path: docs/screenshots/S-04/*email-advisory.png
+          retention-days: 3

@@ -2,7 +2,9 @@ import { lazyPages } from '../../app/lazyPage';
 import type { RouteDef } from '../../specs/types';
 import { STAFF_ROLES, type Role } from '../../auth/roles';
 import { S01, S02, S04, S05, S06, S11 } from './specs';
-export { strings } from './strings';
+import { strings as baseStrings } from './strings';
+import { emailDuplicateStrings } from './desk/emailDuplicateStrings';
+export const strings={...baseStrings,...emailDuplicateStrings};
 // Front-desk pages (S-xx) load as one chunk on first visit.
 const page = lazyPages(() => import('./pages'));
 
