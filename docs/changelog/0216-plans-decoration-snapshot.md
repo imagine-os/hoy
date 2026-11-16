@@ -1,3 +1,9 @@
+---
+date: 2026-11-16
+version: 1.4.1 (unreleased)
+intent: Sample current Plans decoration atomically without relaxing visual release assertions.
+---
+
 # Plans decoration verification uses a fresh DOM snapshot
 
 - Version: 1.4.1 (pending release)

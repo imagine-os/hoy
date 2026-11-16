@@ -1,3 +1,9 @@
+---
+date: 2026-11-16
+version: 1.4.1 (unreleased)
+intent: Fix mobile class row spacing while preserving published content and desktop columns.
+---
+
 # Mobile practice row spacing
 
 - Version: 1.4.1 (pending release)
