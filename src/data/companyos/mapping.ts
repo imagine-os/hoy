@@ -1,3 +1,4 @@
+import { classDescriptionEditorial } from './classDescription';
 import type { BaseRow } from '../schema';
 import { tenant } from '../../tenant/tenant';
 import { modalities as seedModalities, plans as seedPlans, rooms as seedRooms } from '../seed/catalog';
@@ -246,7 +247,7 @@ const classTemplates = entity({
     active: { field: 'active', from: (v) => v !== false },
     // Hoy 12 Nov (D2): the class's own image, a bare file id as stored (untrusted, like a teacher's photo); Class schedule › Clases writes it.
     image_url: { derive: (r) => coachPhotoUrl(r.data[SCHEDULE_FIELDS.image]) },
-    level: { derive: () => 'all' }, generation_mode: { derive: () => 'automatic' }, theme: { derive: () => null }, description: { derive: () => null },
+    level: { derive: () => 'all' }, generation_mode: { derive: () => 'automatic' }, theme: { derive: () => null }, description: { field: 'description', from: classDescriptionEditorial, readOnly: true },
   },
   createDefaults: () => ({ kind: 'class' }),
 });
