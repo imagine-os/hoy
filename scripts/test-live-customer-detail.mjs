@@ -48,5 +48,7 @@ const memberSource=await readFile('src/modules/admin/MemberPage.tsx','utf8');
 assert(!memberSource.includes('<ReviewMemberPage'), 'production must retain the original MemberPage surface');
 assert(memberSource.includes('<LiveCustomerDetail embedded personId={personId} />'), 'production personal editor is embedded additively');
 assert(memberSource.includes('return <MemberDetails') && memberSource.includes('id={route.ids.displayId}') && memberSource.includes('personId={route.ids.personId}'), 'resolved boundary must mount fresh legacy queries with both explicit ids');
+assert(memberSource.includes("{!PRODUCTION_BUILD && <p className=\"small muted\">{t('admin.crm.demo')}</p>}"), 'production must hide the review-only CRM notice');
+assert.equal(memberSource.split("t('admin.crm.demo')").length-1,1,'existing bilingual notice key remains unchanged and unique');
 for(const retained of ["tab === 'bookings'","tab === 'payments' && canPayments",'voiding && <VoidPaymentDrawer',"tab === 'practice'",'<MessageThread'])assert(memberSource.includes(retained),retained+' remains reachable');
 console.log('PASS live customer detail: scoped membership, bounded writes, field conflicts, cancellation, validation, confirmed readback; fictional data only');

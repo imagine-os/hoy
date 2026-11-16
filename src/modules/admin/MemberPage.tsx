@@ -131,7 +131,7 @@ function MemberDetails({ id, personId }: { id: string; personId: string }) {
         <span>{t('admin.crm.col.remaining')}: <strong>{stats?.pkg.left ?? 0}</strong></span>
         <span>{t('admin.crm.col.expires')}: {stats?.pkg.expiresAt ? formatDate(stats.pkg.expiresAt, lang) : '—'}</span>
         <span>{t('admin.crm.col.vouchers')}: {stats?.vouchers.length ?? 0}</span>
-      </div><p className="small muted">{t('admin.crm.demo')}</p>
+      </div>{!PRODUCTION_BUILD && <p className="small muted">{t('admin.crm.demo')}</p>}
       {stats?.vouchers.map(v => <div key={v.id} className="row wrap small"><strong>{v.title}</strong><span>{v.balance} {v.benefitKind === 'classes' ? t('admin.crm.col.remaining') : 'COP'}</span><span>{v.expiresAt ? formatDate(v.expiresAt, lang) : '—'}</span><Badge>{t(`admin.crm.voucher.${v.status}`)}</Badge></div>)}
       </Card>
       <div className="grid grid-4">
