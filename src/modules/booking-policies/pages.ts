@@ -1,1 +1,0 @@
-export { BookingPoliciesPage } from './BookingPoliciesPage';
