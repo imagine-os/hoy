@@ -238,6 +238,7 @@
  /* Keep the 120px mark and 44px controls: spend less space between them on the narrowest phones. */
  .site[data-edition="sanctuary"] .site-head-in { padding-left:var(--sp-sm); padding-right:var(--sp-sm); gap:var(--sp-0); }
  .site[data-edition="sanctuary"] .site-brand-caption { display:none; }
+ .site[data-edition="sanctuary"] .site-brand .wordmark-vector { min-inline-size:var(--wm-min-w); }
  .site[data-edition="sanctuary"] .site-actions { gap:var(--sp-0); }
  .site[data-edition="sanctuary"] .site-burger { min-height:var(--h-ctl); }
  .site[data-edition="sanctuary"] .langtoggle { padding:var(--sp-2xs); }
