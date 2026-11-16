@@ -21,3 +21,11 @@ export function nativeCursorSnapshot() {
     controls,
   };
 }
+
+/** Like the control snapshot, sample a fresh connected text control in one browser JS task.
+ * Only missing/detached/invisible DOM waits. A wrong caret value returns immediately. */
+export function nativeTextCaretSnapshot(selector) {
+  const el = [...document.querySelectorAll(selector)].find(node => node.isConnected && node.getClientRects().length > 0 && getComputedStyle(node).visibility !== 'hidden');
+  if (!el) return false;
+  return { cursor: getComputedStyle(el).cursor, connected: el.isConnected, selector, url: location.href };
+}

@@ -5,7 +5,7 @@ import {chromium} from 'playwright-core';
 import {SITE_PATHS} from '../server/seo.mjs';
 import {resolve,join} from 'node:path';
 import {serveDist} from './lib/launch-qa.mjs';
-import {nativeCursorSnapshot} from './lib/native-cursor-snapshot.mjs';
+import {nativeCursorSnapshot,nativeTextCaretSnapshot} from './lib/native-cursor-snapshot.mjs';
 import {localReviewBase,publishedSite,verifyReleaseProof,verifyReviewProof} from './lib/release-verifier-contracts.mjs';
 
 const base=new URL(process.env.WEBSITE_BASE_URL||'http://127.0.0.1:5490/');
@@ -59,7 +59,7 @@ try{
       await page.goto(siteUrl('/site/teachers?version='+version+'&motion=on'),{waitUntil:'domcontentloaded'});await page.locator('.site[data-site-version="'+(production?'latest':version)+'"]').waitFor();await native(page,lang+' '+version+' teachers');
     }
     await page.goto(siteUrl('/site/contact?motion=on'),{waitUntil:'domcontentloaded'});await page.locator('.site[data-site-version="latest"]').waitFor();await native(page,lang+' contact');
-    for(const selector of ['input:not([type="checkbox"])','textarea']){const control=page.locator(selector).first();await control.waitFor();assert.ok(['text','auto'].includes(await control.evaluate(el=>getComputedStyle(el).cursor)),'native text caret');}
+    for(const selector of ['input:not([type="checkbox"])','textarea']){const handle=await page.waitForFunction(nativeTextCaretSnapshot,selector,{timeout:10000});const caret=await handle.jsonValue();await handle.dispose();assert.equal(caret.connected,true,'native text caret connected: '+selector);assert.ok(['text','auto'].includes(caret.cursor),'native text caret: '+JSON.stringify(caret));}
     await page.screenshot({path:output+'/desktop-'+lang+'.png'});assert.deepEqual(errors,[]);await context.close();
   }
   for(const touch of [false,true]){
