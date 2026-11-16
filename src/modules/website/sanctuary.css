@@ -37,7 +37,8 @@
 .site[data-edition="sanctuary"] .card-highlight { background-color: var(--color-highlight); background-image: var(--tex-surf); }
 .site[data-edition="sanctuary"] .site-panel { border-radius: var(--r-sm); background-image: linear-gradient(rgba(53,89,125,.92),rgba(53,89,125,.92)),url('../../../public/images/sanctuary/texture-blue.webp'); background-size: cover; padding: var(--sp-3xl); }
 .site[data-edition="sanctuary"] .site-panel h2 { color: var(--brand-cream); }
-.site[data-edition="sanctuary"] .site-classrow { gap: 8%; }
+/* Percentage gaps belong to the desktop columns only: a percentage row gap overflows auto-height phone rows. */
+.site[data-edition="sanctuary"] .site-classrow { column-gap: 8%; }
 .site[data-edition="sanctuary"] .site-classrow-media { max-width: 31.25rem; }
 .site[data-edition="sanctuary"] .site-classrow .mediaslot { aspect-ratio: 4/5 !important; border-radius: 48% 48% 5px 5px; }
 .site[data-edition="sanctuary"] .site-teachergrid { gap: var(--grid-gap); }
