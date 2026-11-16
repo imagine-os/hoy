@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useData } from '../../../data/DataContext';
 import { cosRequest, errorCode, type CosRequest } from './wire';
 import { fieldsOf } from '../../admin/customers/customerBalances';
@@ -42,20 +42,24 @@ export async function queryAll(request: CosRequest, spec: QuerySpec, max = 5000)
 export function useCosQueries<K extends string>(specs: Record<K, QuerySpec>, deps: unknown[] = []) {
   const data = useData();
   const request = cosRequest(data);
-  const [state, setState] = useState<{ rows: Record<K, CosRow[]> | null; loading: boolean; error: string | null }>({ rows: null, loading: !!request, error: null });
+  const [state, setState] = useState<{ source: object | null; rows: Record<K, CosRow[]> | null; loading: boolean; error: string | null }>({ source: null, rows: null, loading: !!request, error: null });
   const [version, setVersion] = useState(0);
   const key = JSON.stringify(specs);
+  // A distinct token for every render context/query/reload. Results keep their closure's token,
+  // so an old promise resolving before passive cleanup can never become current in a new context.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const source = useMemo(() => ({}), [data, request, key, version, ...deps]);
   useEffect(() => {
     if (!request) return;
     let alive = true;
     setState(s => ({ ...s, loading: true, error: null }));
     const names = Object.keys(specs) as K[];
     Promise.all(names.map(n => queryAll(request, specs[n])))
-      .then(results => { if (alive) setState({ rows: Object.fromEntries(names.map((n, i) => [n, results[i]])) as Record<K, CosRow[]>, loading: false, error: null }); })
+      .then(results => { if (alive) setState({ source, rows: Object.fromEntries(names.map((n, i) => [n, results[i]])) as Record<K, CosRow[]>, loading: false, error: null }); })
       .catch(e => { if (alive) setState(s => ({ ...s, loading: false, error: errorCode(e) })); });
     return () => { alive = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, key, version, ...deps]);
+  }, [source]);
   const reload = useCallback(() => setVersion(v => v + 1), []);
-  return { ...state, request, reload };
+  return { ...state, request, reload, current: state.source === source && !!request && !state.loading && !state.error };
 }

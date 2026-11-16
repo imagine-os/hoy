@@ -2,6 +2,10 @@ import type { StringTable } from '../../../i18n/types';
 
 /** H-7 · AD-01 / AD-02 copy for the production schedule screens. */
 export const liveScheduleStrings: StringTable = {
+  'live.export.button': { es: 'Exportar vista (.xlsx)', en: 'Export view (.xlsx)' },
+  'live.export.scope': { es: 'Descarga las fechas de esta vista: próximos 14 días, incluidas las canceladas. Horario del estudio; columnas y categorías en español, como la plantilla. No modifica clases ni reservas.', en: 'Downloads this view: next 14 days, including cancelled dates. Studio time; Spanish columns and categories match the template. Classes and bookings are unchanged.' },
+  'live.export.done': { es: 'Archivo preparado para descargar.', en: 'File prepared for download.' },
+  'live.export.error': { es: 'No se pudo exportar: hay datos incompletos o no válidos. Recarga la vista y vuelve a intentar.', en: 'Could not export: data is incomplete or invalid. Reload this view and try again.' },
   'live.tab.classes': { es: 'Clases', en: 'Classes' },
   'live.tab.dates': { es: 'Próximas fechas', en: 'Upcoming dates' },
   'live.tab.teachers': { es: 'Profesores', en: 'Teachers' },

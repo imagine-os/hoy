@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useSession } from '../../../auth/SessionProvider';
-import { addDays, dateKey, formatDateTime, studioDate } from '../../../i18n/format';
+import { addDays, dateKey, formatDateTime, studioDate, STUDIO_TIMEZONE } from '../../../i18n/format';
 import { Card } from '../../../components/molecule/Card/Card';
 import { Button } from '../../../components/atom/Button/Button';
 import { Input, Select } from '../../../components/atom/Input/Input';
@@ -23,6 +23,9 @@ import {
   coachProfileOf, scheduleImageOf, schedulePublishBlocked, scheduleProblems, scheduleTypeHint, updateCoachOps, updateResourceOps, updateScheduleOps, type CoachProfile, type ScheduleDraft,
 } from './scheduleOps';
 
+import { downloadScheduleWorkbook, exportRows } from './scheduleExport';
+import { scheduleQueries } from './scheduleQueries';
+
 type Tab = 'classes' | 'dates' | 'teachers' | 'rooms';
 const str = (v: unknown) => (typeof v === 'string' ? v : '');
 const num = (v: unknown) => (typeof v === 'number' ? v : Number(v) || 0);
@@ -33,7 +36,7 @@ const idOf = (v: unknown) => (v && typeof v === 'object' ? str((v as { id?: unkn
 /** AD-01 / AD-02 in the production build: classes (schedules), their dates (occurrences), teachers (coaches) and rooms. */
 export function LiveSchedulePage() {
   const { t, lang } = useI18n();
-  const { can } = useSession();
+  const { can, user, role, viewAs, viewAsPerson, status, signedIn } = useSession();
   const canWrite = can('classes.write');
   const canEditTeachers = can('teachers.write');
   // A class's image is public like a teacher's photo and has the same gate (Administration, Super Admin): the Coordinator's `classes.write` is not enough.
@@ -43,18 +46,20 @@ export function LiveSchedulePage() {
   // Studio days, not UTC ones: from the start of today in Medellín, so yesterday's evening classes are not listed.
   const from = studioMidnight(dateKey(now));
   const until14 = studioMidnight(dateKey(addDays(now, 14)));
-  const q = useCosQueries({
-    schedules: { entity: 'schedule', sort: [{ field: 'weekday', dir: 'asc' }, { field: 'start_time', dir: 'asc' }] },
-    resources: { entity: 'resource', filter: { field: 'kind', op: 'eq', value: 'room' }, sort: [{ field: 'name', dir: 'asc' }] },
-    coaches: { entity: 'coach', include: [{ field: 'person', fields: ['name', 'email', 'phone'] }] } as never,
-    occurrences: { entity: 'occurrence', filter: { and: [{ field: 'starts_at', op: 'gte', value: from }, { field: 'starts_at', op: 'lt', value: until14 }] }, sort: [{ field: 'starts_at', dir: 'asc' }] },
-  });
+  const q = useCosQueries(scheduleQueries(from, until14), [user.id, role, viewAs, viewAsPerson?.id, status, signedIn]);
   const [message, setMessage] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
   // A teacher's photo uploading: as with a save, the tabs and Cancel wait.
   const [photoBusy, setPhotoBusy] = useState(false);
   // `/query` rows carry their fields under `data` (ADM-01 / ADM-02): read them flat, includes kept as embedded objects.
   const rows = useMemo(() => q.rows && { schedules: flatRows(q.rows.schedules), resources: flatRows(q.rows.resources), coaches: flatRows(q.rows.coaches), occurrences: flatRows(q.rows.occurrences) }, [q.rows]);
+  const exportReady = q.current && status === 'ready' && signedIn && !!rows && !q.loading && !q.error && !busy &&
+    Object.values(rows).every(list => list.length < 5000);
+  const exportDates = () => {
+    if (!exportReady || !rows) return;
+    try { downloadScheduleWorkbook(exportRows(rows.occurrences, coachName, roomName, STUDIO_TIMEZONE)); setMessage({ tone: 'ok', text: t('live.export.done') }); }
+    catch { setMessage({ tone: 'error', text: t('live.export.error') }); }
+  };
   const rooms = rows?.resources ?? [], coaches = rows?.coaches ?? [];
   const roomName = (id: unknown) => str(rooms.find(r => r.id === idOf(id))?.name) || '—';
   const coachName = (id: unknown) => { const c = coaches.find(x => x.id === idOf(id)); return c ? str((c.person as { name?: string } | null)?.name) || '—' : '—'; };
@@ -78,6 +83,7 @@ export function LiveSchedulePage() {
       {q.error && <EmptyState compact tone="error" title={t('live.loadError')} body={deskErrorText(q.error, t)} action={<Button size="sm" onClick={q.reload}>{t('core.common.retry')}</Button>} />}
       {q.loading && !rows && <EmptyState compact tone="loading" title={t('core.common.loading')} />}
       {rows && tab === 'classes' && <Classes rows={rows.schedules} rooms={rooms} coaches={coaches} roomName={roomName} coachName={coachName} weekday={weekday} canWrite={canWrite} canEditImage={canEditImage} busy={busy} photoBusy={photoBusy} setPhotoBusy={setPhotoBusy} run={run} />}
+      {tab === 'dates' && <div className="stack-sm"><div><Button type="button" variant="secondary" disabled={!exportReady} onClick={exportDates}>{t('live.export.button')}</Button></div><p className="xs muted">{t('live.export.scope')}</p></div>}
       {rows && tab === 'dates' && <Dates rows={rows.occurrences} schedules={rows.schedules} rooms={rooms} roomName={roomName} coachName={coachName} canWrite={canWrite} busy={busy} run={run} lang={lang} />}
       {rows && tab === 'teachers' && <Teachers rows={coaches} canWrite={canEditTeachers} busy={busy} photoBusy={photoBusy} setPhotoBusy={setPhotoBusy} run={run} />}
       {rows && tab === 'rooms' && <Rooms rows={rooms} canWrite={canWrite} busy={busy} run={run} />}

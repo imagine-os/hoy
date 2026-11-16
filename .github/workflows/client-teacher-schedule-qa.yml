@@ -1,0 +1,51 @@
+name: Client teacher and schedule tools QA
+on:
+  pull_request:
+    paths:
+      - 'src/modules/classSchedule/live/**'
+      - 'src/modules/teacher/**'
+      - 'src/modules/staff/desk/useCos.ts'
+      - 'src/modules/staff/desk/*Duplicate*'
+      - 'src/modules/staff/desk/emailDuplicate*'
+      - 'src/modules/staff/desk/DeskSalePage.tsx'
+      - 'scripts/test-schedule-export*.mjs'
+      - 'scripts/test-teacher-live-roster*.mjs'
+      - 'scripts/test-email-duplicate-alert*.mjs'
+      - '.github/workflows/client-teacher-schedule-qa.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  feature-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Verify export and read-only teacher contracts
+        run: |
+          node scripts/test-schedule-export.mjs
+          node scripts/test-schedule-export-context.mjs
+          node scripts/test-schedule-export-pagination.mjs
+          node scripts/test-teacher-live-roster.mjs
+          node scripts/test-teacher-ownership.mjs
+      - run: npm run build:production
+      - run: node scripts/test-route-connectivity.mjs
+      - name: Test actual components using fictional providers only
+        run: |
+          node scripts/test-schedule-export-ui.mjs
+          node scripts/test-teacher-live-roster-ui.mjs
+        env:
+          CHROMIUM_PATH: /usr/bin/google-chrome
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: client-teacher-schedule-${{ github.event.pull_request.head.sha || github.sha }}
+          path: qa/schedule-export
+          retention-days: 7
