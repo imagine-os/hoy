@@ -32,6 +32,7 @@ jobs:
         run: |
           node scripts/test-schedule-export.mjs
           node scripts/test-schedule-export-context.mjs
+          node scripts/test-schedule-export-fixture.mjs
           node scripts/test-schedule-export-pagination.mjs
           node scripts/test-teacher-live-roster.mjs
           node scripts/test-teacher-ownership.mjs
