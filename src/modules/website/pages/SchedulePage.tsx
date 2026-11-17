@@ -15,7 +15,6 @@ import type { ModalityRow, RoomRow } from '../../../data/schema';
 import { SessionCalendar } from '../../../components/organism/SessionCalendar/SessionCalendar';
 import { useSession } from '../../../auth/SessionProvider';
 import { purchaseEntry } from '../../../auth/purchaseEntry';
-import { tenant } from '../../../tenant/tenant';
 import { Chip } from '../../../components/atom/Chip/Chip';
 import { Drawer } from '../../../components/organism/Drawer/Drawer';
 import { Button } from '../../../components/atom/Button/Button';
@@ -89,7 +88,7 @@ export function SchedulePage() {
   };
 
   const SECTIONS: Record<string, () => ReactNode> = {
-    PageHead: () => <PageHead title={t('site.schedule.title')} body={t('site.schedule.body', { mats: tenant.studio.mats, classes: tenant.studio.classesPerDay })} />,
+    PageHead: () => <PageHead title={t('site.schedule.title')} body={t('site.schedule.body')} />,
     DayTabs: () => null,
     ClassList: () => <section className="container"><SessionCalendar sessions={list} onPick={s => { setPicked(s.id); }} /></section>,
     Legend: () => (
@@ -100,7 +99,7 @@ export function SchedulePage() {
             <Chip key={m.id} tone={m.tone} dot selected={modFilter === m.slug} onClick={() => pickModality(m.slug)}>{bi({ es: m.name_es, en: m.name_en })}</Chip>
           ))}
         </div>
-        <p className="xs muted" style={{ marginTop: 'var(--sp-sm)' }}>{t('site.schedule.legendBody', { mats: tenant.studio.mats })}</p>
+        <p className="xs muted" style={{ marginTop: 'var(--sp-sm)' }}>{t('site.schedule.legendBody')}</p>
       </section>
     ),
   };

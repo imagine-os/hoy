@@ -1,0 +1,34 @@
+name: Public class and contact QA
+on:
+  push:
+    branches: [fix/public-class-contact-20261113]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  public-ui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: node scripts/test-public-class-contact.mjs && node scripts/test-public-schedule-copy.mjs && node scripts/test-home-photography.mjs && node scripts/test-contacts.mjs
+      - name: Render local fixtures, never send messages
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 5510 > /tmp/public-preview.log 2>&1 &
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:5510/ >/dev/null && break; sleep 1; done
+          node scripts/test-public-class-contact-ui.mjs
+        env:
+          CHROMIUM_PATH: /usr/bin/google-chrome
+          QA_BASE: http://127.0.0.1:5510
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: public-class-contact-${{ github.sha }}
+          path: qa/public-class-contact
+          retention-days: 7

@@ -15,6 +15,7 @@ import { Button } from '../../components/atom/Button/Button';
 import './site.css';
 import './sanctuary.css';
 import './photography.css';
+import './blue-red.css';
 import { useSiteEdition } from './edition';
 import { useLaunchConfig } from '../../config/launch';
 import { Icon } from '../../components/atom/Icon/Icon';

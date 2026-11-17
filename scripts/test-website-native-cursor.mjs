@@ -1,53 +1,72 @@
 import assert from 'node:assert/strict';
-import {mkdir,writeFile} from 'node:fs/promises';
+import {mkdir,writeFile,readFile} from 'node:fs/promises';
 import {existsSync} from 'node:fs';
 import {chromium} from 'playwright-core';
+import {SITE_PATHS} from '../server/seo.mjs';
+import {resolve,join} from 'node:path';
+import {serveDist} from './lib/launch-qa.mjs';
+import {nativeCursorSnapshot,nativeTextCaretSnapshot} from './lib/native-cursor-snapshot.mjs';
+import {localReviewBase,publishedSite,verifyReleaseProof,verifyReviewProof} from './lib/release-verifier-contracts.mjs';
 
 const base=new URL(process.env.WEBSITE_BASE_URL||'http://127.0.0.1:5490/');
+const production=base.href==='https://hoyhumanclub.com/';
+if(!production)localReviewBase(base.href);
+const siteUrl=route=>{if(!production)return new URL('#'+route,base).href;const split=route.indexOf('?'),path=split<0?route:route.slice(0,split),query=split<0?'':route.slice(split);const pair=SITE_PATHS.find(([from])=>from===path);assert(pair,'known_public_path_required');return new URL(pair[1]+query,base).href;};
+const latestUrl=url=>url.origin===base.origin&&url.pathname===base.pathname&&(production?!url.hash:url.hash==='#/site');
 const expected=process.argv[2];assert.match(expected||'',/^[a-f0-9]{40}$/);
 const output=process.env.CURSOR_OUTPUT||'qa/website-native-cursor';
 await mkdir(output,{recursive:true});
-const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||(existsSync('/usr/bin/chromium')?'/usr/bin/chromium':undefined),args:['--no-sandbox','--disable-dev-shm-usage']});
+let localServer=null,browser;
+if(process.env.QA_REVIEW_DIST){
+ assert(!production&&base.href==='http://127.0.0.1:5490/','exact_review_cursor_origin_required');
+ const directory=resolve(process.env.QA_REVIEW_DIST);
+ const [proof,release]=await Promise.all(['qa-review-proof.json','release.json'].map(name=>readFile(join(directory,name),'utf8').then(JSON.parse)));
+ verifyReviewProof(proof,release,expected,'hoy');localServer=await serveDist(5490,directory);
+}
+async function newContext(options){const context=await browser.newContext(options);if(!production)await context.route('**/*',route=>{const url=new URL(route.request().url());return url.origin===base.origin?route.continue():route.abort();});return context;}
 const results=[];let active;
 async function native(page,label){
   const brand=page.locator('.site-brand');
   if(await brand.count())await brand.hover();
   else await page.mouse.move(80,180);
-  const state=await page.evaluate(()=>({overlays:document.querySelectorAll('.element-cursor,.element-cursor-dot,.element-cursor-ring').length,active:document.documentElement.classList.contains('element-cursor-active'),body:getComputedStyle(document.body).cursor}));
+  const snapshot=await page.waitForFunction(nativeCursorSnapshot,undefined,{timeout:10000});
+  const state=await snapshot.jsonValue();await snapshot.dispose();
   assert.equal(state.overlays,0,label+': decorative cursor nodes removed');
   assert.equal(state.active,false,label+': native cursor never hidden');
   assert.notEqual(state.body,'none');assert.ok(!state.body.includes('url('));
-  for(const selector of ['.site-brand','.site-nav a:visible','.site-actions button:visible','.coming-soon-login']){
-    const control=page.locator(selector).first();if(await control.count())assert.equal(await control.evaluate(el=>getComputedStyle(el).cursor),'pointer',label+': '+selector);
+  for(const control of state.controls){
+    assert.equal(control.connected,true,label+': attached '+control.selector);
+    assert.equal(control.cursor,'pointer',label+': '+control.selector);
   }
-  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
+  assert.ok(state.fits);
   results.push({label,...state});
 }
 try{
-  const check=await browser.newContext();const response=await check.request.get(new URL('release.json?cursor='+expected,base).href);assert.equal(response.status(),200);assert.equal((await response.json()).sourceCommit,expected);await check.close();
+  browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||(existsSync('/usr/bin/chromium')?'/usr/bin/chromium':undefined),args:['--no-sandbox','--disable-dev-shm-usage']});
+  const check=await newContext();const response=await check.request.get(new URL('release.json?cursor='+expected,base).href);assert.equal(response.status(),200);const release=await response.json();assert.equal(release.sourceCommit,expected);if(production){const config=await check.request.get(new URL('app-config.json',base).href),health=await check.request.get(new URL('health',base).href);assert(config.ok()&&health.ok());publishedSite(await config.json());verifyReleaseProof(await health.json(),release,expected);}await check.close();
   for(const [lang,dark]of [['es',false],['en',true]]){
-    const context=await browser.newContext({viewport:{width:1280,height:900},reducedMotion:'no-preference'});
+    const context=await newContext({viewport:{width:1280,height:900},reducedMotion:'no-preference'});
     await context.addInitScript(({lang,dark})=>{localStorage.setItem('hoyos.lang',lang);localStorage.setItem('hoyos.theme',JSON.stringify({theme:dark?'dark':'light',skin:'styled'}));},{lang,dark});
     const page=active=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
     await page.goto(base.href,{waitUntil:'domcontentloaded'});await page.locator('a').first().waitFor();await native(page,lang+' landing');
-    await page.goto(new URL('website/',base).href,{waitUntil:'domcontentloaded'});await page.waitForURL(url=>url.hash==='#/site');await page.locator('.site[data-site-version="latest"]').waitFor();await native(page,lang+' Latest entry');
+    await page.goto(new URL('website/',base).href,{waitUntil:'domcontentloaded'});await page.waitForURL(latestUrl);await page.locator('.site[data-site-version="latest"]').waitFor();await native(page,lang+' Latest entry');
     await page.screenshot({path:output+'/latest-'+lang+'.png'});
     await page.keyboard.press('Tab');
     assert.ok(await page.evaluate(()=>{const el=document.activeElement,s=el&&getComputedStyle(el);return el&&el!==document.body&&s.outlineStyle!=='none'&&parseFloat(s.outlineWidth)>=1;}),'keyboard focus remains visible');
-    await page.locator('.site-nav a[href*="/site/plans"]').click();await page.locator('.site-pagehead').waitFor();await native(page,lang+' link navigation');
-    await page.goBack();await page.waitForURL(url=>url.hash==='#/site');await page.locator('.site[data-site-version="latest"]').waitFor();await native(page,lang+' browser back');
+    await page.locator(production?'.site-nav a[href="/planes"]':'.site-nav a[href*="/site/plans"]').click();await page.locator('.site-pagehead').waitFor();await native(page,lang+' link navigation');
+    await page.goBack();await page.waitForURL(latestUrl);await page.locator('.site[data-site-version="latest"]').waitFor();await native(page,lang+' browser back');
     for(const version of ['latest','photos','classic','archive']){
-      await page.goto(new URL('#/site/teachers?version='+version+'&motion=on',base).href,{waitUntil:'domcontentloaded'});await page.locator('.site[data-site-version="'+version+'"]').waitFor();await native(page,lang+' '+version+' teachers');
+      await page.goto(siteUrl('/site/teachers?version='+version+'&motion=on'),{waitUntil:'domcontentloaded'});await page.locator('.site[data-site-version="'+(production?'latest':version)+'"]').waitFor();await native(page,lang+' '+version+' teachers');
     }
-    await page.goto(new URL('#/site/contact?motion=on',base).href,{waitUntil:'domcontentloaded'});await page.locator('.site[data-site-version="latest"]').waitFor();await native(page,lang+' contact');
-    for(const selector of ['input:not([type="checkbox"])','textarea']){const control=page.locator(selector).first();await control.waitFor();assert.ok(['text','auto'].includes(await control.evaluate(el=>getComputedStyle(el).cursor)),'native text caret');}
+    await page.goto(siteUrl('/site/contact?motion=on'),{waitUntil:'domcontentloaded'});await page.locator('.site[data-site-version="latest"]').waitFor();await native(page,lang+' contact');
+    for(const selector of ['input:not([type="checkbox"])','textarea']){const handle=await page.waitForFunction(nativeTextCaretSnapshot,selector,{timeout:10000});const caret=await handle.jsonValue();await handle.dispose();assert.equal(caret.connected,true,'native text caret connected: '+selector);assert.ok(['text','auto'].includes(caret.cursor),'native text caret: '+JSON.stringify(caret));}
     await page.screenshot({path:output+'/desktop-'+lang+'.png'});assert.deepEqual(errors,[]);await context.close();
   }
   for(const touch of [false,true]){
-    const context=await browser.newContext({viewport:{width:touch?390:1280,height:844},hasTouch:touch,isMobile:touch,reducedMotion:touch?'no-preference':'reduce'});
+    const context=await newContext({viewport:{width:touch?390:1280,height:844},hasTouch:touch,isMobile:touch,reducedMotion:touch?'no-preference':'reduce'});
     const page=active=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
-    await page.goto(new URL('#/site?motion=on',base).href,{waitUntil:'domcontentloaded'});await page.locator('.site[data-site-version="latest"]').waitFor();await native(page,touch?'touch':'reduced motion');
-    if(touch){const menu=page.locator('.site-burger');await menu.tap();assert.equal(await menu.getAttribute('aria-expanded'),'true');await page.locator('.site-nav a[href*="/site/teachers"]').tap();await page.locator('.site-teachergrid').waitFor();await native(page,'touch navigation');await page.screenshot({path:output+'/touch-390.png'});}
+    await page.goto(siteUrl('/site?motion=on'),{waitUntil:'domcontentloaded'});await page.locator('.site[data-site-version="latest"]').waitFor();await native(page,touch?'touch':'reduced motion');
+    if(touch){const menu=page.locator('.site-burger');await menu.tap();assert.equal(await menu.getAttribute('aria-expanded'),'true');await page.locator(production?'.site-nav a[href="/profesores"]':'.site-nav a[href*="/site/teachers"]').tap();await page.locator('.site-teachergrid').waitFor();await native(page,'touch navigation');await page.screenshot({path:output+'/touch-390.png'});}
     assert.deepEqual(errors,[]);await context.close();
   }
   await writeFile(output+'/verified.json',JSON.stringify({expectedSource:expected,base:base.href,checkedAt:new Date().toISOString(),results},null,2));
@@ -55,4 +74,4 @@ try{
 }catch(error){
   if(active&&!active.isClosed()){await writeFile(output+'/failure.json',JSON.stringify({message:error.message,url:active.url(),cursor:await active.evaluate(()=>({overlays:document.querySelectorAll('.element-cursor').length,active:document.documentElement.classList.contains('element-cursor-active')}))},null,2)).catch(()=>{});await active.screenshot({path:output+'/failure.png'}).catch(()=>{});}
   throw error;
-}finally{await browser.close();}
+}finally{await browser?.close();await localServer?.close();}

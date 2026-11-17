@@ -1,3 +1,4 @@
+import { CLASS_DESCRIPTION_LIMIT, classDescriptionText } from '../../../data/companyos/classDescription';
 import type { BatchOp } from '../../staff/desk/wire';
 import { COACH_FIELDS, SCHEDULE_FIELDS, coachBio, coachPhotoUrl, coachPhotoValue, coachSpecialties } from '../../../data/companyos/publicImages';
 
@@ -11,19 +12,20 @@ import { COACH_FIELDS, SCHEDULE_FIELDS, coachBio, coachPhotoUrl, coachPhotoValue
 export const CLASS_MINUTES = 50;
 export const WEEKDAYS = [1, 2, 3, 4, 5, 6, 0] as const; // Monday first; 0 = Sunday, as Company OS stores it
 
-export interface ScheduleDraft { title: string; weekday: number; start_time: string; resource: string; coach: string; capacity: number; valid_from: string; valid_until?: string; active: boolean; /** The class type's slug (`schedule.modality`, the recipe's select); required to publish. */ modality?: string; /** The class image as a `/media/<id>` address or none (D2); undefined: the form has no image field, nothing is sent. */ image?: string | null; /** `schedule.image` as stored when the form opened: an update is refused if it has changed since. */ imageAtOpen?: unknown }
+export interface ScheduleDraft { description?: string; title: string; weekday: number; start_time: string; resource: string; coach: string; capacity: number; valid_from: string; valid_until?: string; active: boolean; /** The class type's slug (`schedule.modality`, the recipe's select); required to publish. */ modality?: string; /** The class image as a `/media/<id>` address or none (D2); undefined: the form has no image field, nothing is sent. */ image?: string | null; /** `schedule.image` as stored when the form opened: an update is refused if it has changed since. */ imageAtOpen?: unknown }
 export interface ResourceDraft { name: string; capacity: number }
 /** A teacher's public profile: `specialties` are class type slugs, `photo` a `/media/<id>` address or none. */
 export interface CoachProfile { bio: { es: string; en: string }; specialties: string[]; photo: string | null }
 /** `photoAtOpen`: the `photo` the record held when the form opened, as stored: a save is refused if it has changed since. */
 export interface CoachDraft { name: string; email?: string; phone?: string; active: boolean; profile?: CoachProfile; photoAtOpen?: unknown }
 
-export type ScheduleProblem = 'title' | 'weekday' | 'start_time' | 'resource' | 'coach' | 'capacity' | 'valid_from' | 'modality';
+export type ScheduleProblem = 'title' | 'weekday' | 'start_time' | 'resource' | 'coach' | 'capacity' | 'valid_from' | 'modality' | 'description';
 
 /** Checks a class before it is sent; the server checks types and references. */
 export function scheduleProblems(d: ScheduleDraft, roomCapacity: number | undefined): ScheduleProblem[] {
   const out: ScheduleProblem[] = [];
   if (!d.title.trim()) out.push('title');
+  if (d.description !== undefined && (typeof d.description !== 'string' || d.description.length > CLASS_DESCRIPTION_LIMIT)) out.push('description');
   if (!Number.isInteger(d.weekday) || d.weekday < 0 || d.weekday > 6) out.push('weekday');
   if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(d.start_time)) out.push('start_time');
   if (!d.resource) out.push('resource');
@@ -44,6 +46,7 @@ export const scheduleTypeHint = (row: Record<string, unknown>): 'publish' | 'unb
   hasClassType(row) ? null : row.active === false ? 'publish' : 'unbookable';
 
 export const scheduleData = (d: ScheduleDraft) => ({
+  ...(d.description !== undefined ? { description: classDescriptionText(d.description) } : {}),
   title: d.title.trim(), kind: 'class', weekday: d.weekday, start_time: d.start_time, duration_minutes: CLASS_MINUTES,
   resource: d.resource, coach: d.coach, capacity: d.capacity,
   valid_from: d.valid_from, valid_until: d.valid_until || null, active: d.active,

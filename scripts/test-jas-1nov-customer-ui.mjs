@@ -47,7 +47,7 @@ const PRODUCTS = [
 ];
 const iso = (ms) => new Date(Date.now() + ms).toISOString();
 /** A class tomorrow (`/query` occurrence); `booked` is the server's count. */
-const occurrence = (booked) => ({ id: 'occ_9', data: { title: 'Pulso', starts_at: iso(26 * 3600_000), ends_at: iso(27 * 3600_000), capacity: 15, booked_count: booked, status: 'scheduled', resource: null, coach: null, schedule: null }, createdAt: at, updatedAt: at });
+const occurrence = (booked) => ({ id: 'occ_9', data: { title: 'Pulso', starts_at: iso(26 * 3600_000), ends_at: iso(27 * 3600_000), capacity: 15, booked_count: booked, status: api.calendarCancelled ? 'cancelled' : 'scheduled', resource: null, coach: null, schedule: null }, createdAt: at, updatedAt: at });
 const api = {};
 const userOf = (req) => /^Bearer fake\.([^.]+)\.[^.]+$/.exec(req.headers.authorization ?? '')?.[1] ?? null;
 const json = (res, status, body) => { res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(body)); };
@@ -90,7 +90,8 @@ const server = createServer(async (req, res) => {
       if (spec.entity === 'member') return json(res, 200, { data: m?.roleKeys.includes('member') ? [{ id: `mem_${user}`, data: { person: `per_${user}`, status: 'active', price_audience: m.audience ?? 'general', joined_at: '2026-10-01' }, createdAt: at, updatedAt: at }] : [] });
       if (spec.entity === 'product') return json(res, 200, { data: [...PRODUCTS, ...(api.giftProduct ? [{ id: 'prd_gift4', data: { key: 'gift4', name: 'Regalo 4 clases', kind: 'gift', price: 160000, credits: 4, validity_days: 90, active: true, freezable: false, audience: null, valid_from: '2026-01-01', valid_until: null }, createdAt: at, updatedAt: at }] : [])] });
       // With the live booking, a second class an hour later the same day, to move to.
-      if (spec.entity === 'occurrence') return json(res, 200, { data: [occurrence(api.released ? 4 : 5), ...(api.liveBooking ? [{ ...occurrence(2), id: 'occ_10', data: { ...occurrence(2).data, title: 'Fuerza', starts_at: iso(26.5 * 3600_000), ends_at: iso(27.5 * 3600_000) } }] : [])] });
+      if (spec.entity === 'occurrence' && api.calendarCancelled) api.cancelledReads++;
+      if (spec.entity === 'occurrence') return json(res, 200, { data: [occurrence(api.released ? 4 : 5), { ...occurrence(0), id: 'occ_cancelled', data: { ...occurrence(0).data, title: 'CANCELLED FIXTURE ONLY', status: 'cancelled' } }, ...(api.liveBooking ? [{ ...occurrence(2), id: 'occ_10', data: { ...occurrence(2).data, title: 'Fuerza', starts_at: iso(26.5 * 3600_000), ends_at: iso(27.5 * 3600_000) } }] : [])] });
       // PAG-03: Ana's single class held by transfer, whose time ran out a minute ago; `released` is the server's pass.
       // Review r1: Ana's booked class tomorrow, cancelled from its change sheet (Company OS stores late_cancel).
       if (spec.entity === 'booking' && (user === 'user_ana' || user === 'user_deskcust') && api.liveBooking) return json(res, 200, { data: [{ id: 'bk_live', data: { person: `per_${user}`, occurrence: 'occ_9', entitlement: 'credit', ...(api.liveCancelled ? { status: 'late_cancel', cancelled_at: iso(-5_000) } : { status: 'booked' }) }, createdAt: at, updatedAt: at }] });
@@ -161,7 +162,7 @@ const MEMBERS = () => ({
 const browser = await launchBrowser();
 const errors = [];
 async function open(path = '/', { lang = 'es', width = 1280 } = {}) {
-  api.members = MEMBERS(); api.signups = []; api.batches = []; api.emailLinked = false; api.rejectName = false; api.duplicatePerson = false; api.noNameField = false; api.expiredHold = false; api.released = false; api.liveBooking = false; api.liveCancelled = false; api.rejectOther = false; api.packPending = false; api.giftProduct = false;
+  api.calendarCancelled = false; api.cancelledReads = 0; api.members = MEMBERS(); api.signups = []; api.batches = []; api.emailLinked = false; api.rejectName = false; api.duplicatePerson = false; api.noNameField = false; api.expiredHold = false; api.released = false; api.liveBooking = false; api.liveCancelled = false; api.rejectOther = false; api.packPending = false; api.giftProduct = false;
   const ctx = await browser.newContext({ viewport: { width, height: 900 }, reducedMotion: 'reduce' });
   await ctx.route(/^https?:\/\/(?!127\.0\.0\.1)/, (r) => r.abort());
   await ctx.route(`https://${HOST}/npm/@clerk/clerk-js@*/dist/clerk.browser.js`, (r) => r.fulfill({ status: 200, contentType: 'text/javascript', body: FAKE_CLERK }));
@@ -455,6 +456,33 @@ try {
     await page.goto(`${BASE}/#/app/plans`); await page.waitForTimeout(1800);
     const plansText = await text(page, '.cust-plans');
     check(`PRO-05: ${affiliate ? 'an affiliate sees' : 'a non-affiliate does not see'} the Santa María pack in the app`, /Paquete de 12 clases/.test(plansText) && /Santa María/.test(plansText) === affiliate, plansText.slice(0, 300));
+    await ctx.close();
+  }
+
+  // Canceled classes disappear from browse, not from server records or booking history.
+  for (const lang of ['es', 'en']) for (const width of [390, 1280]) {
+    ({ ctx, page } = await open('/auth/sign-in', { lang, width }));
+    await signIn(page, 'ana@example.test');
+    for (const routeName of ['/app/schedule', '/app/schedule/week']) {
+      await page.goto(`${BASE}/#${routeName}`);
+      await page.locator('.session-calendar input[type=date]').waitFor();
+      const day = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(occurrence(5).data.starts_at));
+      await page.locator('.session-calendar input[type=date]').fill(day);
+      await page.waitForTimeout(1000);
+      const contents = await text(page, '.session-calendar');
+      check(`canceled browse ${lang}/${width}/${routeName}: scheduled remains, canceled absent`, contents.includes('Pulso') && !contents.includes('CANCELLED FIXTURE ONLY'), contents.slice(0,400));
+    }
+    const batchCount = api.batches.length;
+    api.calendarCancelled = true;
+    await page.waitForTimeout(22_000);
+    await page.locator('.session-calendar').waitFor({ state: 'visible' });
+    await page.locator('.session-calendar .calendar-empty').first().waitFor({ state: 'visible' });
+    check(`canceled poll ${lang}/${width}: canceled session removed after refresh`, api.cancelledReads > 0 && !(await page.locator('.session-calendar').innerText()).includes('Pulso'));
+    check(`canceled poll ${lang}/${width}: no writes`, api.batches.length === batchCount);
+    api.calendarCancelled = false;
+    await page.reload();
+    await page.waitForTimeout(1200);
+    check(`canceled reload ${lang}/${width}: restored scheduled fixture visible`, (await text(page, '.session-calendar')).includes('Pulso'));
     await ctx.close();
   }
 

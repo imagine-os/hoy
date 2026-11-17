@@ -25,6 +25,7 @@ import { GIFT_PURCHASE_PATH } from '../../../config/launchRoutes';
 import { useSession } from '../../../auth/SessionProvider';
 import { purchaseEntry } from '../../../auth/purchaseEntry';
 import { sitePlanPath } from '../../customer/genericPlans';
+import { PrivateClassPhoto } from '../../../components/molecule/PrivateClassPhoto/PrivateClassPhoto';
 import { GenericPlanCard } from '../../../components/molecule/GenericPlanCard/GenericPlanCard';
 
 /**
@@ -99,12 +100,16 @@ export function PlansPage() {
         <div className="plans-pass-grid">{prices.byFamily('bienvenida').map((p) => <article className={`plans-pass${planPhoto(p.id) ? ' has-photo plans-pass-full-photo' : ''}`} key={p.id}>{planPhoto(p.id) && <img className="plans-pass-photo" src={planPhoto(p.id)!.src} alt={planPhoto(p.id)!.alt} loading="lazy" decoding="async" />}<div className="plans-pass-copy"><span className="eyebrow">{t('site.plans.oneClass')}</span><h3>{bi(p.name)}</h3><p className="small muted">{bi(p.description)}</p><strong className="plans-pass-price">{formatCOP(p.price ?? 0, lang)}</strong><Button variant="secondary" onClick={() => buy(p.id)}>{t('site.plans.select')}</Button></div></article>)}</div>
         {/* private classes and gift cards */}
         <div className="plans-secondary">
-          <Card eyebrow={bi(FAMILY_RATIONALE.privadas.role)} title={bi(FAMILY_LABEL.privadas)}>
+          <Card className={usesCurrentStudioPhotos(version) ? 'plans-private-with-photo' : ''} padding={usesCurrentStudioPhotos(version) ? 'none' : 'md'}>
+            {usesCurrentStudioPhotos(version) && <PrivateClassPhoto src={photoOverrides.get('site.plans.private')?.url || undefined} alt={planPhoto('private')?.alt} sizes="(max-width: 760px) 90vw, (max-width: 1200px) 45vw, 25vw" />}
+            <div className={usesCurrentStudioPhotos(version) ? 'plans-private-copy' : ''}>
+            <header className="card-head"><div><div className="eyebrow">{bi(FAMILY_RATIONALE.privadas.role)}</div><h3 className="card-title">{bi(FAMILY_LABEL.privadas)}</h3></div></header>
             <p className="small muted">{bi(FAMILY_RATIONALE.privadas.why)}</p>
             {prices.byFamily('privadas').map((p) => <PriceRow key={p.id} item={p} />)}
             <div className="stack-sm" style={{ marginTop: 'var(--stack-loose)' }}>
               <a href={wa.link('specials', t('site.plans.private.wa'))} target="_blank" rel="noreferrer"><Button variant="secondary">{t('site.plans.private.cta')} ↗</Button></a>
               {specialsNote && <p className="xs muted">{bi(specialsNote)}</p>}
+            </div>
             </div>
           </Card>
           <Card eyebrow={bi(FAMILY_RATIONALE.regalos.role)} title={bi(FAMILY_LABEL.regalos)}>

@@ -74,7 +74,7 @@ for(const [id,variants] of groups) {
   const [width,height]=dimensions(await readFile(resolve(root,'public',url)),extname(url));
   const stem=id.split('/').at(-1).replace(/\.[^.]+$/,'');
   const kind=/\.(mp4|webm|mov)$/.test(url)?'video':'image';
-  const source=url.startsWith('brand/')?'brand':url.startsWith('images/studio-')?'studio':'concept';
+  const source=url.includes('finale-rings-reconstructed')?'concept':url.startsWith('brand/')?'brand':url.startsWith('images/studio-')?'studio':'concept';
   catalog.push({id,url,thumbnail:kind==='image'?variants[0]:null,name:stem.replace(/-/g,' ').replace(/^./,c=>c.toUpperCase()),source,kind,orientation:width&&height?(width===height?'square':width>height?'landscape':'portrait'):'unknown',width,height,variants,tags:[source,...stem.split('-')].filter((x,i,a)=>a.indexOf(x)===i),usages:[]});
 }
 const lookup=new Map(catalog.flatMap(a=>a.variants.map(v=>[v,a])));
@@ -105,7 +105,7 @@ const editorialUse=(asset,label,path,slot)=>{for(const [suffix,state] of [['','l
 for(const [id,name] of homePlanPhotoEntries)editorialUse(`images/studio-2026/${name}-960.webp`,'Home plan card','/site',`site.plans.${id}`);
 for(const [slug,name] of practicePhotoEntries)editorialUse(`images/studio-2026/${name}-960.webp`,'Home practice','/site',`site.classes.${slug}`);
 for(const [id,name] of planPhotoEntries)editorialUse(`images/studio-2026/${name}-960.webp`,'Plan photograph','/site/plans',`site.plans.${id}`);
-editorialUse('images/sanctuary/mountains.webp','Home philosophy','/site','site.home.philosophy');
+editorialUse('images/studio-2026/philosophy-warm.png','Home philosophy','/site','site.home.philosophy');
 for(const [suffix,state] of [['','live'],['?version=photos','draft']])add('images/studio-2026/practice-background-1280.webp','Home practice background','/site'+suffix,state,'src/modules/website/photography.css: current Home practice background.');
 const archiveBrand=await read(`${website}/archive/brand.ts`);
 const classNames=(archiveBrand.match(/export const classOrder[^=]*=\s*\[([^\]]+)\]/)?.[1].match(/'([^']+)'/g)??[]).map(x=>x.slice(1,-1));
@@ -143,9 +143,8 @@ for(const archived of [false,true]) {
         add('images/studio-2026/facility-red-studio-1600.webp',label,'/site','live',evidence);
         add('images/studio-2026/facility-red-studio-1600.webp',label,'/site?version=photos','draft',evidence);
       }
-      if(page==='HomePage'&&code.includes('option1-finale'))for(const name of ['finale-red-slats','facility-equipment']) {
-        names.delete(name);
-        for(const [suffix,state] of [['','live'],['?version=photos','draft']])add(`images/studio-2026/${name}-960.webp`,label,path+suffix,state,`${file}: owner-selected primary finale photo pair shared by Latest and Photos.`);
+      if(page==='HomePage'&&code.includes('finale-rings-reconstructed.png')) {
+        for(const [suffix,state] of [['','live'],['?version=photos','draft']])add('images/studio-2026/finale-rings-reconstructed.png',label,path+suffix,state,`${file}: AI-reconstructed ring portraits from client reference screenshots, authorized by owner; not original studio photography.`);
       }
       if(code.includes('teacherStudioPhoto(te.id, version)')) {
         teacherPhotos.forEach(n=>names.add(n));

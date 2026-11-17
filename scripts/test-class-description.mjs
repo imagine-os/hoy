@@ -1,0 +1,18 @@
+// Fictional values only. The actual production command builders and mapping are bundled, not duplicated.
+import assert from 'node:assert/strict';
+import {build} from 'esbuild';
+import {readFileSync} from 'node:fs';
+const b=await build({stdin:{contents:"export * from './src/modules/classSchedule/live/scheduleOps'; export * from './src/data/companyos/classDescription'; export {adapters,fromRecord} from './src/data/companyos/mapping'; export {resolveSessionEditorial} from './src/data/sessionEditorial';",resolveDir:process.cwd(),loader:'ts'},bundle:true,platform:'node',format:'esm',write:false,loader:{'.css':'empty','.jpg':'empty','.png':'empty','.webp':'empty','.svg':'empty','.mp4':'empty'},define:{'import.meta.env':'{"VITE_HOY_BUILD":"production","DEV":false}'}});
+const m=await import('data:text/javascript;base64,'+Buffer.from(b.outputFiles[0].text).toString('base64'));
+const d={title:'Fictional class',weekday:1,start_time:'07:10',resource:'fictional-room',coach:'fictional-teacher',capacity:12,valid_from:'2026-11-16',valid_until:'2027-02-16',active:true,modality:'pulso'};
+for(const value of [undefined,null,'','  ',[],{},'x'.repeat(4001)])assert.equal(m.classDescriptionEditorial(value),null);
+assert.deepEqual(m.classDescriptionEditorial('  Clear & calm <script>fictional</script>  '),{es:'Clear & calm <script>fictional</script>',en:'Clear & calm <script>fictional</script>'});
+assert.equal(m.scheduleProblems({...d,description:'x'.repeat(4000)},12).length,0);assert(m.scheduleProblems({...d,description:'x'.repeat(4001)},12).includes('description'));assert(m.scheduleProblems({...d,description:{}},12).includes('description'));
+assert(!('description' in m.updateScheduleOps('fictional-template',d)[0].data),'legacy caller omits the field and preserves existing description');
+const existing={...d,description:'Old copy'},before=structuredClone(existing),ops=m.updateScheduleOps('fictional-template',{...d,description:' New copy '});assert.equal(ops.length,1);assert.equal(ops[0].entity,'schedule');assert.equal(ops[0].op,'update');assert.equal(ops[0].data.description,'New copy');assert.equal(ops[0].data.active,true);for(const k of ['weekday','start_time','resource','coach','capacity','valid_from','valid_until'])assert.equal(ops[0].data[k],d[k]);assert.deepEqual(existing,before);
+assert.equal(m.createScheduleOps({...d,active:false,description:'Draft copy'})[0].data.description,'Draft copy');assert.equal(m.updateScheduleOps('fictional-template',{...d,description:'  '})[0].data.description,null);
+const template=m.fromRecord(m.adapters.class_templates,{id:'fictional-template',data:{...d,description:'Shared description'}});assert.deepEqual(template.description,{es:'Shared description',en:'Shared description'});
+for(const id of ['already-published-a','already-published-b']){const session={id,template_id:template.id,description_override:null,theme_override:null};assert.deepEqual(m.resolveSessionEditorial(session,template,{description:{es:'Type fallback',en:'Type fallback'}}).description,template.description);}
+const empty=m.fromRecord(m.adapters.class_templates,{id:'fictional-template',data:{...d,description:null}});assert.deepEqual(m.resolveSessionEditorial({description_override:null,theme_override:null},empty,{description:{es:'Type fallback',en:'Type fallback'}}).description,{es:'Type fallback',en:'Type fallback'});
+assert(readFileSync('src/modules/classSchedule/live/LiveSchedulePage.tsx','utf8').includes('description: str(r.description)'), 'existing overlimit stored text stays visible and validation blocks unrelated clearing');
+console.log('PASS optional description bounds, actual schedule-only commands, unchanged publishing/time/capacity, shared existing dates and blank fallback');

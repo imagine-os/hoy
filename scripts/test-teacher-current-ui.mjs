@@ -51,7 +51,7 @@ try {
           await img.scrollIntoViewIfNeeded();await img.evaluate(async image=>{image.loading='eager';await image.decode();});
           const box=await img.boundingBox();assert(box?.width>0&&box?.height>0,'photo has visible area');
         }
-        if(path==='/teachers'&&version==='latest') for(const name of Object.keys(selected)) assert.equal(await namedRow(path,name).locator('img').evaluate(img=>getComputedStyle(img).objectFit),'contain','verified portraits retain the full selected pose');
+        if(path==='/teachers'&&version==='latest') for(const name of Object.keys(selected)) assert.equal(await namedRow(path,name).locator('img').evaluate(img=>getComputedStyle(img).objectFit),'cover','verified portraits fill the consistent frame');
         assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),`${version} ${lang} ${width} no overflow`);
         const height=await page.evaluate(()=>document.documentElement.scrollHeight);await page.setViewportSize({width,height});
         await images.evaluateAll(async ims=>{await Promise.all(ims.map(i=>i.decode()));});

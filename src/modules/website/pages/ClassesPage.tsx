@@ -1,3 +1,5 @@
+import { useSiteEdition } from '../edition';
+import { classPhotoPresentation } from '../classPhotoPresentation';
 import { Fragment, type ReactNode } from 'react';
 import { Link } from '../links';
 import { useI18n } from '../../../i18n/I18nProvider';
@@ -25,6 +27,7 @@ export function ClassesPage() {
   const { rows: modalities } = useTable<ModalityRow>('modalities', { where: { active: true } });
   const { rows: teachers } = useTable<TeacherRow>('teachers', { where: { active: true } });
   const photos = useClassPhotos();
+  const { version } = useSiteEdition();
   const prices = useLivePricing();
   const trial = prices.item('trial');
   const trialPrice = trial?.price != null ? formatCOP(trial.price, lang) : '';
@@ -69,7 +72,7 @@ export function ClassesPage() {
                   </div>
                 </div>
                 <div className="site-classrow-media">
-                  <ClassArch slug={slug} index={i + 1} size="lg" photoUrl={photos.get(slug)} />
+                  <ClassArch slug={slug} index={i + 1} size="lg" {...classPhotoPresentation(slug, photos, version)} />
                 </div>
               </article>
             );

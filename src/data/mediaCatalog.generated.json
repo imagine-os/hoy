@@ -484,20 +484,7 @@
       "concept",
       "mountains"
     ],
-    "usages": [
-      {
-        "label": "Home philosophy",
-        "path": "/site",
-        "state": "live",
-        "evidence": "Verified editorial photo fallback; ready CMS photo takes priority. photo_slots:site.home.philosophy:fallback"
-      },
-      {
-        "label": "Home philosophy",
-        "path": "/site?version=photos",
-        "state": "draft",
-        "evidence": "Verified editorial photo fallback; ready CMS photo takes priority. photo_slots:site.home.philosophy:fallback"
-      }
-    ]
+    "usages": []
   },
   {
     "id": "images/sanctuary/philosophy.webp",
@@ -1102,20 +1089,7 @@
       "facility",
       "equipment"
     ],
-    "usages": [
-      {
-        "label": "Home",
-        "path": "/site",
-        "state": "live",
-        "evidence": "src/modules/website/pages/HomePage.tsx: owner-selected primary finale photo pair shared by Latest and Photos."
-      },
-      {
-        "label": "Home",
-        "path": "/site?version=photos",
-        "state": "draft",
-        "evidence": "src/modules/website/pages/HomePage.tsx: owner-selected primary finale photo pair shared by Latest and Photos."
-      }
-    ]
+    "usages": []
   },
   {
     "id": "images/studio-2026/facility-heater.webp",
@@ -1233,18 +1207,39 @@
       "red",
       "slats"
     ],
+    "usages": []
+  },
+  {
+    "id": "images/studio-2026/finale-rings-reconstructed.png",
+    "url": "images/studio-2026/finale-rings-reconstructed.png",
+    "thumbnail": "images/studio-2026/finale-rings-reconstructed.png",
+    "name": "Finale rings reconstructed",
+    "source": "concept",
+    "kind": "image",
+    "orientation": "landscape",
+    "width": 1374,
+    "height": 1145,
+    "variants": [
+      "images/studio-2026/finale-rings-reconstructed.png"
+    ],
+    "tags": [
+      "concept",
+      "finale",
+      "rings",
+      "reconstructed"
+    ],
     "usages": [
       {
         "label": "Home",
         "path": "/site",
         "state": "live",
-        "evidence": "src/modules/website/pages/HomePage.tsx: owner-selected primary finale photo pair shared by Latest and Photos."
+        "evidence": "src/modules/website/pages/HomePage.tsx: AI-reconstructed ring portraits from client reference screenshots, authorized by owner; not original studio photography."
       },
       {
         "label": "Home",
         "path": "/site?version=photos",
         "state": "draft",
-        "evidence": "src/modules/website/pages/HomePage.tsx: owner-selected primary finale photo pair shared by Latest and Photos."
+        "evidence": "src/modules/website/pages/HomePage.tsx: AI-reconstructed ring portraits from client reference screenshots, authorized by owner; not original studio photography."
       }
     ]
   },
@@ -1360,6 +1355,39 @@
     "usages": []
   },
   {
+    "id": "images/studio-2026/philosophy-warm.png",
+    "url": "images/studio-2026/philosophy-warm.png",
+    "thumbnail": "images/studio-2026/philosophy-warm.png",
+    "name": "Philosophy warm",
+    "source": "studio",
+    "kind": "image",
+    "orientation": "portrait",
+    "width": 1024,
+    "height": 1536,
+    "variants": [
+      "images/studio-2026/philosophy-warm.png"
+    ],
+    "tags": [
+      "studio",
+      "philosophy",
+      "warm"
+    ],
+    "usages": [
+      {
+        "label": "Home philosophy",
+        "path": "/site",
+        "state": "live",
+        "evidence": "Verified editorial photo fallback; ready CMS photo takes priority. photo_slots:site.home.philosophy:fallback"
+      },
+      {
+        "label": "Home philosophy",
+        "path": "/site?version=photos",
+        "state": "draft",
+        "evidence": "Verified editorial photo fallback; ready CMS photo takes priority. photo_slots:site.home.philosophy:fallback"
+      }
+    ]
+  },
+  {
     "id": "images/studio-2026/plan-single.webp",
     "url": "images/studio-2026/plan-single-960.webp",
     "thumbnail": "images/studio-2026/plan-single-480.webp",
@@ -1447,6 +1475,12 @@
       "alineacion"
     ],
     "usages": [
+      {
+        "label": "Component library",
+        "path": "/dev/components",
+        "state": "live",
+        "evidence": "src/components/molecule/ClassArch/ClassArch.meta.ts: literal asset reference. This is a code placement, not a runtime visibility guarantee."
+      },
       {
         "label": "Home practice",
         "path": "/site",
@@ -1767,6 +1801,52 @@
         "path": "/site/schedule?version=photos",
         "state": "draft",
         "evidence": "src/modules/website/pages/SchedulePage.tsx; src/modules/website/photography.ts; src/modules/website/edition.ts. Opt-in photos edition only; teacher entries are conditional fallbacks for matching active teachers."
+      }
+    ]
+  },
+  {
+    "id": "images/studio-2026/private-acroyoga.webp",
+    "url": "images/studio-2026/private-acroyoga-960.webp",
+    "thumbnail": "images/studio-2026/private-acroyoga-480.webp",
+    "name": "Private acroyoga",
+    "source": "studio",
+    "kind": "image",
+    "orientation": "portrait",
+    "width": 820,
+    "height": 1318,
+    "variants": [
+      "images/studio-2026/private-acroyoga-480.webp",
+      "images/studio-2026/private-acroyoga-960.webp"
+    ],
+    "tags": [
+      "studio",
+      "private",
+      "acroyoga"
+    ],
+    "usages": [
+      {
+        "label": "Home plan card",
+        "path": "/site",
+        "state": "live",
+        "evidence": "Verified editorial photo fallback; ready CMS photo takes priority. photo_slots:site.plans.private:fallback"
+      },
+      {
+        "label": "Home plan card",
+        "path": "/site?version=photos",
+        "state": "draft",
+        "evidence": "Verified editorial photo fallback; ready CMS photo takes priority. photo_slots:site.plans.private:fallback"
+      },
+      {
+        "label": "Plan photograph",
+        "path": "/site/plans",
+        "state": "live",
+        "evidence": "Verified editorial photo fallback; ready CMS photo takes priority. photo_slots:site.plans.private:fallback"
+      },
+      {
+        "label": "Plan photograph",
+        "path": "/site/plans?version=photos",
+        "state": "draft",
+        "evidence": "Verified editorial photo fallback; ready CMS photo takes priority. photo_slots:site.plans.private:fallback"
       }
     ]
   },

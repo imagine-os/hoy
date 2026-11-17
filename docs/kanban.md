@@ -920,6 +920,31 @@ Protected-capture clarification: M14 schedule/pay screenshots remain local/ignor
 - Customer area (C-xx): a login that holds the customer role but never signed up (invited staff, desk-invited customers: `GET /signup` `registered: false`) accepts the documents once in the same consent step, then goes on. Read once per session, never in frames or view-as; a failed or slow read opens the page as before. [Changelog](changelog/_pending/hoy-test-fixes-r2hoy2.md)
 - A platform operator signing in with their own login takes the studio sign-up like anyone (tested).
 
+- Public class/contact annotation fixes: shared class-photo fallbacks, international visitor phone hint, contact spacing and source philosophy portrait. Ready CMS content preserved. Local contract/typecheck/build checks; rendered review pending environment support.
+## Public copy clarity · 2026-11-13
+
+### Implemented on lane branch, pending integrated review/release
+- Remove universal schedule mat-count claim; direct visitors to each session's available places.
+- Clarify empty-date navigation and private-class WhatsApp quotation copy without changing CMS data or prices.
+- [Changelog](changelog/_pending/public-copy-20261113.md)
+
+### Content questions, not changed
+- Sara Estrada's duplicate biography and Jennifer's missing portrait require approved source content from Jas.
+
+## Public finale imagery — 2026-11-13
+- In review: reconstructed ring diptych matching Aleja’s reference, 20% blue overlay and mobile no-occlusion layout. No CMS changes. Build, responsive screenshots and two integrated reviews required before merge. Private/affiliate photos remain source-verification dependencies.
+
+## Public image frames · 2026-11-13
+- In review: class arches, staff portraits and booking banner fill without gutters; CMS content preserved. [Changelog](changelog/0207-public-image-frames.md). Responsive QA and two independent reviews are release gates.
+
+## Aleja public blue/navy direction · 14 November 2026
+
+- In review on isolated `design/aleja-blue-red-20261114` from live v1.2.4: scoped blue/navy website surfaces, selected red gradients, supplied complete acroyoga photo on Home/Plans. Content, prices, Santa María package, booking handlers and PR146 photo frames preserved. Hosted responsive matrix, two independent review rounds and existing-environment preview pending. Production release remains held for Justin. [Changelog](changelog/0208-aleja-blue-red.md).
+
+## Approved Aleja website release · 1.2.5
+
+- PR147 merged after Justin's approval. All scoped checks and full Auth regression passed on57d801c. Release metadata in review; Cut release and Deploy web(prod) must complete before the production claim. [Release record](changelog/0209-release-1.2.5.md).
+
 ## Email test sends · pending Anu approval (2026-11-13)
 
 Separate frontend and Company OS branches implement chosen-address live/draft tests, sample data, keyed queueing and isolated history. No production deployment or customer edits. Review, validation and release prerequisites: [pending changelog](changelog/_pending/email-test-send-anu-review.md).

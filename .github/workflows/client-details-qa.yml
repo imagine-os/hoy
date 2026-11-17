@@ -1,0 +1,42 @@
+name: Client details QA
+on:
+  pull_request:
+    paths:
+      - 'src/modules/admin/MemberPage.tsx'
+      - 'src/modules/admin/index.ts'
+      - 'src/modules/admin/customers/**'
+      - 'src/modules/admin/strings.ts'
+      - 'scripts/test-live-customer-detail*.mjs'
+      - '.github/workflows/client-details-qa.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  client-details:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Verify scoped client edit contract
+        run: node scripts/test-live-customer-detail.mjs
+      - name: Build production frontend
+        run: npm run build:production
+      - name: Verify production route connectivity
+        run: node scripts/test-route-connectivity.mjs
+      - name: Verify actual client components with fictional provider
+        run: node scripts/test-live-customer-detail-ui.mjs
+        env:
+          CHROMIUM_PATH: /usr/bin/google-chrome
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: client-details-${{ github.event.pull_request.head.sha || github.sha }}
+          path: docs/screenshots/M-06/*live-client-detail.png
+          retention-days: 7

@@ -7,7 +7,7 @@ export const studioPhoto = (name: string, width = 960) => `${import.meta.env.BAS
 export const usesCurrentStudioPhotos = (version: SiteVersion) => version === 'latest' || version === 'photos';
 export const practiceStudioPhoto = (slug: ClassSlug, version: SiteVersion) => usesCurrentStudioPhotos(version) ? studioPhoto(practicePhotos[slug]) : undefined;
 export const planStudioPhoto = (id: string, version: SiteVersion) => usesCurrentStudioPhotos(version) && planPhotos[id] ? studioPhoto(planPhotos[id]) : undefined;
-export const philosophyStudioPhoto = (version: SiteVersion) => usesCurrentStudioPhotos(version) ? `${import.meta.env.BASE_URL}images/sanctuary/mountains.webp` : undefined;
+export const philosophyStudioPhoto = (version: SiteVersion) => usesCurrentStudioPhotos(version) ? `${import.meta.env.BASE_URL}images/studio-2026/philosophy-warm.png` : undefined;
 export function studioPhotoProps(name: string, portrait = false, priority = false) {
   return { src: studioPhoto(name), srcSet: `${studioPhoto(name, 480)} 480w, ${studioPhoto(name)} 960w`, sizes: '(max-width: 700px) 100vw, 50vw', width: 960, height: portrait ? 1440 : 640, loading: priority ? 'eager' as const : 'lazy' as const, decoding: 'async' as const, fetchPriority: priority ? 'high' as const : 'auto' as const };
 }

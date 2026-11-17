@@ -15,13 +15,14 @@ export default defineMeta({
     { name: 'size', type: "'md' | 'lg'", default: "'md'", description: { es: 'md: fila de siete en el inicio; lg: página de clases y de clase.', en: 'md: the home row of seven; lg: the classes and class pages.' } },
     { name: 'to', type: 'string', description: { es: 'Si existe, el arco es un enlace.', en: 'When set, the arch is a link.' } },
     { name: 'photoUrl', type: 'string | null', description: { es: 'Foto real de la clase (M-02d) bajo un velo del tono.', en: 'The real class photo (M-02d) under a tone wash.' } },
-    { name: 'naturalPhoto', type: 'boolean', description: { es: 'Conserva la composición 2:3 de una foto verificada; las cargas del CMS mantienen el recorte existente.', en: 'Preserves a verified 2:3 photo composition; CMS uploads keep their existing crop.' } },
+    { name: 'naturalPhoto', type: 'boolean', description: { es: 'Marco 2:3 para fotos verificadas; las variantes grandes llenan el arco sin franjas.', en: 'Uses a verified 2:3 photo frame; larger variants fill the arch without gutters.' } },
     { name: 'tagline', type: 'boolean', description: { es: 'Muestra la frase de la clase (lg: sí por defecto).', en: 'Shows the class line (lg: on by default).' } },
   ],
   states: ['natural studio photo', 'default', 'hover (lifts)', 'focus (ring)', 'lg with tagline', 'with photo', 'figure (no link)'],
   usages: [
     { title: { es: 'Foto verificada completa', en: 'Full verified photograph' }, render: () => h(ClassArch, { slug: 'ligereza', photoUrl: './images/studio-2026/practice-ligereza-480.webp', naturalPhoto: true }) },
     { title: { es: 'Fila de las siete (inicio)', en: 'Row of seven (home)' }, render: () => h('div', { style: { display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 'var(--grid-gap)' } }, ...classOrder.map((slug, i) => h(ClassArch, { key: slug, slug, index: i + 1, to: `/site/classes/${slug}` }))) },
+    { title: { es: 'Foto que llena el arco grande', en: 'Cover-filled large photo' }, render: () => h(ClassArch, { slug: 'pulso', size: 'lg', photoUrl: './images/studio-2026/practice-alineacion-480.webp', naturalPhoto: true }) },
     { title: { es: 'Grande, con frase', en: 'Large, with tagline' }, render: () => h(ClassArch, { slug: 'centro', index: 5, size: 'lg' }) },
   ],
   a11y: [
