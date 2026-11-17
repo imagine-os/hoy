@@ -31,7 +31,8 @@ export function TemplateEditor({ template }: { template: string }) {
     String(a.created_at).localeCompare(String(b.created_at)) || a.id.localeCompare(b.id));
   if (query.error || !query.request || (!query.loading && active.length !== 1))
     return <p role="alert">{t('emailEdit.unavailable')} <Button onClick={query.reload}>{t('notifications.delivery.retry')}</Button></p>;
-  if (query.loading || !active[0]) return <p role="status">{t('core.common.loading')}</p>;
+  // A background reload keeps the rows already shown, so the open test panel and its messages are not unmounted.
+  if (!active[0]) return <p role="status">{t('core.common.loading')}</p>;
   const live = active[0], current = copy(live), version = history.length + 1;
   const canEdit = role === 'super_admin' && !live.body_html;
   const start = (value: Copy) => { setBase(live); setDraft(value); setFailed(false); };
@@ -76,6 +77,6 @@ export function TemplateEditor({ template }: { template: string }) {
         {canEdit && !draft && <Button variant="outline" onClick={() => start(copy(r))}>{t('emailEdit.reuse')}</Button>}
       </details>)}
     </details>
-    {role === 'super_admin' && <EmailTestPanel request={query.request} source={liveSource(live)} draft={draft} version={version} defaultRecipient={user.email} />}
+    {role === 'super_admin' && <EmailTestPanel key={live.id+':'+version} invalidDraft={invalidToken} onStale={query.reload} request={query.request} source={liveSource(live)} draft={draft} version={version} defaultRecipient={user.email} />}
   </div>;
 }

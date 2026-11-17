@@ -13,6 +13,8 @@ export const strings: StringTable = {
   'emailTest.recipient': {es:'Dirección de destino para la prueba',en:'Test recipient email address'},
   'emailTest.version': {es:'Versión para probar',en:'Version to test'},
   'emailTest.basedOn': {es:'basado en',en:'based on'},
+  'emailTest.recipientHint': {es:'Escribe una sola dirección de correo válida.',en:'Enter one valid email address.'},
+  'emailTest.draftUnusable': {es:'El borrador no se puede probar: tiene variables no válidas, está vacío o es igual a la versión publicada.',en:'The draft cannot be tested: it has invalid placeholders, is empty, or equals the live version.'},
   'emailTest.from': {es:'Remitente',en:'From'},
   'emailTest.replyTo': {es:'Responder a',en:'Reply-to'},
   'emailTest.send': {es:'Enviar esta prueba',en:'Send this test'},

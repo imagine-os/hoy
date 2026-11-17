@@ -6,10 +6,10 @@
       "es": "HoyOS",
       "en": "HoyOS"
     },
-    "version": "1.6.0",
+    "version": "0.25.0",
     "baseUrl": "https://imagine-os.github.io/hoy/"
   },
-  "generatedAt": "2026-11-16T00:00:00.000Z",
+  "generatedAt": "2026-10-29T00:00:00.000Z",
   "run": {
     "how": "window.__hoyos.run(id, params)",
     "note": "in-page only; no MCP server yet"
@@ -361,6 +361,31 @@
         {
           "code": "C-27",
           "route": "/app/practice"
+        }
+      ]
+    },
+    {
+      "id": "app.pickMat",
+      "label": {
+        "es": "Elegir tapete",
+        "en": "Pick a mat"
+      },
+      "intent": {
+        "es": "Quiero el tapete {mat}",
+        "en": "I want mat {mat}"
+      },
+      "params": {
+        "mat": "number 1–16"
+      },
+      "permission": "bookings.write",
+      "roles": [
+        "customer",
+        "teacher"
+      ],
+      "pages": [
+        {
+          "code": "C-04",
+          "route": "/app/checkout/:id"
         }
       ]
     },
