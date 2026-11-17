@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { Button } from '../../atom/Button/Button';
 import { createActionKeys, errorCode, type CosRequest } from '../../../modules/staff/desk/wire';
-import { testPayload, testRefusal, validTestRecipient, type TestConfig, type TestCopy, type TestSource } from '../../../notifications/templateTests';
+import { deliveryErrorKey, testPayload, testRefusal, validTestRecipient, type TestConfig, type TestCopy, type TestSource } from '../../../notifications/templateTests';
 
 /** Preview never sends; test sends use only the opt-in, authenticated backend. Mount it with a key of template id + version. */
 export function EmailTestPanel({ request, source, draft, version, defaultRecipient = '', invalidDraft = false, onStale }: {
@@ -74,7 +74,7 @@ export function EmailTestPanel({ request, source, draft, version, defaultRecipie
       {config.history.map(row=><div key={row.id} className="small">
         <p>{new Date(row.at).toLocaleString(lang)} · {row.recipient} · {t(row.mode==='draft'?'emailEdit.draft':'emailEdit.live')} · {t('notifications.status.'+row.status)}</p>
         <p>{t('emailTest.snapshot')}: <code>{row.sourceHash}</code> · {t('emailTest.actor')}: {row.actor || t('emailTest.operator')}</p>
-        {row.error && <p>{row.error}</p>}
+        {row.error && <p>{t('emailTest.'+deliveryErrorKey(row.error))}{deliveryErrorKey(row.error)==='errOther' && <> <span className="small muted">({row.error})</span></>}</p>}
       </div>)}
       <Button variant="ghost" disabled={busy} onClick={reload}>{t('emailTest.refresh')}</Button>
     </>}

@@ -142,9 +142,9 @@ try {
   postDelay=300;const before=posted.length;await send.dblclick();await until(()=>posted.length>before);await status.filter({hasText:lang==='en'?'Test queued.':'Prueba en cola.'}).waitFor();postDelay=0;
   check(`${lang}/${width}: double click sends once`,posted.length===before+1);
   // Definitive refusals show their copy and drop the key (the next send is a new action); 5xx would keep it (checked above).
-  const refusals=[[429,'test_rate_limit',/Limit: 10|Límite: 10/],[422,'test_sample_missing',/safe sample value|dato ficticio seguro/]];
+  const refusals=[[429,'test_rate_limit',/Limit: 10|Límite: 10/],[422,'test_sample_missing',/safe sample value|dato ficticio seguro/],[409,'test_link_base_missing',/link address|dirección de enlaces/],[404,undefined,/no longer active|ya no está activa/]];
   for(const [st,code,re] of refusals){refuse={status:st,code};const n=posted.length;await send.click();await status.filter({hasText:re}).waitFor();await send.click();await until(()=>posted.length===n+2);
-    check(`${lang}/${width}: ${code} is mapped and its key is dropped`,posted[n].key!==posted[n+1].key);}
+    check(`${lang}/${width}: ${code??'404 without code'} is mapped and its key is dropped`,posted[n].key!==posted[n+1].key);}
   // template_changed: message, the live template is reloaded, Send stays off until refreshed.
   const q0=queries.filter(q=>q.entity==='message_template').length;refuse={status:409,code:'template_changed'};await send.click();
   await status.filter({hasText:/live version changed|Cambió la versión/}).waitFor();await until(()=>queries.filter(q=>q.entity==='message_template').length>q0);

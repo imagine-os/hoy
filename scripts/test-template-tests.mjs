@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { testPayload, validTestRecipient, liveSource, testRefusal }
+import { testPayload, validTestRecipient, liveSource, testRefusal, deliveryErrorKey }
   from '../src/notifications/templateTests.ts';
 
 assert.equal(validTestRecipient('admin@example.com'),true);
@@ -29,4 +29,18 @@ assert.deepEqual(testRefusal('template_tests_disabled',403),{key:'disabled',defi
 assert.deepEqual(testRefusal('response_lost',503),{key:'failed',definitive:false});
 assert.deepEqual(testRefusal('test_rate_limit',503),{key:'rateLimit',definitive:false});
 assert.deepEqual(testRefusal('failed'),{key:'failed',definitive:false});
+for (const [code,status,key] of [['test_link_base_missing',409,'linkBase'],['test_sample_invalid',422,'sampleInvalid'],['invalid_test_mode',400,'invalidMode'],['unsafe_html',422,'unsafeHtml'],['invalid_test_request',400,'invalidRequest']]) {
+  assert.deepEqual(testRefusal(code,status),{key,definitive:true},code);
+  assert.deepEqual(testRefusal(code,503),{key,definitive:false},code+' 5xx keeps key');
+}
+assert.deepEqual(testRefusal('not_found',404),{key:'gone',definitive:true});
+assert.deepEqual(testRefusal('failed',404),{key:'gone',definitive:true});
+assert.deepEqual(testRefusal('',404),{key:'gone',definitive:true});
+assert.deepEqual(testRefusal('response_lost',503),{key:'failed',definitive:false});
+// Delivery error codes in history rows.
+for (const [c,k] of [['contact_suppressed','errSuppressed'],['contact_unsubscribed','errUnsubscribed'],['bounced','errBounced'],['provider_error','errProvider']]) assert.equal(deliveryErrorKey(c),k);
+assert.equal(deliveryErrorKey('weird_code'),'errOther');
+// Recipient check close to zod's .email().
+for (const ok of ['a@example.com','first.last@sub.example.co','a+tag@example.io',"o'neil@example.com"]) assert.equal(validTestRecipient(ok),true,ok);
+for (const bad of ['a..b@example.com','.a@example.com','a.@example.com','a@example','a@example.c','a@example.c1','a@-example.com','a@example..com','a b@example.com','@example.com','a@@example.com','a@example.com.']) assert.equal(validTestRecipient(bad),false,bad);
 console.log('Template test request validation and draft isolation passed.');
