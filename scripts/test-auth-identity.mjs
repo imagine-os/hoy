@@ -473,6 +473,53 @@ check('r1 L5 enrol: a real super admin without the customer role is enrolled on 
   check('teacher link: re-sending to a Teacher with no linked record is refused (teacher_required), nothing sent', e?.code === 'teacher_required' && cos.calls.length === 0, String(e?.code));
 }
 
+// ── Teacher link, round 1 fixes ────────────────────────────────────────────────────────────────────────────────
+{
+  const T = M.team;
+  const safe = async (f) => { try { return await f(); } catch (e) { return e; } };
+  const fake = (answer) => { const calls = []; return { calls, request: async (method, path, body) => { calls.push({ method, path, body }); return answer(method, path, body); } }; };
+  const row = (n, extra = {}) => ({ id: `c${String(n).padStart(4, '0')}`, data: { person: { id: `p${n}`, name: `T${n}`, email: `t${n}@example.invalid`, user: null }, ...extra } });
+  const u = (id, ...keys) => ({ userId: id, email: `${id}@example.invalid`, name: id, memberships: keys.map((k, i) => ({ membershipId: `${id}_m${i}`, roleKey: k })) });
+  const recs = [{ coachId: 'c1', personId: 'p1', name: 'Ana', email: 'a@example.invalid', userId: null, active: true }, { coachId: 'c9', personId: 'p9', name: 'Old', email: 'o@example.invalid', userId: null, active: false }];
+
+  // user embedded as an object {id}
+  let cos = fake(() => ({ data: [{ id: 'c1', data: { person: { id: 'p1', name: 'A', email: 'a@example.invalid', user: { id: 'u_a' } } } }] }));
+  let out = await safe(() => T.listTeacherRecords(cos.request));
+  check('r1 records: a user embedded as an object {id} reads as that userId', Array.isArray(out) && out[0]?.userId === 'u_a', JSON.stringify(out));
+
+  // paging past 500
+  cos = fake((m, path, body) => ({ data: body.offset === 0 ? Array.from({ length: 500 }, (_, i) => row(i)) : body.offset === 500 ? [row(500), row(501)] : [] }));
+  out = await safe(() => T.listTeacherRecords(cos.request));
+  check('r1 records: pages past 500 rows (500 then a short page) and returns all 502', Array.isArray(out) && out.length === 502 && cos.calls.length === 2 && cos.calls[1].body.offset === 500, `${out?.length} ${cos.calls.length}`);
+
+  // inactive coaches
+  cos = fake(() => ({ data: [row(1), row(2, { active: false })] }));
+  out = await safe(() => T.listTeacherRecords(cos.request));
+  check('r1 records: active is read (false for an inactive coach) and the picker list leaves inactive ones out', Array.isArray(out) && out.find((r) => r.personId === 'p2')?.active === false && out.find((r) => r.personId === 'p1')?.active === true && T.freeTeachers?.(out).map((r) => r.personId).join() === 'p1', JSON.stringify(out));
+  cos = fake(() => ({ userId: 'u', invitationId: 'i', url: 'https://x.invalid/l' }));
+  let e = await safe(() => T.invite(cos.request, 'o@example.invalid', 'coach', 'https://x.invalid/', { personId: 'p9', records: recs }));
+  check('r1 records: inviting to an inactive teacher record is refused client side', e?.code === 'teacher_required' && cos.calls.length === 0, String(e?.code));
+
+  // 200 without a url never becomes "invited"
+  const noUrl = () => ({ userId: 'u', roleAdded: true });
+  cos = fake(noUrl);
+  let r = await safe(() => T.invite(cos.request, 'a@example.invalid', 'coach', 'https://x.invalid/', { personId: 'p1', records: recs }));
+  check('r1 no url: invite with a 200 without url gives signed_up, never invited', r?.kind === 'signed_up', JSON.stringify(r));
+  cos = fake(noUrl);
+  r = await safe(() => T.invite(cos.request, 'f@example.invalid', 'front_desk', 'https://x.invalid/'));
+  check('r1 no url: the same for a non-teacher invite', r?.kind === 'signed_up', JSON.stringify(r));
+  cos = fake(noUrl);
+  r = await safe(() => T.resendInvitation(cos.request, u('u_front', 'front_desk'), 'https://x.invalid/', recs));
+  check('r1 no url: resend with a 200 without url gives signed_up', r?.kind === 'signed_up', JSON.stringify(r));
+  cos = fake(noUrl);
+  r = await safe(() => T.linkTeacher(cos.request, u('u_ana', 'coach'), 'p1', 'https://x.invalid/', recs));
+  check('r1 no url: linkTeacher with a 200 without url gives linked', r?.kind === 'linked', JSON.stringify(r));
+
+  // free list and stale picks
+  check('r1 stale picks: pruneTeacherPicks drops a form pick and row picks no longer free', typeof T.pruneTeacherPicks === 'function' && (() => { const f = T.pruneTeacherPicks({ personId: 'p9' }, { a: 'p1', b: 'p9', c: 'gone' }, recs); return f.personId === '' && JSON.stringify(f.picks) === JSON.stringify({ a: 'p1' }); })());
+  check('r1 stale picks: a still-free pick is kept', T.pruneTeacherPicks?.({ personId: 'p1' }, {}, recs)?.personId === 'p1');
+}
+
 // ── Token wait: a Clerk that never loads answers null (production build) ────────────────────────────────────────
 {
   const prod = await build({
