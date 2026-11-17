@@ -135,10 +135,11 @@ export async function invite(request: CosRequest, rawEmail: string, roleKey: Tea
   let result: InviteResult;
   try {
     const res = await request<{ userId: string; invitationId: string; url: string }>('POST', '/invitations', { email, roleKey, ...person, redirectUrl });
-    // A 200 with no link (the login already had the role) must never be emailed as "undefined".
-    result = res.url ? { kind: 'invited', url: res.url } : { kind: 'signed_up' };
+    // A 200 with no link (Company OS added the role to an existing login) must never be emailed as "undefined".
+    result = res.url ? { kind: 'invited', url: res.url } : { kind: 'added' };
   } catch (e) {
-    if (code(e) === 'role_mismatch') { await addMembership(request, email, null, roleKey); result = { kind: 'added' }; }
+    // A Teacher must be linked: adding only the role here would leave them with no teacher profile.
+    if (code(e) === 'role_mismatch' && roleKey !== 'coach') { await addMembership(request, email, null, roleKey); result = { kind: 'added' }; }
     else if (code(e) === 'already_signed_up') result = { kind: 'signed_up' };
     else {
       // `502 invitation_failed`: the login and membership were committed; complete Administration before reporting it.
@@ -189,7 +190,7 @@ export async function resendInvitation(request: CosRequest, user: TeamUser, redi
       setAside++;
     }
     const res = await request<{ userId: string; invitationId: string; url: string }>('POST', '/invitations', { email, roleKey, ...person, redirectUrl });
-    result = res.url ? { kind: 'invited', url: res.url } : { kind: 'signed_up' };
+    result = res.url ? { kind: 'invited', url: res.url } : { kind: 'added' };
   } catch (e) {
     if (code(e) === 'already_signed_up') result = { kind: 'signed_up' };
     else if (code(e) === 'role_mismatch') result = { kind: 'has_account' };

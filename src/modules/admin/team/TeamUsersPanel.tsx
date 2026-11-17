@@ -14,7 +14,7 @@ import { deskErrorText } from '../../staff/desk/strings';
 import { PartialTeamChange, SUPER_ADMIN, TEAM_ROLES, changeRole, invite, inviteRedirect, isTeamRole, linkTeacher, freeTeachers as freeOf, linkedTeacher, listTeacherRecords, pruneTeacherPicks, listTeam, needsRepair, removeFromTeam, resendInvitation, sendInvitationEmail, teamGuard, teamRoleOf, type InviteOutcome, type TeacherRecord, type TeamRoleKey, type TeamUser } from './teamApi';
 
 /** Refusals of a teacher link get their own copy; the rest read through the shared table. */
-const TEACHER_LINK_CODES = ['person_email_mismatch', 'user_linked_to_other_person', 'person_linked_to_other_user', 'person_not_found', 'teacher_required'];
+const TEACHER_LINK_CODES = ['person_email_mismatch', 'user_linked_to_other_person', 'person_linked_to_other_user', 'person_not_found', 'teacher_required', 'role_mismatch'];
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /** AD-06 in the production build: invite, re-send an invitation, change role and remove Front desk and Administration users. */
@@ -38,6 +38,7 @@ export function TeamUsersPanel() {
   const [records, setRecords] = useState<TeacherRecord[]>([]);
   /** The record picked for each unlinked Teacher row. */
   const [recordsFailed, setRecordsFailed] = useState(false);
+  const [recordsLoaded, setRecordsLoaded] = useState(false);
   const [picks, setPicks] = useState<Record<string, string>>({});
   const errText = (e: unknown) => { const c = errorCode(e); return TEACHER_LINK_CODES.includes(c) ? tRef.current(`team.err.${c}`) : deskErrorText(c, tRef.current); };
   // `request` is stable per provider; `t` is read through a ref so a re-render never re-fetches.
@@ -47,8 +48,8 @@ export function TeamUsersPanel() {
     // The team list never waits on the teacher records: if they can't be read, Teacher rows just offer no link.
     const [list, recs] = await Promise.allSettled([listTeam(request), listTeacherRecords(request)]);
     if (list.status === 'fulfilled') setUsers(list.value); else setError(deskErrorText(errorCode(list.reason), tRef.current));
-    if (recs.status === 'fulfilled') { setRecords(recs.value); setRecordsFailed(false); setForm(f => ({ ...f, personId: pruneTeacherPicks(f, {}, recs.value).personId })); setPicks(p => pruneTeacherPicks({ personId: '' }, p, recs.value).picks); }
-    else { setRecords([]); setRecordsFailed(true); setForm(f => ({ ...f, personId: '' })); setPicks({}); }
+    if (recs.status === 'fulfilled') { setRecords(recs.value); setRecordsFailed(false); setRecordsLoaded(true); setForm(f => ({ ...f, personId: pruneTeacherPicks(f, {}, recs.value).personId })); setPicks(p => pruneTeacherPicks({ personId: '' }, p, recs.value).picks); }
+    else setRecordsFailed(true); // keep the last good records; linking stays off until they load
   }, [request]);
   useEffect(() => { void load(); }, [load]);
   const roleLabel = (k: string) => t(`team.role.${isTeamRole(k) ? k : 'other'}`);
@@ -145,18 +146,19 @@ export function TeamUsersPanel() {
         {!users ? <EmptyState compact tone="loading" title={t('core.common.loading')} /> : users.length === 0 ? <EmptyState compact title={t('team.empty')} /> : users.map(u => {
           const current = teamRoleOf(u) as TeamRoleKey;
           const teacher = current === 'coach' ? linkedTeacher(u, records) : null;
+          const unlinked = current === 'coach' && !teacher && !recordsFailed && recordsLoaded;
           const pick = picks[u.userId] ?? '';
           return <div key={u.userId} className="row-between wrap">
-            <span><strong className="small crm-name">{u.name || u.email}</strong> <span className="xs muted">{u.email}</span> <Badge tone={current === 'administrator' || current === SUPER_ADMIN ? 'primary' : 'neutral'}>{roleLabel(current)}</Badge>{current === 'coach' && (teacher ? <span className="xs muted"> {t('team.teacher.linkedTo', { name: teacher.name || teacher.email })}</span> : <> <Badge tone="warn">{t('team.teacher.missing')}</Badge></>)}</span>
+            <span><strong className="small crm-name">{u.name || u.email}</strong> <span className="xs muted">{u.email}</span> <Badge tone={current === 'administrator' || current === SUPER_ADMIN ? 'primary' : 'neutral'}>{roleLabel(current)}</Badge>{current === 'coach' && (teacher ? <span className="xs muted"> {t('team.teacher.linkedTo', { name: teacher.name || teacher.email })}</span> : unlinked ? <> <Badge tone="warn">{t('team.teacher.missing')}</Badge></> : null)}</span>
             <span className="row wrap">
-              {current === 'coach' && !teacher && !recordsFailed && <>
-                <Select aria-label={t('team.teacher')} value={pick} disabled={!!busy} onChange={e => setPicks({ ...picks, [u.userId]: e.target.value })}><option value="">{t('team.teacher.pick')}</option>{freeTeachers.map(r => <option key={r.personId} value={r.personId}>{r.name || r.email}</option>)}</Select>
+              {unlinked && <>
+                <Select aria-label={t('team.teacher')} value={pick} disabled={!!busy} onChange={e => { const v = e.target.value; setPicks(p => ({ ...p, [u.userId]: v })); }}><option value="">{t('team.teacher.pick')}</option>{freeTeachers.map(r => <option key={r.personId} value={r.personId}>{r.name || r.email}</option>)}</Select>
                 <Button size="sm" variant="secondary" disabled={!!busy || !pick} loading={busy === `link:${u.userId}`} onClick={() => void linkTo(u, pick)}>{t('team.teacher.link')}</Button>
               </>}
               <Select aria-label={t('team.role')} value={current} disabled={!!busy} onChange={e => { const next = e.target.value as TeamRoleKey; if (next !== current && !guarded(u, next)) void setRole(u, next, 'team.changed'); }}>{grantable(current).map(r => <option key={r} value={r}>{roleLabel(r)}</option>)}</Select>
               {needsRepair(u) && <Button size="sm" variant="secondary" disabled={!!busy} onClick={() => { if (!guarded(u, current)) void setRole(u, current, 'team.repaired'); }}>{t('team.repair')}</Button>}
               {/* The list can't tell who has signed up: Company OS answers `already_signed_up` and the notice says so. */}
-              {u.userId !== user.id && (current !== 'coach' || !!teacher) && <Button size="sm" variant="ghost" icon="mail" disabled={!!busy} loading={busy === `resend:${u.userId}`} onClick={() => resend(u)}>{t('team.resend')}</Button>}
+              {u.userId !== user.id && !unlinked && <Button size="sm" variant="ghost" icon="mail" disabled={!!busy} loading={busy === `resend:${u.userId}`} onClick={() => resend(u)}>{t('team.resend')}</Button>}
               <Button size="sm" variant="outline" disabled={!!busy} loading={busy === u.userId} onClick={() => { if (!guarded(u, null)) void remove(u); }}>{t('team.remove')}</Button>
             </span>
           </div>;
