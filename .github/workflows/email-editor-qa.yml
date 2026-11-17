@@ -3,6 +3,8 @@ on:
   pull_request:
     paths:
       - 'src/notifications/**'
+      - 'src/components/organism/EmailTestPanel/**'
+      - 'scripts/test-template-tests*.mjs'
       - 'src/modules/notifications/**'
       - 'scripts/test-launch-emails-ui.mjs'
       - '.github/workflows/email-editor-qa.yml'
@@ -21,3 +23,9 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: node scripts/test-launch-emails-ui.mjs
+      - name: Test-email request validation and draft isolation
+        run: node scripts/test-template-tests.mjs
+      - name: Production build for fictional test-email browser fixtures
+        run: npm run build:production
+      - name: Test-email controls (fictional API, no external delivery)
+        run: node scripts/test-template-tests-ui.mjs

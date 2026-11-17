@@ -944,3 +944,7 @@ Protected-capture clarification: M14 schedule/pay screenshots remain local/ignor
 ## Approved Aleja website release · 1.2.5
 
 - PR147 merged after Justin's approval. All scoped checks and full Auth regression passed on57d801c. Release metadata in review; Cut release and Deploy web(prod) must complete before the production claim. [Release record](changelog/0209-release-1.2.5.md).
+
+## Email test sends · pending Anu approval (2026-11-13)
+
+Separate frontend and Company OS branches implement chosen-address live/draft tests, sample data, keyed queueing and isolated history. No production deployment or customer edits. Review, validation and release prerequisites: [pending changelog](changelog/_pending/email-test-send-anu-review.md).
