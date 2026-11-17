@@ -315,42 +315,42 @@ await test('PRO-04 desk: still offered to a new customer, a declined trial payme
 });
 
 // ── REC-06: "Sell and check in" lists only today's classes that haven't started ─────────────────────────────────────
-await test('REC-06 sell and check in: a class that has started (or starts this minute) is not listed; a later one is', () => {
-  const { notStarted } = need('deskSale');
+await test('REC-06 sell and check in: a class beyond the walk-in window is not listed; start instant and future are', () => {
+  const { walkInSessions } = need('deskSale');
   const now = Date.parse('2026-11-02T14:30:00Z');
   const s = (id, starts_at) => ({ session: { id, starts_at } });
   const list = [s('past', '2026-11-02T12:00:00Z'), s('running', '2026-11-02T14:00:00Z'), s('now', '2026-11-02T14:30:00Z'), s('later', '2026-11-02T16:00:00Z')];
-  assert.deepEqual(notStarted(list, now).map((x) => x.session.id), ['later']);
-  assert.deepEqual(notStarted([s('bad', 'not-a-date')], now), [], 'hostile: an unreadable start is not offered');
+  assert.deepEqual(walkInSessions(list, now).map((x) => x.session.id), ['now', 'later']);
+  assert.deepEqual(walkInSessions([s('bad', 'not-a-date')], now), [], 'hostile: an unreadable start is not offered');
 });
 
 await test('REC-06 evening in Bogotá (UTC already tomorrow): at 20:30 a 19:00 class is gone and a 21:00 one is offered', () => {
-  const { notStarted } = need('deskSale');
+  const { walkInSessions } = need('deskSale');
   const now = Date.parse('2026-11-03T01:30:00Z'); // 2 Nov, 20:30 in Bogotá
   const list = [{ session: { id: 'c19', starts_at: '2026-11-03T00:00:00Z' } }, { session: { id: 'c21', starts_at: '2026-11-03T02:00:00Z' } }];
-  assert.deepEqual(notStarted(list, now).map((x) => x.session.id), ['c21']);
+  assert.deepEqual(walkInSessions(list, now).map((x) => x.session.id), ['c21']);
 });
 await test('REC-06 a class chosen for check-in that has since started is no longer the choice (nothing is sent for it)', () => {
-  const { chosenSession, notStarted } = need('deskSale');
+  const { chosenSession, walkInSessions } = need('deskSale');
   const list = [{ session: { id: 'c19', starts_at: '2026-11-02T19:00:00Z' } }, { session: { id: 'c21', starts_at: '2026-11-02T21:00:00Z' } }];
-  assert.equal(chosenSession(notStarted(list, Date.parse('2026-11-02T18:00:00Z')), 'c19'), 'c19', 'still to come: kept');
-  assert.equal(chosenSession(notStarted(list, Date.parse('2026-11-02T19:05:00Z')), 'c19'), '', 'started while the form was open: dropped');
+  assert.equal(chosenSession(walkInSessions(list, Date.parse('2026-11-02T18:00:00Z')), 'c19'), 'c19', 'still to come: kept');
+  assert.equal(chosenSession(walkInSessions(list, Date.parse('2026-11-02T19:15:00.001Z')), 'c19'), '', 'started while the form was open: dropped');
   assert.equal(chosenSession(list, ''), '');
   assert.equal(chosenSession(list, 'not_today'), '', 'hostile: a ?session= for another class is not chosen');
 });
 
 await test('REC-06 r1: a chosen class that has started is named on screen (es and en note); none, a later class or another day\'s is not', () => {
-  const { startedChoice, notStarted, deskStrings } = need('deskSale');
+  const { startedChoice, walkInSessions, deskStrings } = need('deskSale');
   assert.equal(typeof startedChoice, 'function', 'startedChoice is exported');
   const all = [{ session: { id: 'c19', starts_at: '2026-11-02T19:00:00Z' } }, { session: { id: 'c21', starts_at: '2026-11-02T21:00:00Z' } }];
-  const offered = notStarted(all, Date.parse('2026-11-02T19:05:00Z'));
+  const offered = walkInSessions(all, Date.parse('2026-11-02T19:15:00.001Z'));
   assert.equal(startedChoice(all, offered, 'c19'), true, 'chosen, then started: the note shows');
   assert.equal(startedChoice(all, offered, 'c21'), false, 'still offered: no note');
   assert.equal(startedChoice(all, offered, ''), false, 'no class chosen (sell without check-in): no note');
   assert.equal(startedChoice(all, offered, 'not_today'), false, 'hostile: a ?session= for another day is not "started"');
   const s = deskStrings['desk.sale.sessionStarted'];
   assert.ok(s?.es && s?.en, 'es and en copy');
-  assert.match(s.es, /empezó/); assert.match(s.es, /sin check-in/); assert.match(s.en, /started/); assert.match(s.en, /without check-in/);
+  assert.match(s.es, /15 minutos/); assert.match(s.es, /sin check-in/); assert.match(s.en, /15 minutes/); assert.match(s.en, /without check-in/);
 });
 
 // ── FIN-01: the desk expense keeps the chosen paid-on date; the server's rule (not after today) is the only limit ──────

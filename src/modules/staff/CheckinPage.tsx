@@ -27,7 +27,7 @@ import { maskPhone, personMatches, usePeople, type Person } from './people';
 import { S02 } from './specs';
 import { approvedPackageRows, packageState } from '../../data/packages';
 import { bookWithPackage } from '../../data/deskBooking';
-import { checkInOpen } from './desk/deskSale';
+import { checkInOpen, staffWalkInOpen } from './desk/deskSale';
 import { checkinView } from './checkinSelection';
 import { useNow } from '../customer/hooks';
 import { SERVER_RULES } from '../customer/booking/bookingPolicy';
@@ -96,7 +96,7 @@ export function CheckinPage() {
   const paymentFor = (b: BookingRow) => payments.find(p => p.status === 'pending' && ((p as PaymentRow & { for_id?: string }).for_id === b.id || p.payment_id === b.id || b.payment_id === p.id));
   const onRoster = useMemo(() => new Set(bookings.filter((b) => b.status !== 'cancelled').map((b) => b.user_id)), [bookings]);
   const walkIns = useMemo(() => (q.trim().length < 2 ? [] : people.filter((p) => p.role === 'customer' && !onRoster.has(p.id) && personMatches(p, q)).slice(0, 6)), [people, onRoster, q]);
-  // Production: Hoy has no late grace (owner 2026-11-11, F1b), so the screen promises none; the review build keeps the demo policy.
+  // Existing arrival lateness is unchanged; the separate staff walk-in registration window is not an attendance grace.
   const graceMin = SERVER_RULES ? 0 : settings.policies.lateGraceMin;
   const graceMs = graceMin * MS.min;
   /** F1b hint: a class that has ended takes no check-in (the server refuses `check_in_closed`). */
@@ -139,7 +139,7 @@ export function CheckinPage() {
   const packageFor = (userId: string) => packageState(approvedPackageRows(ledger.filter(row => row.user_id === userId), payments));
   const unavailable = (userId: string) => {
     // Production: the server decides capacity, balance, expiry and overlaps; only the class choice is checked here.
-    if (server) return !selected || selected.session.status !== 'scheduled' ? t('staff.checkin.package.unavailable') : null;
+    if (server) return !selected || !staffWalkInOpen(selected.session, Date.now()) ? t('desk.error.occurrence_not_open') : null;
     if (selected && !sessionAdmissionAvailable(selected.session, selected.modality, selected.session.template_id ? { id: selected.session.template_id, active: selected.templateActive } : undefined)) return t('staff.checkin.error.session_unavailable');
     if (!selected || selected.session.status !== 'scheduled' || Date.parse(selected.session.starts_at) <= Date.now()) return t('staff.checkin.package.unavailable');
     if (selected.session.booked_count >= selected.session.capacity) return t('core.common.full');
