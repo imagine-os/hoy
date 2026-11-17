@@ -13,7 +13,7 @@ try {
   await build({
     stdin: {
       contents: `export { reviewOps } from './src/modules/transfers/launch/payments';
-export { notStarted, checkInOpen } from './src/modules/staff/desk/deskSale';
+export { walkInSessions, checkInOpen } from './src/modules/staff/desk/deskSale';
 export { deskStrings, DESK_CODES } from './src/modules/staff/desk/strings';
 export { CONTRACT_REFUSALS } from './src/data/companyos/refusals';
 export { BOOKING_POLICY_DEFAULTS } from './src/modules/customer/booking/bookingPolicy';
@@ -31,10 +31,10 @@ export { strings as customerStrings } from './src/modules/customer/strings';`,
   // ── F1b (owner, 2026-11-11, supersedes F1): no late grace; no check-in after the class has ended (the UI only hints)
   const now = Date.parse('2026-11-12T18:08:00Z');
   const at = (minutesAgo) => ({ session: { starts_at: new Date(now - minutesAgo * 60000).toISOString() } });
-  check('F1b no grace in the policy and the desk offers only classes that have not started', () => {
+  check('Public policy retains no grace; desk offers the new staff-only 15-minute window', () => {
     assert.equal('lateGraceMinutes' in m.BOOKING_POLICY_DEFAULTS, false);
     const list = [at(8), at(20), at(-30), { session: { starts_at: 'junk' } }];
-    assert.deepEqual(m.notStarted(list, now), [list[2]]);
+    assert.deepEqual(m.walkInSessions(list, now), [list[0], list[2]]);
   });
   check('F1b check-in is offered before the start and during the class, not after its end', () => {
     const cls = (start, end) => ({ starts_at: new Date(now + start * 60000).toISOString(), ends_at: new Date(now + end * 60000).toISOString() });

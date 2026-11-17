@@ -14,7 +14,7 @@ export const DESK_CODES = [
 
 export const deskStrings: StringTable = {
   'desk.error.occurrence_full': { es: 'La clase está llena. No se descontó ninguna clase.', en: 'The class is full. No class was deducted.' },
-  'desk.error.occurrence_not_open': { es: 'La clase ya empezó, terminó o fue cancelada.', en: 'The class has started, ended or was cancelled.' },
+  'desk.error.occurrence_not_open': { es: 'La inscripción en recepción cerró (15 minutos después del inicio), o la clase terminó o fue cancelada.', en: 'Front-desk registration closed (15 minutes after the start), or the class ended or was cancelled.' },
   'desk.error.already_booked': { es: 'Esta persona ya tiene un cupo en esta clase.', en: 'This person already has a spot in this class.' },
   'desk.error.person_overlap': { es: 'Esta persona ya tiene otra clase a esa hora.', en: 'This person already has another class at that time.' },
   'desk.error.daily_limit_reached': { es: 'Esta persona ya tiene una clase ese día.', en: 'This person already has a class that day.' },
@@ -59,7 +59,7 @@ export const deskStrings: StringTable = {
 
   'desk.sale.checkInFailed': { es: 'Venta guardada, pero no se registró la llegada. Márcala en Check-in; no vuelvas a cobrar.', en: 'Sale saved, but the arrival was not recorded. Mark it on Check-in; do not charge again.' },
   'desk.sale.reference': { es: 'Referencia (voucher del datáfono)', en: 'Reference (card-terminal slip)' },
-  'desk.sale.sessionStarted': { es: 'La clase que elegiste ya empezó: elige otra o vende sin check-in.', en: 'The class you chose has started: choose another or sell without check-in.' },
+  'desk.sale.sessionStarted': { es: 'La clase que elegiste cerró su inscripción (15 minutos después del inicio): elige otra o vende sin check-in.', en: 'Registration for the chosen class has closed (15 minutes after the start): choose another or sell without check-in.' },
   'desk.sale.trialUsed': { es: 'ya usó su clase de prueba', en: 'trial already used' },
   'desk.sale.trialUsed.note': { es: 'Esta persona ya usó su clase de prueba (o tiene una pendiente de pago). Elige otro producto.', en: 'This person has already used their trial class (or has one waiting for payment). Choose another product.' },
   'desk.sale.quoted': { es: 'Este producto no tiene precio fijo: escribe el valor acordado y el motivo.', en: 'This product has no fixed price: enter the agreed amount and the reason.' },
