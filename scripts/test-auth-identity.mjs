@@ -504,13 +504,13 @@ check('r1 L5 enrol: a real super admin without the customer role is enrolled on 
   const noUrl = () => ({ userId: 'u', roleAdded: true });
   cos = fake(noUrl);
   let r = await safe(() => T.invite(cos.request, 'a@example.invalid', 'coach', 'https://x.invalid/', { personId: 'p1', records: recs }));
-  check('r1 no url: invite with a 200 without url gives signed_up, never invited', r?.kind === 'signed_up', JSON.stringify(r));
+  check('r1 no url: invite with a 200 without url gives added (the role was added; they can sign in now), never invited', r?.kind === 'added', JSON.stringify(r));
   cos = fake(noUrl);
   r = await safe(() => T.invite(cos.request, 'f@example.invalid', 'front_desk', 'https://x.invalid/'));
-  check('r1 no url: the same for a non-teacher invite', r?.kind === 'signed_up', JSON.stringify(r));
+  check('r1 no url: the same for a non-teacher invite', r?.kind === 'added', JSON.stringify(r));
   cos = fake(noUrl);
   r = await safe(() => T.resendInvitation(cos.request, u('u_front', 'front_desk'), 'https://x.invalid/', recs));
-  check('r1 no url: resend with a 200 without url gives signed_up', r?.kind === 'signed_up', JSON.stringify(r));
+  check('r1 no url: resend with a 200 without url gives added', r?.kind === 'added', JSON.stringify(r));
   cos = fake(noUrl);
   r = await safe(() => T.linkTeacher(cos.request, u('u_ana', 'coach'), 'p1', 'https://x.invalid/', recs));
   check('r1 no url: linkTeacher with a 200 without url gives linked', r?.kind === 'linked', JSON.stringify(r));
@@ -518,6 +518,21 @@ check('r1 L5 enrol: a real super admin without the customer role is enrolled on 
   // free list and stale picks
   check('r1 stale picks: pruneTeacherPicks drops a form pick and row picks no longer free', typeof T.pruneTeacherPicks === 'function' && (() => { const f = T.pruneTeacherPicks({ personId: 'p9' }, { a: 'p1', b: 'p9', c: 'gone' }, recs); return f.personId === '' && JSON.stringify(f.picks) === JSON.stringify({ a: 'p1' }); })());
   check('r1 stale picks: a still-free pick is kept', T.pruneTeacherPicks?.({ personId: 'p1' }, {}, recs)?.personId === 'p1');
+}
+
+// ── Teacher link, round 2 fixes ────────────────────────────────────────────────────────────────────────────────
+{
+  const T = M.team;
+  const safe = async (f) => { try { return await f(); } catch (e) { return e; } };
+  const fake = (answer) => { const calls = []; return { calls, request: async (method, path, body) => { calls.push({ method, path, body }); return answer(method, path, body); } }; };
+  const recs = [{ coachId: 'c1', personId: 'p1', name: 'Ana', email: 'a@example.invalid', userId: null, active: true }];
+  const mismatch = (m, path) => { if (path === '/invitations') throw Object.assign(new Error('role_mismatch'), { code: 'role_mismatch', status: 409 }); return {}; };
+  let cos = fake(mismatch);
+  let e = await safe(() => T.invite(cos.request, 'a@example.invalid', 'coach', 'https://x.invalid/', { personId: 'p1', records: recs }));
+  check('r2 coach: role_mismatch on a Teacher invite is surfaced, never turned into a role with no link', e?.code === 'role_mismatch' && !cos.calls.some((c) => c.path === '/admin/users'), JSON.stringify([e?.code, cos.calls.map((c) => c.path)]));
+  cos = fake(mismatch);
+  const r = await safe(() => T.invite(cos.request, 'f@example.invalid', 'front_desk', 'https://x.invalid/'));
+  check('r2 coach: other roles keep the add-role fallback on role_mismatch', r?.kind === 'added' && cos.calls.some((c) => c.path === '/admin/users'), JSON.stringify([r, cos.calls.map((c) => c.path)]));
 }
 
 // ── Token wait: a Clerk that never loads answers null (production build) ────────────────────────────────────────
