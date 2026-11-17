@@ -23,7 +23,7 @@ import { DESK_CONSENTS, type DeskMethod, type SaleResult } from './deskCommands'
 import { deskErrorText } from './strings';
 import { useActionKeys, useDeskCommands } from './useDesk';
 import { cosRequest, errorCode } from './wire';
-import { chosenSession, deskTrialBlock, notStarted, startedChoice } from './deskSale';
+import { chosenSession, deskTrialBlock, walkInSessions, startedChoice } from './deskSale';
 import '../staff.css';
 
 const METHODS: { id: DeskMethod; label: string }[] = [{ id: 'cash', label: 'staff.register.method.cash' }, { id: 'card_terminal', label: 'staff.register.method.datafono' }, { id: 'transfer', label: 'staff.register.method.transfer' }];
@@ -41,12 +41,12 @@ export function DeskSalePage() {
   const keys = useActionKeys();
   const [params] = useSearchParams();
   const { people } = usePeople();
-  // REC-06: only today's classes that haven't started (the server refuses a started one: occurrence_not_open).
+  // Today's staff walk-in window includes the first 15 minutes; the server remains authoritative.
   const todayAll = useTodaySessions();
-  // Re-checked every 30 s, so a class that starts while the form is open drops out of the list.
+  // Re-checked every 30 s, so a class whose walk-in window closes drops out of the list.
   const [, tick] = useState(0);
   useEffect(() => { const timer = setInterval(() => tick((n) => n + 1), 30_000); return () => clearInterval(timer); }, []);
-  const today = notStarted(todayAll, Date.now());
+  const today = walkInSessions(todayAll, Date.now());
   const data = useData();
   const emailChoiceContext=JSON.stringify([user.id,role,viewAs]);
   const [emailChoice,setEmailChoice]=useState<{provider:typeof data;context:string;person:EmailMatch}|null>(null);

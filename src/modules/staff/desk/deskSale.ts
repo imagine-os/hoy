@@ -2,7 +2,7 @@ import type { TrialAssessment } from '../../../data/trialEligibility';
 
 /**
  * S-04 in the production build: what the desk sale offers. Display only; the server stays the authority (it refuses a
- * second trial with `trial_used`, and a class that has started with `occurrence_not_open`).
+ * second trial with `trial_used`, and a closed staff admission window with `occurrence_not_open`).
  */
 
 /** The same rule as `assessLiveTrial`: a product is the trial when its kind (Company OS `product.kind`) or key is `trial`. */
@@ -17,16 +17,23 @@ export function deskTrialBlock(product: { kind?: unknown; slug?: string | null }
   return isTrial(product) && assessment?.status === 'trial_used' ? 'trial_used' : null;
 }
 
-/**
- * REC-06: "Sell and check in" offers only today's classes that have not started yet (an unreadable start is not offered).
- * No grace after the start (owner 2026-11-11, F1b); the server's `occurrence_not_open` stays the authority.
+/** HOY staff-only walk-in display hint. Server authorization and capacity remain authoritative.
+ * New walk-ins are offered through start + 15 minutes (inclusive), never after the class ends.
+ * This does not change customer booking or existing reservation check-in policy.
  */
-export function notStarted<T extends { session: { starts_at: string } }>(list: T[], now: number): T[] {
-  return list.filter((x) => { const at = Date.parse(x.session.starts_at); return Number.isFinite(at) && at > now; });
+export function staffWalkInOpen(session: { starts_at: string; ends_at?: string; status?: string }, now: number): boolean {
+  const start = Date.parse(session.starts_at);
+  const end = session.ends_at === undefined ? Infinity : Date.parse(session.ends_at);
+  return (!session.status || session.status === 'scheduled') && Number.isFinite(start)
+    && !Number.isNaN(end) && now <= start + 15 * 60_000 && now <= end;
+}
+
+export function walkInSessions<T extends { session: { starts_at: string; ends_at?: string; status?: string } }>(list: T[], now: number): T[] {
+  return list.filter((x) => staffWalkInOpen(x.session, now));
 }
 
 /**
- * The class chosen for check-in, if it is still offered: one that started while the form was open drops out of the
+ * The class chosen for check-in, if it is still offered: one whose admission window closes while the form is open drops out of the
  * list, and then nothing is sent for it (the server would refuse it `occurrence_not_open` with nothing on screen to fix).
  */
 export function chosenSession(list: readonly { session: { id: string } }[], sessionId: string): string {
@@ -34,7 +41,7 @@ export function chosenSession(list: readonly { session: { id: string } }[], sess
 }
 
 /**
- * Review r1: the chosen check-in class has started (it is one of today's classes but no longer offered), so it dropped
+ * Review r1: the chosen check-in class is outside the staff admission window (it is one of today's classes but no longer offered), so it dropped
  * out of the list. The page says so instead of silently showing "no check-in". A class of another day, or none, is not.
  */
 export function startedChoice(all: readonly { session: { id: string } }[], offered: readonly { session: { id: string } }[], sessionId: string): boolean {

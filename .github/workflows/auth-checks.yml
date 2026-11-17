@@ -108,7 +108,7 @@ jobs:
       - name: The Company OS provider (mapping, queries, batch and idempotency, polling, refusal copy)
         run: node scripts/test-companyos-provider.mjs
       - name: Jas 1 Nov, administration and front desk (wrapped /query rows, payment settings from /me roles, desk trial and classes, expense date, refusal copy)
-        run: node scripts/test-jas-1nov-admin.mjs
+        run: node scripts/test-jas-1nov-admin.mjs && node scripts/test-staff-walkin-window.mjs
       - name: The payment void's screens at logic level (the write, who gets it, every refusal in words, a voided receipt)
         run: node scripts/test-void-payment.mjs
       - name: The activity log's audit read (paging, filters, refusals)

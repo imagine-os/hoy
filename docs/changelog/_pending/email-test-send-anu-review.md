@@ -9,7 +9,7 @@ rejected: Browser provider keys, customer-data fixtures, automatic publication a
 
 The email editor is already live in HOY 1.2.0. This separate review branch adds a test panel for super admins, with their address prefilled, one chosen recipient, live/draft selection, sender/reply-to display, explicit sending, separate history and status refresh. Sample data only; tests never publish drafts or change customer records. Clear [TEST] markers, duplicate protection, quotas and stale-template checks are enforced by the paired backend PR.
 
-Company OS 1.18.0 is the minimum release that carries the new API. Missing backend or disabled opt-in shows an unavailable/disabled message. UI strings and responsive checks cover ES/EN. Component inventory includes EmailTestPanel and a safe unavailable usage.
+Company OS 1.19.0 is the minimum (with #162) release that carries the new API. Missing backend or disabled opt-in shows an unavailable/disabled message. UI strings and responsive checks cover ES/EN. Component inventory includes EmailTestPanel and a safe unavailable usage.
 
 Validation: request contract started red, then passed; production build and TypeScript checks; browser checks with fictional auth/API fixtures; local PostgreSQL plus fake-provider integration checks in the backend. Two independent integrated review rounds are required before handoff. No real test delivery has been attempted; a controlled real inbox check remains for after approval/deployment.
 

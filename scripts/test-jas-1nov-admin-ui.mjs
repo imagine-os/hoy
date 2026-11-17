@@ -62,6 +62,7 @@ function reset({ hostileOccurrence = false, refuseSettings = false, deskSale = f
       // Tonight (2 Nov in Bogotá): one class started at 19:00, one starts at 21:00.
       ...(deskSale ? [
         rec('oc_1900', { title: 'Noche temprana', starts_at: '2026-11-03T00:00:00.000Z', ends_at: '2026-11-03T00:50:00.000Z', status: 'scheduled', booked_count: 2, capacity: 16, coach: 'co_ana', resource: 'res_big', schedule: 'sch_pulso' }),
+        rec('oc_grace', { title: 'Llegada reciente', starts_at: '2026-11-03T01:20:00.000Z', ends_at: '2026-11-03T02:10:00.000Z', status: 'scheduled', booked_count: 0, capacity: 16, coach: 'co_ana', resource: 'res_big', schedule: 'sch_pulso' }),
         rec('oc_2100', { title: 'Noche tardía', starts_at: '2026-11-03T02:00:00.000Z', ends_at: '2026-11-03T02:50:00.000Z', status: 'scheduled', booked_count: 1, capacity: 16, coach: 'co_ana', resource: 'res_big', schedule: 'sch_pulso' }),
       ] : []),
       // A malformed start that still falls inside the page's 14-day window (the fake compares it as Company OS would, as
@@ -272,6 +273,11 @@ try {
   check('…and the trial chosen before her shows the note to choose another product', /ya usó su clase de prueba \(o tiene una pendiente de pago\)/.test(await page.locator('[role=note]').allInnerTexts().then((x) => x.join(' ')).catch(() => '')));
   const classes = await page.getByLabel('Check-in a la clase', { exact: true }).locator('option').allTextContents().catch(() => []);
   check('Sell and check in (evening): the 21:00 class is offered, the 19:00 one that started is not', classes.some((o) => /Noche tardía/.test(o)) && !classes.some((o) => /Noche temprana/.test(o)), classes.join(' | '));
+  check('staff 15-minute window: class started 10 minutes ago stays offered', classes.some((o) => /Llegada reciente/.test(o)));
+  await page.getByLabel('Check-in a la clase', { exact: true }).selectOption('oc_grace');
+  await page.clock.fastForward(6 * 60_000);
+  check('staff window expiry: chosen class drops out after 15 minutes', !(await page.getByLabel('Check-in a la clase', { exact: true }).locator('option').allTextContents()).some(o => /Llegada reciente/.test(o)));
+  check('staff window expiry: clear no-check-in note', /15 minutos/.test(await page.locator('[data-desk-session-started]').innerText()));
   at = await go(page, '/staff/expense');
   const eveningPaidOn = await page.locator('[data-desk-expense-form]').getByLabel('Pagado el', { exact: false }).inputValue().catch(() => 'missing');
   check('Record expense (evening): the paid-on date defaults to the studio day, not the UTC one', eveningPaidOn === TODAY, eveningPaidOn);
@@ -279,7 +285,7 @@ try {
   at = await go(page, '/staff/register?session=oc_1900');
   const startedNote = page.locator('[data-desk-session-started]');
   const noteShown = await startedNote.waitFor({ timeout: 8000 }).then(() => true, () => false);
-  check('REC-06 r1: a chosen class that has started shows "choose another or sell without check-in"', noteShown && /ya empezó/.test(await startedNote.innerText().catch(() => '')) && /sin check-in/.test(await startedNote.innerText().catch(() => '')), (await text(page)).slice(0, 400));
+  check('REC-06 r1: a chosen class that has started shows "choose another or sell without check-in"', noteShown && /15 minutos/.test(await startedNote.innerText().catch(() => '')) && /sin check-in/.test(await startedNote.innerText().catch(() => '')), (await text(page)).slice(0, 400));
   check('no fake query was refused for an unknown filter operator', !world.log.some((l) => l.refused), JSON.stringify(world.log.filter((l) => l.refused)).slice(0, 400));
   await ctx.close();
 
