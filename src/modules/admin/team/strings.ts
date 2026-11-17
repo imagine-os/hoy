@@ -47,6 +47,7 @@ export const teamStrings: StringTable = {
   'team.teacher': { es: 'Perfil de profesor', en: 'Teacher profile' },
   'team.teacher.pick': { es: 'Elige un perfil…', en: 'Choose a profile…' },
   'team.teacher.none': { es: 'No hay perfiles de profesor sin cuenta. Crea el perfil primero.', en: 'No teacher profiles without an account. Create the profile first.' },
+  'team.teacher.loadFailed': { es: 'No se pudieron cargar los perfiles de profesor: no se puede invitar ni vincular profesores por ahora. Recarga la página.', en: 'Teacher profiles could not be loaded: teachers cannot be invited or linked for now. Reload the page.' },
   'team.teacher.missing': { es: 'Sin perfil de profesor', en: 'No teacher profile' },
   'team.teacher.link': { es: 'Vincular', en: 'Link' },
   'team.teacher.linkedTo': { es: 'Perfil: {name}', en: 'Profile: {name}' },

@@ -94,7 +94,7 @@ export type InviteOutcome = InviteResult & { repair?: boolean };
  * A teacher record (a `coach` row) with its person: Company OS links a login to a person only when the invitation carries
  * that person's id, and the teacher app finds "me" through that link. `userId` is the login already linked, or null.
  */
-export interface TeacherRecord { coachId: string; personId: string; name: string; email: string; userId: string | null }
+export interface TeacherRecord { coachId: string; personId: string; name: string; email: string; userId: string | null; active: boolean }
 const refuse = (c: string) => Object.assign(new Error(c), { code: c });
 const str = (v: unknown) => (typeof v === 'string' ? v : '');
 /** Teacher records, paged past 500 with a sort ending in `id`. A coach without a person cannot be linked and is left out. */
@@ -106,17 +106,24 @@ export async function listTeacherRecords(request: CosRequest): Promise<TeacherRe
       const p = row.data?.person as { id?: unknown; name?: unknown; email?: unknown; user?: unknown } | null | undefined;
       if (!p || typeof p !== 'object' || typeof p.id !== 'string') continue;
       const user = p.user && typeof p.user === 'object' ? (p.user as { id?: unknown }).id : p.user;
-      out.push({ coachId: row.id, personId: p.id, name: str(p.name), email: str(p.email), userId: typeof user === 'string' && user ? user : null });
+      out.push({ coachId: row.id, personId: p.id, name: str(p.name), email: str(p.email), userId: typeof user === 'string' && user ? user : null, active: row.data?.active !== false });
     }
     if (res.data.length < 500) return out;
   }
 }
 /** The teacher record linked to this login, or null. */
 export const linkedTeacher = (user: TeamUser, records: TeacherRecord[]): TeacherRecord | null => records.find(r => r.userId === user.userId) ?? null;
+/** The records a picker offers: active teacher profiles that have no login yet (inactive ones still show an existing link). */
+export const freeTeachers = (records: TeacherRecord[]) => records.filter(r => !r.userId && r.active);
+/** Drops a picked profile (the invite form's and each row's) that is no longer free after the records were read again. */
+export function pruneTeacherPicks(form: { personId: string }, picks: Record<string, string>, records: TeacherRecord[]) {
+  const free = new Set(freeTeachers(records).map(r => r.personId));
+  return { personId: free.has(form.personId) ? form.personId : '', picks: Object.fromEntries(Object.entries(picks).filter(([, id]) => free.has(id))) };
+}
 /** A person to link must be one of the listed records and not yet linked to another login. */
 const requireFreeTeacher = (personId: string | undefined, records: TeacherRecord[] | undefined, allowUserId?: string) => {
   const rec = personId && records ? records.find(r => r.personId === personId) : undefined;
-  if (!rec || (rec.userId && rec.userId !== allowUserId)) throw refuse('teacher_required');
+  if (!rec || !rec.active || (rec.userId && rec.userId !== allowUserId)) throw refuse('teacher_required');
   return rec.personId;
 };
 
@@ -128,7 +135,8 @@ export async function invite(request: CosRequest, rawEmail: string, roleKey: Tea
   let result: InviteResult;
   try {
     const res = await request<{ userId: string; invitationId: string; url: string }>('POST', '/invitations', { email, roleKey, ...person, redirectUrl });
-    result = { kind: 'invited', url: res.url };
+    // A 200 with no link (the login already had the role) must never be emailed as "undefined".
+    result = res.url ? { kind: 'invited', url: res.url } : { kind: 'signed_up' };
   } catch (e) {
     if (code(e) === 'role_mismatch') { await addMembership(request, email, null, roleKey); result = { kind: 'added' }; }
     else if (code(e) === 'already_signed_up') result = { kind: 'signed_up' };
@@ -181,7 +189,7 @@ export async function resendInvitation(request: CosRequest, user: TeamUser, redi
       setAside++;
     }
     const res = await request<{ userId: string; invitationId: string; url: string }>('POST', '/invitations', { email, roleKey, ...person, redirectUrl });
-    result = { kind: 'invited', url: res.url };
+    result = res.url ? { kind: 'invited', url: res.url } : { kind: 'signed_up' };
   } catch (e) {
     if (code(e) === 'already_signed_up') result = { kind: 'signed_up' };
     else if (code(e) === 'role_mismatch') result = { kind: 'has_account' };
@@ -204,7 +212,7 @@ export async function linkTeacher(request: CosRequest, user: TeamUser, personId:
   const person = requireFreeTeacher(personId, records, user.userId);
   try {
     const res = await request<{ userId: string; invitationId: string; url: string }>('POST', '/invitations', { email: user.email.trim().toLowerCase(), roleKey: 'coach', personId: person, redirectUrl });
-    return { kind: 'invited', url: res.url };
+    return res.url ? { kind: 'invited', url: res.url } : { kind: 'linked' };
   } catch (e) {
     if (code(e) === 'already_signed_up') return { kind: 'linked' };
     throw e;

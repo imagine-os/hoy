@@ -405,8 +405,8 @@ check('r1 L5 enrol: a real super admin without the customer role is enrolled on 
   /** A fake Company OS: records every call; `answer(path, body)` returns the reply or throws. */
   const fake = (answer) => { const calls = []; return { calls, request: async (method, path, body) => { calls.push({ method, path, body }); return answer ? answer(method, path, body) : { userId: 'u', invitationId: 'i', url: 'https://clerk.example.invalid/x' }; } }; };
   const records = [
-    { coachId: 'c1', personId: 'p1', name: 'Ana', email: 'ana@example.invalid', userId: null },
-    { coachId: 'c2', personId: 'p2', name: 'Bea', email: 'bea@example.invalid', userId: 'u_bea' },
+    { coachId: 'c1', personId: 'p1', name: 'Ana', email: 'ana@example.invalid', userId: null, active: true },
+    { coachId: 'c2', personId: 'p2', name: 'Bea', email: 'bea@example.invalid', userId: 'u_bea', active: true },
   ];
   const u = (id, ...keys) => ({ userId: id, email: `${id}@example.invalid`, name: id, memberships: keys.map((k, i) => ({ membershipId: `${id}_m${i}`, roleKey: k })) });
 
