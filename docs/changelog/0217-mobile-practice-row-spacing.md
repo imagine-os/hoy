@@ -1,12 +1,12 @@
 ---
 date: 2026-11-16
-version: 1.4.1 (unreleased)
+version: 1.6.0 (unreleased)
 intent: Fix mobile class row spacing while preserving published content and desktop columns.
 ---
 
 # Mobile practice row spacing
 
-- Version: 1.4.1 (pending release)
+- Version: 1.6.0 (pending release)
 - Date: 2026-11-16
 - Intent: correct the reported Ligereza/Híbrido overlap and inspect related mobile sections.
 - Decision: use the sanctuary percentage as a column gap so phone layouts retain their existing vertical spacing. The existing ≤380px header uses smaller outer/inter-control spacing while retaining the logo minimum and 44px controls; overflow diagnostics record exact element bounds. All class copy, images, class dimensions and published content are preserved.

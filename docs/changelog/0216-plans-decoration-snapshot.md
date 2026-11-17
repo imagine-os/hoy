@@ -1,12 +1,12 @@
 ---
 date: 2026-11-16
-version: 1.4.1 (unreleased)
+version: 1.6.0 (unreleased)
 intent: Sample current Plans decoration atomically without relaxing visual release assertions.
 ---
 
 # Plans decoration verification uses a fresh DOM snapshot
 
-- Version: 1.4.1 (pending release)
+- Version: 1.6.0 (pending release)
 - Date: 2026-11-16
 - Intent: investigate repeated hosted Plans mask assertions without relaxing release checks.
 - Decision: select the current connected page heading and read its pseudo-element styles and overflow in one browser task. Wait only for required DOM readiness. Wrong mask, pointer behavior or overflow still fails immediately. Save the raw variant-specific sample in failure.json.

@@ -1,6 +1,6 @@
 ---
 date: 2026-11-16
-version: 1.4.1 (unreleased)
+version: 1.6.0 (unreleased)
 intent: Warn reception about existing clients with the same email without imposing universal uniqueness.
 ---
 
