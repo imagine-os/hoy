@@ -3,6 +3,8 @@ export type TestSource = TestCopy & { id: string; body_html?: unknown };
 export type TestHistory = { id: string; at: string; actor: string | null; recipient: string; mode: 'live' | 'draft'; sourceHash: string; status: string; error: string | null };
 export type TestConfig = { enabled: boolean; from: string; replyTo: string; history: TestHistory[] };
 export const validTestRecipient = (value: string) => value.length <= 254 && /^[^\s@,;<>]+@[^\s@,;<>.]+(?:\.[^\s@,;<>.]+)+$/.test(value);
+export const liveSource = (r: { id?: unknown; subject?: unknown; body?: unknown; body_html?: unknown }): TestSource =>
+  ({ id: String(r.id ?? ''), subject: String(r.subject ?? ''), body: String(r.body ?? ''), body_html: r.body_html });
 export function testPayload(source: TestSource, recipient: string, mode: 'live' | 'draft', draft: TestCopy | null) {
   if (mode === 'draft' && !draft) throw new Error('draft_required');
   return { templateId: source.id, recipient: recipient.trim(), mode,

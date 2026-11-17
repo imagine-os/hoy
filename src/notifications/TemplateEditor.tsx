@@ -5,6 +5,7 @@ import { Button } from '../components/atom/Button/Button';
 import { EmailPreview } from '../components/organism/EmailPreview/EmailPreview';
 import { useCosQueries, flatRows, type CosRow } from '../modules/staff/desk/useCos';
 import { batch, createActionKeys, type BatchOp } from '../modules/staff/desk/wire';
+import { liveSource } from './templateTests';
 import { LAUNCH_SAMPLE, renderSample } from './launchEmails';
 import { EmailTestPanel } from '../components/organism/EmailTestPanel/EmailTestPanel';
 
@@ -75,6 +76,6 @@ export function TemplateEditor({ template }: { template: string }) {
         {canEdit && !draft && <Button variant="outline" onClick={() => start(copy(r))}>{t('emailEdit.reuse')}</Button>}
       </details>)}
     </details>
-    {role === 'super_admin' && <EmailTestPanel request={query.request} source={{...copy(draft && base ? base : live),id:live.id,body_html:live.body_html}} draft={draft} version={version} defaultRecipient={user.email} />}
+    {role === 'super_admin' && <EmailTestPanel request={query.request} source={liveSource(live)} draft={draft} version={version} defaultRecipient={user.email} />}
   </div>;
 }
