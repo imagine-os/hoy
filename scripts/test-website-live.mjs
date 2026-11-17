@@ -6,12 +6,13 @@ import {chromium} from 'playwright-core';
 import {PAGES} from '../server/pageMeta.mjs';
 import {socialSurfaces,socialHead} from './lib/social-sharing.mjs';
 import {publishedSite,verifyReleaseProof,verifyMeta,verifyFinale} from './lib/release-verifier-contracts.mjs';
+import {plansDecorationSnapshot} from './lib/plans-decoration-snapshot.mjs';
 const expected=process.argv[2];assert.match(expected||'',/^[0-9a-f]{40}$/,'an exact released source SHA is required');
 const base=new URL(process.env.WEBSITE_BASE_URL||'https://hoyhumanclub.com/');
 assert.equal(base.href,'https://hoyhumanclub.com/','production verification requires the canonical production origin');
 await mkdir('qa/website-release',{recursive:true});
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||(existsSync('/usr/bin/chromium')?'/usr/bin/chromium':undefined),args:['--no-sandbox','--disable-dev-shm-usage']});
-const checks=[];let proof=null,active=null;
+const checks=[];let proof=null,active=null,plansProbe=null;
 try{
  const crawler=await browser.newContext({javaScriptEnabled:false});
  const configResponse=await crawler.request.get(new URL('app-config.json',base).href);assert.equal(configResponse.status(),200);publishedSite(await configResponse.json());
@@ -38,6 +39,7 @@ try{
  }
  await crawler.close();
  for(const lang of ['es','en'])for(const dark of [false,true])for(const width of [390,1280]){
+  plansProbe=null;
   const context=await browser.newContext({viewport:{width,height:900},reducedMotion:'reduce'});
   await context.addInitScript(({lang,dark})=>{localStorage.setItem('hoyos.lang',lang);localStorage.setItem('hoyos.theme',JSON.stringify({theme:dark?'dark':'light',skin:'styled'}));},{lang,dark});
   const page=active=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
@@ -53,10 +55,12 @@ try{
   verifyFinale(geometry);
   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
   const suffix=lang+'-'+(dark?'dark':'light')+'-'+width;await section.screenshot({path:'qa/website-release/home-option1-'+suffix+'.png'});
-  await page.goto(new URL('planes',base).href,{waitUntil:'domcontentloaded'});await page.locator('.site-pagehead').waitFor();await page.evaluate(()=>scrollTo(0,0));
-  const decoration=await page.locator('.site-pagehead').evaluate(el=>({mask:getComputedStyle(el,'::after').maskImage,pointer:getComputedStyle(el,'::after').pointerEvents}));assert(decoration.mask.includes('radial-gradient'));assert.equal(decoration.pointer,'none');assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
+  plansProbe={suffix};await page.goto(new URL('planes',base).href,{waitUntil:'domcontentloaded'});await page.evaluate(()=>scrollTo(0,0));
+  const snapshot=await page.waitForFunction(plansDecorationSnapshot,undefined,{timeout:10000});
+  const decoration=await snapshot.jsonValue();await snapshot.dispose();plansProbe={suffix,...decoration};
+  assert.equal(decoration.connected,true);assert(decoration.mask.includes('radial-gradient'));assert.equal(decoration.pointer,'none');assert.equal(decoration.fits,true);
   await page.screenshot({path:'qa/website-release/plans-'+suffix+'.png'});assert.deepEqual(errors,[]);checks.push('Latest redirect, Option1 frame and Plans decoration '+suffix);await context.close();active=null;
  }
  await writeFile('qa/website-release/verified.json',JSON.stringify({base:base.href,expectedSource:expected,...proof,checkedAt:new Date().toISOString(),checks},null,2));console.log('PASS production website: exact SHA, real-path crawler previews, eight responsive/language/theme photo and Plans groups');
-}catch(error){await writeFile('qa/website-release/failure.json',JSON.stringify({expectedSource:expected,base:base.href,proof,checks,message:String(error.message),url:active?.url()},null,2));if(active&&!active.isClosed())await active.screenshot({path:'qa/website-release/failure.png'}).catch(()=>{});throw error;
+}catch(error){await writeFile('qa/website-release/failure.json',JSON.stringify({expectedSource:expected,base:base.href,proof,checks,plansProbe,message:String(error.message),url:active?.url()},null,2));if(active&&!active.isClosed())await active.screenshot({path:'qa/website-release/failure.png'}).catch(()=>{});throw error;
 }finally{await browser.close();}

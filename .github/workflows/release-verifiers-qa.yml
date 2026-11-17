@@ -9,6 +9,8 @@ on:
       - 'scripts/test-website-native-cursor.mjs'
       - 'scripts/test-subscriptions-live.mjs'
       - 'scripts/lib/release-verifier-contracts.mjs'
+      - 'scripts/lib/plans-decoration-snapshot.mjs'
+      - 'scripts/test-plans-decoration-snapshot.mjs'
       - 'scripts/write-review-proof.mjs'
       - 'scripts/test-release-verifier-contracts.mjs'
   workflow_dispatch:
@@ -32,7 +34,7 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - run: node --test scripts/test-release-verifier-contracts.mjs scripts/test-native-cursor-snapshot.mjs
+      - run: node --test scripts/test-release-verifier-contracts.mjs scripts/test-native-cursor-snapshot.mjs scripts/test-plans-decoration-snapshot.mjs
       - run: npm run build
       - name: Bind exact review artifact
         run: node scripts/write-review-proof.mjs dist "$(git rev-parse HEAD)" hoy
