@@ -11,8 +11,10 @@ import { Badge } from '../../../components/atom/Badge/Badge';
 import { EmptyState } from '../../../components/molecule/EmptyState/EmptyState';
 import { cosRequest, errorCode } from '../../staff/desk/wire';
 import { deskErrorText } from '../../staff/desk/strings';
-import { PartialTeamChange, SUPER_ADMIN, TEAM_ROLES, changeRole, invite, inviteRedirect, isTeamRole, listTeam, needsRepair, removeFromTeam, resendInvitation, sendInvitationEmail, teamGuard, teamRoleOf, type InviteOutcome, type TeamRoleKey, type TeamUser } from './teamApi';
+import { PartialTeamChange, SUPER_ADMIN, TEAM_ROLES, changeRole, invite, inviteRedirect, isTeamRole, linkTeacher, linkedTeacher, listTeacherRecords, listTeam, needsRepair, removeFromTeam, resendInvitation, sendInvitationEmail, teamGuard, teamRoleOf, type InviteOutcome, type TeacherRecord, type TeamRoleKey, type TeamUser } from './teamApi';
 
+/** Refusals of a teacher link get their own copy; the rest read through the shared table. */
+const TEACHER_LINK_CODES = ['person_email_mismatch', 'user_linked_to_other_person', 'person_linked_to_other_user', 'person_not_found', 'teacher_required'];
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /** AD-06 in the production build: invite, re-send an invitation, change role and remove Front desk and Administration users. */
@@ -31,12 +33,20 @@ export function TeamUsersPanel() {
   /** A half-applied role change or removal, to run again on the refreshed list. */
   const [retry, setRetry] = useState<{ userId: string; next: TeamRoleKey | null } | null>(null);
   const [copied, setCopied] = useState(false);
-  const [form, setForm] = useState<{ email: string; role: TeamRoleKey }>({ email: '', role: 'front_desk' });
+  const [form, setForm] = useState<{ email: string; role: TeamRoleKey; personId: string }>({ email: '', role: 'front_desk', personId: '' });
+  /** Teacher records (coach rows): a Teacher login is always linked to one, or the teacher app cannot find them. */
+  const [records, setRecords] = useState<TeacherRecord[]>([]);
+  /** The record picked for each unlinked Teacher row. */
+  const [picks, setPicks] = useState<Record<string, string>>({});
+  const errText = (e: unknown) => { const c = errorCode(e); return TEACHER_LINK_CODES.includes(c) ? tRef.current(`team.err.${c}`) : deskErrorText(c, tRef.current); };
   // `request` is stable per provider; `t` is read through a ref so a re-render never re-fetches.
   const tRef = useRef(t); tRef.current = t;
   const load = useCallback(async () => {
     if (!request) return;
-    try { setUsers(await listTeam(request)); } catch (e) { setError(deskErrorText(errorCode(e), tRef.current)); }
+    try {
+      const [list, recs] = await Promise.all([listTeam(request), listTeacherRecords(request)]);
+      setUsers(list); setRecords(recs);
+    } catch (e) { setError(deskErrorText(errorCode(e), tRef.current)); }
   }, [request]);
   useEffect(() => { void load(); }, [load]);
   const roleLabel = (k: string) => t(`team.role.${isTeamRole(k) ? k : 'other'}`);
@@ -48,7 +58,7 @@ export function TeamUsersPanel() {
     setBusy(id); setError(null); setNotice(null); setLink(null); setRetry(null); setCopied(false);
     try { setNotice(await work()); } catch (e) {
       const repair = (e as { repair?: boolean }).repair ? ` ${t('team.repairNeeded')}` : '';
-      setError(((e as { teamText?: string }).teamText ?? deskErrorText(errorCode(e), t)) + repair);
+      setError(((e as { teamText?: string }).teamText ?? errText(e)) + repair);
     } finally {
       // The list is read again before the next action (a retry) can start, so it never works from old memberships.
       await load(); running.current = false; setBusy(null);
@@ -74,19 +84,26 @@ export function TeamUsersPanel() {
     }
   });
   const sendInvite = () => {
-    const email = form.email.trim().toLowerCase(), role = form.role;
+    const email = form.email.trim().toLowerCase(), role = form.role, personId = form.personId;
     if ((users ?? []).some(u => u.email.toLowerCase() === email)) { setNotice(null); setLink(null); setRetry(null); setError(t('team.already')); return; }
     void teamAct('invite', async () => {
-      const res = await invite(request!, email, role, inviteRedirect(location.origin, role));
-      setForm({ email: '', role });
+      const res = await invite(request!, email, role, inviteRedirect(location.origin, role), { personId, records });
+      setForm({ email: '', role, personId: '' });
       return deliver(email, role, res, 'team.invited');
     });
   };
   const resend = (u: TeamUser) => {
     const role = teamRoleOf(u);
     if (!role) return;
-    void teamAct(`resend:${u.userId}`, async () => deliver(u.email.trim().toLowerCase(), role, await resendInvitation(request!, u, inviteRedirect(location.origin, role)), 'team.resent'));
+    void teamAct(`resend:${u.userId}`, async () => deliver(u.email.trim().toLowerCase(), role, await resendInvitation(request!, u, inviteRedirect(location.origin, role), records), 'team.resent'));
   };
+  const linkTo = (u: TeamUser, personId: string) => teamAct(`link:${u.userId}`, async () => {
+    const res = await linkTeacher(request!, u, personId, inviteRedirect(location.origin, 'coach'), records);
+    const email = u.email.trim().toLowerCase();
+    if (res.kind === 'linked') return t('team.linked', { email });
+    return deliver(email, 'coach', res, 'team.resent');
+  });
+  const freeTeachers = records.filter(r => !r.userId);
   const setRole = (u: TeamUser, next: TeamRoleKey, done: string) => teamAct(u.userId, async () => { await changeRole(request!, u, next); return t(done); }, { userId: u.userId, next });
   const remove = (u: TeamUser) => teamAct(u.userId, async () => { await removeFromTeam(request!, u); return t('team.removed'); }, { userId: u.userId, next: null });
   const runRetry = () => {
@@ -109,8 +126,9 @@ export function TeamUsersPanel() {
         <p className="xs muted">{t('team.body')}</p>
         <div className="row wrap">
           <Field label={t('team.email')}>{id => <Input id={id} type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />}</Field>
-          <Field label={t('team.role')}>{id => <Select id={id} value={form.role} onChange={e => setForm({ ...form, role: e.target.value as TeamRoleKey })}>{grantable().map(r => <option key={r} value={r}>{roleLabel(r)}</option>)}</Select>}</Field>
-          <Button disabled={!EMAIL.test(form.email.trim()) || !!busy} loading={busy === 'invite'} onClick={sendInvite}>{t('team.invite')}</Button>
+          <Field label={t('team.role')}>{id => <Select id={id} value={form.role} onChange={e => setForm({ ...form, role: e.target.value as TeamRoleKey, personId: '' })}>{grantable().map(r => <option key={r} value={r}>{roleLabel(r)}</option>)}</Select>}</Field>
+          {form.role === 'coach' && <Field label={t('team.teacher')} hint={freeTeachers.length ? undefined : t('team.teacher.none')}>{id => <Select id={id} value={form.personId} onChange={e => setForm({ ...form, personId: e.target.value })}><option value="">{t('team.teacher.pick')}</option>{freeTeachers.map(r => <option key={r.personId} value={r.personId}>{r.name || r.email}</option>)}</Select>}</Field>}
+          <Button disabled={!EMAIL.test(form.email.trim()) || (form.role === 'coach' && !form.personId) || !!busy} loading={busy === 'invite'} onClick={sendInvite}>{t('team.invite')}</Button>
         </div>
         {notice && <p className="small rooms-free" role="status">{notice}</p>}
         {error && <p className="small register-diff" role="alert">{error}</p>}
@@ -123,9 +141,15 @@ export function TeamUsersPanel() {
         {retry && <Button size="sm" variant="secondary" disabled={!!busy} onClick={runRetry}>{t('team.partial.retry')}</Button>}
         {!users ? <EmptyState compact tone="loading" title={t('core.common.loading')} /> : users.length === 0 ? <EmptyState compact title={t('team.empty')} /> : users.map(u => {
           const current = teamRoleOf(u) as TeamRoleKey;
+          const teacher = current === 'coach' ? linkedTeacher(u, records) : null;
+          const pick = picks[u.userId] ?? '';
           return <div key={u.userId} className="row-between wrap">
-            <span><strong className="small crm-name">{u.name || u.email}</strong> <span className="xs muted">{u.email}</span> <Badge tone={current === 'administrator' || current === SUPER_ADMIN ? 'primary' : 'neutral'}>{roleLabel(current)}</Badge></span>
+            <span><strong className="small crm-name">{u.name || u.email}</strong> <span className="xs muted">{u.email}</span> <Badge tone={current === 'administrator' || current === SUPER_ADMIN ? 'primary' : 'neutral'}>{roleLabel(current)}</Badge>{current === 'coach' && (teacher ? <span className="xs muted"> {t('team.teacher.linkedTo', { name: teacher.name || teacher.email })}</span> : <> <Badge tone="warn">{t('team.teacher.missing')}</Badge></>)}</span>
             <span className="row wrap">
+              {current === 'coach' && !teacher && <>
+                <Select aria-label={t('team.teacher')} value={pick} disabled={!!busy} onChange={e => setPicks({ ...picks, [u.userId]: e.target.value })}><option value="">{t('team.teacher.pick')}</option>{freeTeachers.map(r => <option key={r.personId} value={r.personId}>{r.name || r.email}</option>)}</Select>
+                <Button size="sm" variant="secondary" disabled={!!busy || !pick} loading={busy === `link:${u.userId}`} onClick={() => void linkTo(u, pick)}>{t('team.teacher.link')}</Button>
+              </>}
               <Select aria-label={t('team.role')} value={current} disabled={!!busy} onChange={e => { const next = e.target.value as TeamRoleKey; if (next !== current && !guarded(u, next)) void setRole(u, next, 'team.changed'); }}>{grantable(current).map(r => <option key={r} value={r}>{roleLabel(r)}</option>)}</Select>
               {needsRepair(u) && <Button size="sm" variant="secondary" disabled={!!busy} onClick={() => { if (!guarded(u, current)) void setRole(u, current, 'team.repaired'); }}>{t('team.repair')}</Button>}
               {/* The list can't tell who has signed up: Company OS answers `already_signed_up` and the notice says so. */}

@@ -374,7 +374,8 @@ check('r1 L5 enrol: a real super admin without the customer role is enrolled on 
   // Changed on purpose (lane C): a super_admin-only login is the Super admin role, not Administration.
   check('team: a super_admin-only login shows as Super admin', T.teamRoleOf(u('s', 'super_admin')) === 'super_admin');
   check('team: a coach who is also a customer shows as Teacher; customers alone are not listed', T.teamRoleOf(u('c', 'member', 'coach')) === 'coach' && T.teamMembers([u('m', 'member')]).length === 0);
-  for (const k of STAFF.filter((k) => k !== 'super_admin')) {
+  // Changed on purpose (teacher link): a Teacher invite needs a teacher record; it is covered in the teacher link block below.
+  for (const k of STAFF.filter((k) => k !== 'super_admin' && k !== 'coach')) {
     const cos = fakeCos();
     await safe(() => T.invite(cos.request, `${k}@example.invalid`, k, T.inviteRedirect('https://app.example.invalid', k)));
     check(`team: inviting ${k} posts that role key${k === 'administrator' ? ' (and super_admin after it, AD-04)' : ''}`, cos.calls[0]?.[1] === '/invitations' && cos.calls[0][2] === k && (k === 'administrator' ? cos.calls[1][2] === 'super_admin' && cos.calls.length === 2 : cos.calls.length === 1), JSON.stringify(cos.calls));

@@ -90,12 +90,44 @@ export class PartialTeamChange extends Error {
 /** The invitation exists but an Administration login is missing `super_admin`: the list offers "Completar acceso". */
 export type InviteOutcome = InviteResult & { repair?: boolean };
 
-export async function invite(request: CosRequest, rawEmail: string, roleKey: TeamRoleKey, redirectUrl: string): Promise<InviteOutcome> {
+/**
+ * A teacher record (a `coach` row) with its person: Company OS links a login to a person only when the invitation carries
+ * that person's id, and the teacher app finds "me" through that link. `userId` is the login already linked, or null.
+ */
+export interface TeacherRecord { coachId: string; personId: string; name: string; email: string; userId: string | null }
+const refuse = (c: string) => Object.assign(new Error(c), { code: c });
+const str = (v: unknown) => (typeof v === 'string' ? v : '');
+/** Teacher records, paged past 500 with a sort ending in `id`. A coach without a person cannot be linked and is left out. */
+export async function listTeacherRecords(request: CosRequest): Promise<TeacherRecord[]> {
+  const out: TeacherRecord[] = [];
+  for (let offset = 0; ; offset += 500) {
+    const res = await request<{ data: { id: string; data: Record<string, unknown> }[] }>('POST', '/query', { entity: 'coach', include: [{ field: 'person', fields: ['name', 'email', 'user'] }], sort: [{ field: 'id', dir: 'asc' }], limit: 500, offset });
+    for (const row of res.data) {
+      const p = row.data?.person as { id?: unknown; name?: unknown; email?: unknown; user?: unknown } | null | undefined;
+      if (!p || typeof p !== 'object' || typeof p.id !== 'string') continue;
+      const user = p.user && typeof p.user === 'object' ? (p.user as { id?: unknown }).id : p.user;
+      out.push({ coachId: row.id, personId: p.id, name: str(p.name), email: str(p.email), userId: typeof user === 'string' && user ? user : null });
+    }
+    if (res.data.length < 500) return out;
+  }
+}
+/** The teacher record linked to this login, or null. */
+export const linkedTeacher = (user: TeamUser, records: TeacherRecord[]): TeacherRecord | null => records.find(r => r.userId === user.userId) ?? null;
+/** A person to link must be one of the listed records and not yet linked to another login. */
+const requireFreeTeacher = (personId: string | undefined, records: TeacherRecord[] | undefined, allowUserId?: string) => {
+  const rec = personId && records ? records.find(r => r.personId === personId) : undefined;
+  if (!rec || (rec.userId && rec.userId !== allowUserId)) throw refuse('teacher_required');
+  return rec.personId;
+};
+
+export async function invite(request: CosRequest, rawEmail: string, roleKey: TeamRoleKey, redirectUrl: string, teacher?: { personId?: string; records?: TeacherRecord[] }): Promise<InviteOutcome> {
   refuseUnknown(roleKey);
   const email = rawEmail.trim().toLowerCase();
+  // A Teacher is always tied to a teacher record; other roles never send a person.
+  const person = roleKey === 'coach' ? { personId: requireFreeTeacher(teacher?.personId, teacher?.records) } : {};
   let result: InviteResult;
   try {
-    const res = await request<{ userId: string; invitationId: string; url: string }>('POST', '/invitations', { email, roleKey, redirectUrl });
+    const res = await request<{ userId: string; invitationId: string; url: string }>('POST', '/invitations', { email, roleKey, ...person, redirectUrl });
     result = { kind: 'invited', url: res.url };
   } catch (e) {
     if (code(e) === 'role_mismatch') { await addMembership(request, email, null, roleKey); result = { kind: 'added' }; }
@@ -119,9 +151,13 @@ export async function invite(request: CosRequest, rawEmail: string, roleKey: Tea
  * can sign in; `role_mismatch` (`has_account`) means the login holds another role (a customer account), so they sign in
  * with it. Open for Company OS: `/invitations` could accept `super_admin` beside `administrator`, so nothing is set aside.
  */
-export async function resendInvitation(request: CosRequest, user: TeamUser, redirectUrl: string): Promise<InviteOutcome> {
+export async function resendInvitation(request: CosRequest, user: TeamUser, redirectUrl: string, records: TeacherRecord[] = []): Promise<InviteOutcome> {
   const roleKey = teamRoleOf(user);
   if (!roleKey) throw Object.assign(new Error('not_on_team'), { code: 'not_on_team' });
+  // A Teacher's re-send keeps the link to their teacher record; an unlinked Teacher is linked first (`linkTeacher`).
+  const linked = roleKey === 'coach' ? linkedTeacher(user, records) : null;
+  if (roleKey === 'coach' && !linked) throw refuse('teacher_required');
+  const person = linked ? { personId: linked.personId } : {};
   const email = user.email.trim().toLowerCase();
   let setAside = 0;
   /**
@@ -144,7 +180,7 @@ export async function resendInvitation(request: CosRequest, user: TeamUser, redi
       await request('DELETE', `/admin/memberships/${encodeURIComponent(m.membershipId)}`);
       setAside++;
     }
-    const res = await request<{ userId: string; invitationId: string; url: string }>('POST', '/invitations', { email, roleKey, redirectUrl });
+    const res = await request<{ userId: string; invitationId: string; url: string }>('POST', '/invitations', { email, roleKey, ...person, redirectUrl });
     result = { kind: 'invited', url: res.url };
   } catch (e) {
     if (code(e) === 'already_signed_up') result = { kind: 'signed_up' };
@@ -156,6 +192,23 @@ export async function resendInvitation(request: CosRequest, user: TeamUser, redi
   }
   // Administration holds `super_admin` again afterwards (also when it was missing: the resend repairs it).
   return (await restore()) ? result : { ...result, repair: true };
+}
+
+/**
+ * Links a Teacher login to a teacher record: `POST /invitations` with `personId`. Company OS commits the link before it
+ * answers `already_signed_up`, so that answer means linked (nothing is emailed); a new invitation is emailed by the caller.
+ * Its refusals (`person_not_found`, `person_linked_to_other_user`, `user_linked_to_other_person`, `person_email_mismatch`)
+ * reach the caller unchanged.
+ */
+export async function linkTeacher(request: CosRequest, user: TeamUser, personId: string, redirectUrl: string, records: TeacherRecord[]): Promise<{ kind: 'linked' } | { kind: 'invited'; url: string }> {
+  const person = requireFreeTeacher(personId, records, user.userId);
+  try {
+    const res = await request<{ userId: string; invitationId: string; url: string }>('POST', '/invitations', { email: user.email.trim().toLowerCase(), roleKey: 'coach', personId: person, redirectUrl });
+    return { kind: 'invited', url: res.url };
+  } catch (e) {
+    if (code(e) === 'already_signed_up') return { kind: 'linked' };
+    throw e;
+  }
 }
 
 /** A team user missing one of their role's memberships (an Administration without `super_admin`): `changeRole` repairs it. */
