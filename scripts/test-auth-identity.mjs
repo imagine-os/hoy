@@ -374,7 +374,8 @@ check('r1 L5 enrol: a real super admin without the customer role is enrolled on 
   // Changed on purpose (lane C): a super_admin-only login is the Super admin role, not Administration.
   check('team: a super_admin-only login shows as Super admin', T.teamRoleOf(u('s', 'super_admin')) === 'super_admin');
   check('team: a coach who is also a customer shows as Teacher; customers alone are not listed', T.teamRoleOf(u('c', 'member', 'coach')) === 'coach' && T.teamMembers([u('m', 'member')]).length === 0);
-  for (const k of STAFF.filter((k) => k !== 'super_admin')) {
+  // Changed on purpose (teacher link): a Teacher invite needs a teacher record; it is covered in the teacher link block below.
+  for (const k of STAFF.filter((k) => k !== 'super_admin' && k !== 'coach')) {
     const cos = fakeCos();
     await safe(() => T.invite(cos.request, `${k}@example.invalid`, k, T.inviteRedirect('https://app.example.invalid', k)));
     check(`team: inviting ${k} posts that role key${k === 'administrator' ? ' (and super_admin after it, AD-04)' : ''}`, cos.calls[0]?.[1] === '/invitations' && cos.calls[0][2] === k && (k === 'administrator' ? cos.calls[1][2] === 'super_admin' && cos.calls.length === 2 : cos.calls.length === 1), JSON.stringify(cos.calls));
@@ -394,6 +395,144 @@ check('r1 L5 enrol: a real super admin without the customer role is enrolled on 
   check('team: only a super admin grants or changes Super admin (the screen asks first; Company OS decides)', T.teamGuard(users, users[2], 'super_admin', 'a', false) === 'super_admin_only' && T.teamGuard(users, users[1], 'front_desk', 'a', false) === 'super_admin_only' && T.teamGuard(users, users[2], 'super_admin', 's', true) === null && T.teamGuard(users, users[2], 'coach', 'a', false) === null);
   check('team: last administrator and self are still protected', T.teamGuard([users[0], users[2]], users[0], 'coach', 'd', true) === 'last_admin' && T.teamGuard(users, users[2], 'coach', 'd', true) === 'self');
   check('team: an unknown role key is refused before anything is sent', await rejects(T.invite(fakeCos().request, 'x@example.invalid', 'owner', '')) !== null && await rejects(T.changeRole(fakeCos().request, u('z', 'front_desk'), 'member')) !== null);
+}
+
+// ── Teacher link: a Teacher invite always carries the teacher record's personId (Company OS links the login to it) ──
+{
+  const T = M.team;
+  const safe = async (f) => { try { return await f(); } catch (e) { return e; } };
+  const errOf = (code, status = 409) => Object.assign(new Error(code), { code, status });
+  /** A fake Company OS: records every call; `answer(path, body)` returns the reply or throws. */
+  const fake = (answer) => { const calls = []; return { calls, request: async (method, path, body) => { calls.push({ method, path, body }); return answer ? answer(method, path, body) : { userId: 'u', invitationId: 'i', url: 'https://clerk.example.invalid/x' }; } }; };
+  const records = [
+    { coachId: 'c1', personId: 'p1', name: 'Ana', email: 'ana@example.invalid', userId: null, active: true },
+    { coachId: 'c2', personId: 'p2', name: 'Bea', email: 'bea@example.invalid', userId: 'u_bea', active: true },
+  ];
+  const u = (id, ...keys) => ({ userId: id, email: `${id}@example.invalid`, name: id, memberships: keys.map((k, i) => ({ membershipId: `${id}_m${i}`, roleKey: k })) });
+
+  check('teacher link: the API exposes listTeacherRecords, linkedTeacher and linkTeacher', typeof T.listTeacherRecords === 'function' && typeof T.linkedTeacher === 'function' && typeof T.linkTeacher === 'function');
+
+  // Reading the teacher records: /query on coach, person embedded, paged, sorted ending in id.
+  {
+    const cos = fake((m, path, body) => ({ data: body.offset ? [] : [
+      { id: 'c1', data: { person: { id: 'p1', name: 'Ana', email: 'Ana@Example.invalid', user: null } } },
+      { id: 'c2', data: { person: { id: 'p2', name: 'Bea', email: 'bea@example.invalid', user: 'u_bea' } } },
+      { id: 'c3', data: { person: null } },
+    ] }));
+    const out = await safe(() => T.listTeacherRecords(cos.request));
+    const q = cos.calls[0];
+    check('teacher link: records come from /query on coach with the person embedded, sorted by id', q?.method === 'POST' && q.path === '/query' && q.body.entity === 'coach' && q.body.include?.[0]?.field === 'person' && q.body.sort?.at(-1)?.field === 'id', JSON.stringify(q));
+    check('teacher link: each record has coachId, personId, name, email, userId (null when unlinked); a coach without a person is dropped', Array.isArray(out) && out.length === 2 && out[0].coachId === 'c1' && out[0].personId === 'p1' && out[0].name === 'Ana' && out[0].userId === null && out[1].userId === 'u_bea', JSON.stringify(out));
+  }
+  check('teacher link: linkedTeacher finds the record whose person is this login; an unlinked login gives null', T.linkedTeacher?.(u('u_bea', 'coach'), records)?.coachId === 'c2' && T.linkedTeacher?.(u('u_other', 'coach'), records) === null);
+
+  // invite
+  let cos = fake();
+  await safe(() => T.invite(cos.request, 'ana@example.invalid', 'coach', 'https://x.invalid/', { personId: 'p1', records }));
+  check('teacher link: a Teacher invite sends personId', cos.calls.length === 1 && cos.calls[0].path === '/invitations' && cos.calls[0].body.personId === 'p1' && cos.calls[0].body.roleKey === 'coach', JSON.stringify(cos.calls));
+  cos = fake();
+  let e = await safe(() => T.invite(cos.request, 'ana@example.invalid', 'coach', 'https://x.invalid/'));
+  check('teacher link: a Teacher invite without a teacher is refused (teacher_required) and nothing is sent', e?.code === 'teacher_required' && cos.calls.length === 0, String(e?.code));
+  cos = fake();
+  e = await safe(() => T.invite(cos.request, 'ana@example.invalid', 'coach', 'https://x.invalid/', { personId: 'p_made_up', records }));
+  check('teacher link: hostile personId not among the listed records is refused client side, nothing sent', e?.code === 'teacher_required' && cos.calls.length === 0, String(e?.code));
+  cos = fake();
+  e = await safe(() => T.invite(cos.request, 'bea@example.invalid', 'coach', 'https://x.invalid/', { personId: 'p2', records }));
+  check('teacher link: a record already linked to a login is not offered, so it is refused client side', e?.code === 'teacher_required' && cos.calls.length === 0, String(e?.code));
+  for (const k of ['front_desk', 'administrator', 'booking_manager', 'treasurer', 'maintenance', 'marketing', 'developer']) {
+    cos = fake();
+    await safe(() => T.invite(cos.request, `${k}@example.invalid`, k, 'https://x.invalid/', { personId: 'p1', records }));
+    check(`teacher link: a ${k} invite never sends personId`, cos.calls.length > 0 && cos.calls.every((c) => !('personId' in (c.body ?? {}))), JSON.stringify(cos.calls));
+  }
+
+  // linkTeacher
+  cos = fake(() => { throw errOf('already_signed_up'); });
+  let r = await safe(() => T.linkTeacher(cos.request, u('u_ana', 'coach'), 'p1', 'https://x.invalid/', records));
+  check('teacher link: already_signed_up means linked (nothing to email); body carries email, roleKey coach, personId, redirectUrl', r?.kind === 'linked' && cos.calls[0].body.personId === 'p1' && cos.calls[0].body.roleKey === 'coach' && cos.calls[0].body.email === 'u_ana@example.invalid' && cos.calls[0].body.redirectUrl === 'https://x.invalid/', JSON.stringify([r, cos.calls]));
+  cos = fake();
+  r = await safe(() => T.linkTeacher(cos.request, u('u_ana', 'coach'), 'p1', 'https://x.invalid/', records));
+  check('teacher link: a 201 gives invited with the link to email', r?.kind === 'invited' && r.url === 'https://clerk.example.invalid/x', JSON.stringify(r));
+  for (const code of ['person_not_found', 'person_linked_to_other_user', 'user_linked_to_other_person', 'person_email_mismatch']) {
+    cos = fake(() => { throw errOf(code, 409); });
+    e = await safe(() => T.linkTeacher(cos.request, u('u_ana', 'coach'), 'p1', 'https://x.invalid/', records));
+    check(`teacher link: ${code} reaches the caller unchanged`, e?.code === code, String(e?.code ?? JSON.stringify(e)));
+  }
+  cos = fake();
+  e = await safe(() => T.linkTeacher(cos.request, u('u_ana', 'coach'), 'p_made_up', 'https://x.invalid/', records));
+  check('teacher link: linking to a personId that is not listed is refused client side', e?.code === 'teacher_required' && cos.calls.length === 0, String(e?.code));
+
+  // resend
+  cos = fake();
+  await safe(() => T.resendInvitation(cos.request, u('u_bea', 'coach'), 'https://x.invalid/', records));
+  check('teacher link: re-sending to a linked Teacher keeps personId', cos.calls.some((c) => c.path === '/invitations' && c.body.personId === 'p2'), JSON.stringify(cos.calls));
+  cos = fake();
+  await safe(() => T.resendInvitation(cos.request, u('u_front', 'front_desk'), 'https://x.invalid/', records));
+  check('teacher link: re-sending to another role never sends personId', cos.calls.length === 1 && !('personId' in cos.calls[0].body), JSON.stringify(cos.calls));
+  cos = fake();
+  e = await safe(() => T.resendInvitation(cos.request, u('u_ana', 'coach'), 'https://x.invalid/', records));
+  check('teacher link: re-sending to a Teacher with no linked record is refused (teacher_required), nothing sent', e?.code === 'teacher_required' && cos.calls.length === 0, String(e?.code));
+}
+
+// ── Teacher link, round 1 fixes ────────────────────────────────────────────────────────────────────────────────
+{
+  const T = M.team;
+  const safe = async (f) => { try { return await f(); } catch (e) { return e; } };
+  const fake = (answer) => { const calls = []; return { calls, request: async (method, path, body) => { calls.push({ method, path, body }); return answer(method, path, body); } }; };
+  const row = (n, extra = {}) => ({ id: `c${String(n).padStart(4, '0')}`, data: { person: { id: `p${n}`, name: `T${n}`, email: `t${n}@example.invalid`, user: null }, ...extra } });
+  const u = (id, ...keys) => ({ userId: id, email: `${id}@example.invalid`, name: id, memberships: keys.map((k, i) => ({ membershipId: `${id}_m${i}`, roleKey: k })) });
+  const recs = [{ coachId: 'c1', personId: 'p1', name: 'Ana', email: 'a@example.invalid', userId: null, active: true }, { coachId: 'c9', personId: 'p9', name: 'Old', email: 'o@example.invalid', userId: null, active: false }];
+
+  // user embedded as an object {id}
+  let cos = fake(() => ({ data: [{ id: 'c1', data: { person: { id: 'p1', name: 'A', email: 'a@example.invalid', user: { id: 'u_a' } } } }] }));
+  let out = await safe(() => T.listTeacherRecords(cos.request));
+  check('r1 records: a user embedded as an object {id} reads as that userId', Array.isArray(out) && out[0]?.userId === 'u_a', JSON.stringify(out));
+
+  // paging past 500
+  cos = fake((m, path, body) => ({ data: body.offset === 0 ? Array.from({ length: 500 }, (_, i) => row(i)) : body.offset === 500 ? [row(500), row(501)] : [] }));
+  out = await safe(() => T.listTeacherRecords(cos.request));
+  check('r1 records: pages past 500 rows (500 then a short page) and returns all 502', Array.isArray(out) && out.length === 502 && cos.calls.length === 2 && cos.calls[1].body.offset === 500, `${out?.length} ${cos.calls.length}`);
+
+  // inactive coaches
+  cos = fake(() => ({ data: [row(1), row(2, { active: false })] }));
+  out = await safe(() => T.listTeacherRecords(cos.request));
+  check('r1 records: active is read (false for an inactive coach) and the picker list leaves inactive ones out', Array.isArray(out) && out.find((r) => r.personId === 'p2')?.active === false && out.find((r) => r.personId === 'p1')?.active === true && T.freeTeachers?.(out).map((r) => r.personId).join() === 'p1', JSON.stringify(out));
+  cos = fake(() => ({ userId: 'u', invitationId: 'i', url: 'https://x.invalid/l' }));
+  let e = await safe(() => T.invite(cos.request, 'o@example.invalid', 'coach', 'https://x.invalid/', { personId: 'p9', records: recs }));
+  check('r1 records: inviting to an inactive teacher record is refused client side', e?.code === 'teacher_required' && cos.calls.length === 0, String(e?.code));
+
+  // 200 without a url never becomes "invited"
+  const noUrl = () => ({ userId: 'u', roleAdded: true });
+  cos = fake(noUrl);
+  let r = await safe(() => T.invite(cos.request, 'a@example.invalid', 'coach', 'https://x.invalid/', { personId: 'p1', records: recs }));
+  check('r1 no url: invite with a 200 without url gives added (the role was added; they can sign in now), never invited', r?.kind === 'added', JSON.stringify(r));
+  cos = fake(noUrl);
+  r = await safe(() => T.invite(cos.request, 'f@example.invalid', 'front_desk', 'https://x.invalid/'));
+  check('r1 no url: the same for a non-teacher invite', r?.kind === 'added', JSON.stringify(r));
+  cos = fake(noUrl);
+  r = await safe(() => T.resendInvitation(cos.request, u('u_front', 'front_desk'), 'https://x.invalid/', recs));
+  check('r1 no url: resend with a 200 without url gives added', r?.kind === 'added', JSON.stringify(r));
+  cos = fake(noUrl);
+  r = await safe(() => T.linkTeacher(cos.request, u('u_ana', 'coach'), 'p1', 'https://x.invalid/', recs));
+  check('r1 no url: linkTeacher with a 200 without url gives linked', r?.kind === 'linked', JSON.stringify(r));
+
+  // free list and stale picks
+  check('r1 stale picks: pruneTeacherPicks drops a form pick and row picks no longer free', typeof T.pruneTeacherPicks === 'function' && (() => { const f = T.pruneTeacherPicks({ personId: 'p9' }, { a: 'p1', b: 'p9', c: 'gone' }, recs); return f.personId === '' && JSON.stringify(f.picks) === JSON.stringify({ a: 'p1' }); })());
+  check('r1 stale picks: a still-free pick is kept', T.pruneTeacherPicks?.({ personId: 'p1' }, {}, recs)?.personId === 'p1');
+}
+
+// ── Teacher link, round 2 fixes ────────────────────────────────────────────────────────────────────────────────
+{
+  const T = M.team;
+  const safe = async (f) => { try { return await f(); } catch (e) { return e; } };
+  const fake = (answer) => { const calls = []; return { calls, request: async (method, path, body) => { calls.push({ method, path, body }); return answer(method, path, body); } }; };
+  const recs = [{ coachId: 'c1', personId: 'p1', name: 'Ana', email: 'a@example.invalid', userId: null, active: true }];
+  const mismatch = (m, path) => { if (path === '/invitations') throw Object.assign(new Error('role_mismatch'), { code: 'role_mismatch', status: 409 }); return {}; };
+  let cos = fake(mismatch);
+  let e = await safe(() => T.invite(cos.request, 'a@example.invalid', 'coach', 'https://x.invalid/', { personId: 'p1', records: recs }));
+  check('r2 coach: role_mismatch on a Teacher invite is surfaced, never turned into a role with no link', e?.code === 'role_mismatch' && !cos.calls.some((c) => c.path === '/admin/users'), JSON.stringify([e?.code, cos.calls.map((c) => c.path)]));
+  cos = fake(mismatch);
+  const r = await safe(() => T.invite(cos.request, 'f@example.invalid', 'front_desk', 'https://x.invalid/'));
+  check('r2 coach: other roles keep the add-role fallback on role_mismatch', r?.kind === 'added' && cos.calls.some((c) => c.path === '/admin/users'), JSON.stringify([r, cos.calls.map((c) => c.path)]));
 }
 
 // ── Token wait: a Clerk that never loads answers null (production build) ────────────────────────────────────────
