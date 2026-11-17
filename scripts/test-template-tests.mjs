@@ -19,7 +19,7 @@ const livePayload=testPayload(liveSource(liveRow),'a@example.com','live',null);
 assert.equal(livePayload.source.subject,'Current {{person.name}}');assert.notEqual(livePayload.source.subject,staleBase.subject);
 const draftPayload=testPayload(liveSource(liveRow),'a@example.com','draft',{subject:'Draft',body:'D'});
 assert.equal(draftPayload.draft.subject,'Draft');assert.equal(draftPayload.source.body,'Current body');
-assert.equal(JSON.parse(readFileSync(new URL('../company-os.json',import.meta.url),'utf8')).requires,'>=1.19.0');
+assert.equal(JSON.parse(readFileSync(new URL('../company-os.json',import.meta.url),'utf8')).requires,'>=1.18.0');
 // Refusal mapping; `errorCode(e)` yields the code from either shape (server `.code`, browser `Error(message)`), the UI script drives the server shape.
 const server=Object.assign(new Error('template_changed'),{code:'template_changed',status:409});
 assert.deepEqual(testRefusal(server.code,server.status),{key:'changed',definitive:true});
