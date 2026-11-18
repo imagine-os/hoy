@@ -30,6 +30,8 @@ export const teamStrings: StringTable = {
   'team.guard.last_admin': { es: 'Debe quedar al menos una persona de administración.', en: 'At least one administration user must remain.' },
   'team.mail.subject': { es: 'Invitación al equipo de {studio}', en: 'Invitation to the {studio} team' },
   'team.mail.body': { es: 'Hola,\n\nTe invitaron al equipo de {studio} como {role}. Entra con este enlace:\n{url}\n\nSi no esperabas este correo, ignóralo.', en: 'Hi,\n\nYou were invited to the {studio} team as {role}. Sign in with this link:\n{url}\n\nIf you did not expect this email, ignore it.' },
+  'team.signInLink': { es: 'Enlace de inicio de sesión para {email}', en: 'Sign-in link for {email}' },
+  'team.signInHelp': { es: 'No necesita otra invitación. Comparte este enlace para que entre con su cuenta existente. No se ha enviado ningún correo ni cambiado su contraseña.', en: 'No new invitation is needed. Share this link so they can use their existing account. No email has been sent and their password has not been changed.' },
   'team.resend': { es: 'Reenviar invitación', en: 'Resend invitation' },
   'team.resent': { es: 'Invitación reenviada a {email}. El enlace nuevo es el que vale.', en: 'Invitation resent to {email}. The new link is the one that works.' },
   'team.mailFailed': { es: 'La invitación de {email} quedó creada y su acceso guardado, pero el correo no salió (código {code}). Copia el enlace y envíaselo, o usa «Reenviar invitación».', en: 'The invitation for {email} was created and their access saved, but the email did not go out (code {code}). Copy the link and send it to them, or use “Resend invitation”.' },

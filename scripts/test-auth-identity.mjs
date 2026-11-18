@@ -551,5 +551,8 @@ check('r1 L5 enrol: a real super admin without the customer role is enrolled on 
   check('token seam: a source registered while waiting answers', await late === 'tok_late');
 }
 
+// The same identity CI/release gates cover existing-account sign-in guidance.
+await import('./test-existing-account-help.mjs');
+
 console.log(failed ? `\n${failed} H-2 identity check(s) failed` : '\nH-2 identity passed');
 process.exitCode = failed ? 1 : 0;
