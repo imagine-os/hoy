@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// area-imports v1
+// area-imports v2
 // Source: Company OS tools/ci/area-imports.mjs. Website repos copy this file verbatim to
 // scripts/ci/area-imports.mjs (next to affected-areas.mjs); change it in Company OS and copy it again.
 // Docs: Company OS tools/ci/README.md, section "Imports cross areas".
@@ -12,51 +12,21 @@
 // Plain Node 20+, no dependencies besides ./affected-areas.mjs.
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
-import { posix } from "node:path";
 import { fileURLToPath } from "node:url";
-import { classify, DEFAULT_CONFIG, loadConfig, matchGlob } from "./affected-areas.mjs";
+import { DEFAULT_CONFIG, fileKind, importEdges, loadConfig, resolveSpecifier, SOURCE } from "./affected-areas.mjs";
 
-export const VERSION = "area-imports v1";
-const SOURCE = /\.(?:[cm]?[jt]sx?|css)$/;
-const EXTENSIONS = [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".css", ".json"];
+export const VERSION = "area-imports v2";
+export { resolveSpecifier };
 
-/** Import specifiers in a source text: static, `export … from`, dynamic import(), require(), CSS @import. */
+/** Import specifiers in a source text (static, export … from, import(), require(), CSS @import); globs left out. */
 export function specifiers(text) {
-  const out = new Set();
-  const patterns = [
-    /\bimport\s+(?:[^'";]*?\bfrom\s*)?["']([^"']+)["']/g,
-    /\bexport\s*[^'";]*?\bfrom\s*["']([^"']+)["']/g,
-    /\bimport\s*\(\s*["']([^"']+)["']/g,
-    /\brequire\s*\(\s*["']([^"']+)["']/g,
-    /@import\s+(?:url\(\s*)?["']([^"']+)["']/g,
-  ];
-  for (const re of patterns) for (const m of text.matchAll(re)) out.add(m[1]);
-  return [...out];
+  return [...new Set(importEdges(text).edges.filter((e) => e.spec !== undefined).map((e) => e.spec))];
 }
 
-/** Repo file a specifier points to, or null (bare package, URL, outside the repo, not found). */
-export function resolveSpecifier(spec, importer, fileSet, aliases) {
-  const clean = spec.replace(/[?#].*$/, "");
-  if (clean === "" || /^[a-z][a-z0-9+.-]*:/i.test(clean) || clean.startsWith("//")) return null;
-  let base = null;
-  if (clean.startsWith("./") || clean.startsWith("../")) base = posix.join(posix.dirname(importer), clean);
-  else {
-    const prefix = Object.keys(aliases).filter((p) => clean.startsWith(p)).sort((a, b) => b.length - a.length)[0];
-    if (prefix !== undefined) base = posix.normalize(aliases[prefix] + clean.slice(prefix.length));
-    else if (importer.endsWith(".css") && !clean.startsWith("@") && !clean.startsWith("/")) base = posix.join(posix.dirname(importer), clean);
-  }
-  if (base === null || base.startsWith("../") || base === ".." || base.startsWith("/")) return null;
-  for (const c of [base, ...EXTENSIONS.map((e) => base + e), ...EXTENSIONS.map((e) => `${base}/index${e}`)]) if (fileSet.has(c)) return c;
-  return null;
-}
-
-/** Where a file sits, with classify() semantics: {kind: "shared"|"unknown"|"ignore"|"fast"|"areas", areas}. */
+/** Where a file sits: {kind: "shared"|"unknown"|"ignore"|"fast"|"areas"|"graph", areas} (fileKind, unsafe and own as unknown). */
 function bucket(file, config) {
-  const r = classify([file], config);
-  if (r.mode === "none") return { kind: "ignore", areas: [] };
-  if (r.mode === "fast") return { kind: "fast", areas: [] };
-  if (r.mode === "areas") return { kind: "areas", areas: r.areas };
-  return { kind: (config.shared ?? []).some((g) => matchGlob(g, file)) ? "shared" : "unknown", areas: [] };
+  const w = fileKind(file, config);
+  return w.kind === "unsafe" || w.kind === "own" ? { kind: "unknown", areas: [] } : w;
 }
 
 /**
@@ -64,7 +34,7 @@ function bucket(file, config) {
  * file in an area set not contained in S imports. `files` is the repo file list, `read(path)` the text,
  * `aliases` maps import prefixes to repo folders (default {"@/": ""}).
  */
-export function importProblems({ config, files, read, aliases = { "@/": "" } }) {
+export function importProblems({ config, files, read, aliases = config.graph?.aliases ?? { "@/": "" } }) {
   const fileSet = new Set(files);
   const buckets = new Map();
   const of = (f) => buckets.get(f) ?? buckets.set(f, bucket(f, config)).get(f);

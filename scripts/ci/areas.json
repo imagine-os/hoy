@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "runner": [
     "node"
   ],
@@ -13,7 +13,7 @@
     ".gitignore",
     ".railway/**",
     "server/**",
-    "src/**/*.{ts,tsx,json}",
+    "src/**/*.json",
     "src/modules/hub/*.css",
     "src/design/tokens.css",
     "src/app/productionFrame.css",
@@ -26,6 +26,7 @@
     "docs/source/index.json",
     "scripts/ci/**",
     "scripts/lib/**",
+    "scripts/gen-{actions,sql,tokens}.mjs",
     "scripts/fixtures/fake-clerk.js",
     ".github/workflows/{auth-checks,release,deploy-test,deploy-prod,pages}.yml"
   ],
@@ -40,7 +41,11 @@
     "supabase/**",
     "README.md",
     "ROADMAP.md",
-    "scripts/test-{auth-identity,jas-1nov-customer,view-as,hub-production,pay-page-frame,launch-routes,launch-config,pack-reads,golive-h3,payment-paid-at,companyos-studio-data,teacher-codes,h1-connected-flows,companyos-provider,jas-1nov-admin,staff-walkin-window,void-payment,admin-activity,golive-images,class-images,hoy-server,real-signup,move-private-settings,test-gate,seo,hoy-12nov-book,hoy-12nov-fix,hoy-12nov-r1,hoy-12nov-r2,any-start-time}.mjs"
+    "scripts/test-{auth-identity,jas-1nov-customer,view-as,hub-production,pay-page-frame,launch-routes,launch-config,pack-reads,golive-h3,payment-paid-at,companyos-studio-data,teacher-codes,h1-connected-flows,companyos-provider,jas-1nov-admin,staff-walkin-window,void-payment,admin-activity,golive-images,class-images,hoy-server,real-signup,move-private-settings,test-gate,seo,hoy-12nov-book,hoy-12nov-fix,hoy-12nov-r1,hoy-12nov-r2,any-start-time}.mjs",
+    "src/**/*.d.ts",
+    "scripts/*-harness.{tsx,html}",
+    "scripts/move-private-settings.ts",
+    "scripts/test-{holidays,hours,subscriptions,subscription-calendar,contact-map,clean-hub,reschedule-cutoff,template-tests}.mjs"
   ],
   "ignore": [
     "AGENTS.md",
@@ -150,5 +155,38 @@
         "scripts/test-launch-roles-ui.mjs"
       ]
     }
+  },
+  "graph": {
+    "sources": [
+      "src/**/*.{ts,tsx}"
+    ],
+    "roots": [
+      "src/main.tsx",
+      "src/app/**",
+      "src/auth/**"
+    ],
+    "entries": {
+      "auth": [
+        "src/modules/{identity,docs,ops-manual,dev}/**"
+      ],
+      "customer": [
+        "src/modules/{customer,identity,vouchers,voucher-gifts,launch-receipts,transfers,quotes}/**"
+      ],
+      "website": [
+        "src/modules/{website,coming-soon,hub,promotions-guide,promotions,customer,identity,docs,ops-manual}/**"
+      ],
+      "admin": [
+        "src/modules/{admin,booking-policies,classSchedule,products,promotions,marketing,staff,maintenance,transfers,vouchers,launch-receipts,teacher,notifications,media}/**"
+      ]
+    },
+    "seams": [
+      {
+        "from": "src/app/registry.ts",
+        "to": "src/modules/*/index.ts"
+      },
+      {
+        "from": "src/modules/*/index.ts"
+      }
+    ]
   }
 }

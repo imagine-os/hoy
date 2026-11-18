@@ -29,10 +29,11 @@ name: Auth checks
 #          lint) and every node-level check (about 35 s); the browser checks do not run
 #   areas  a browser check's own file or a public asset: fast, then the browser checks of that area
 #          (scripts/ci/run-areas.mjs)
-#   all    any TypeScript under src/, server/, package.json, the workflows, any unknown file: fast, then every
-#          browser check. All of src/ is shared: the router imports every module eagerly and pages import across
-#          modules, so the import guard (scripts/ci/area-imports.mjs, run by scripts/test-ci-areas.mjs) leaves no
-#          module file to one area.
+#   areas  also TypeScript under src/ that only module pages import (v2: classified by its importers, the graph in
+#          areas.json): the browser checks of the areas whose modules reach it
+#   all    TypeScript the app shell (src/app, src/main.tsx) or sign-in (src/auth) reaches, server/, package.json,
+#          the workflows, any unknown file: fast, then every browser check. The walk sees every import or the
+#          areas test fails (graphProblems in scripts/test-ci-areas.mjs).
 # One job on purpose: parallel area jobs would each repeat about two minutes of setup. A push to main runs the fast
 # checks only (mode fast: no plan diff, no area or browser checks); Cut release runs the fast checks plus every area
 # changed since the last verified release on the exact commit it tags.

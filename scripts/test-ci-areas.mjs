@@ -5,11 +5,13 @@
 // - every area script is a file that exists (runner ["node"]: an area script is a file path, run as `node <file>`);
 // - every glob matches at least one tracked file, and the shape is valid (validateConfig, the shared script's own);
 // - a few paths land where they should (shared → all, agent files → none, CSS → fast, an area's file → that area);
-// - no file in an area is imported from outside it (area-imports, the shared import guard).
+// - no file in an area is imported from outside it (area-imports, the shared import guard);
+// - v2: src/ is classified by its importers (graph in areas.json): graphProblems finds no import the walk cannot see,
+//   and pinned files land where they should (a module page → its areas, the app shell → all).
 // Run: node scripts/test-ci-areas.mjs
 import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
-import { classify, configProblems, validateConfig } from './ci/affected-areas.mjs';
+import { buildGraph, classify, configProblems, graphProblems, validateConfig } from './ci/affected-areas.mjs';
 import { importProblems } from './ci/area-imports.mjs';
 
 let failed = 0;
@@ -45,6 +47,8 @@ check('the fake-clerk job has fast steps and run-areas', job.includes('node scri
 check('the by-hand real-clerk and real-signup jobs still run test-auth-real-clerk', /\n  real-clerk:[\s\S]*node scripts\/test-auth-real-clerk\.mjs\n[\s\S]*\n  real-signup:[\s\S]*node scripts\/test-auth-real-clerk\.mjs --real-api/.test(wf));
 
 const repoFiles = execFileSync('git', ['ls-files', '-z'], { encoding: 'utf8' }).split('\0').filter(Boolean);
+const read = (f) => readFileSync(f, 'utf8');
+const graph = buildGraph({ config, files: repoFiles.filter((f) => existsSync(f)), read });
 const scriptFiles = repoFiles.filter((f) => /^scripts\/test-[a-z0-9.-]+\.mjs$/.test(f));
 const problems = validateConfig(config, { workflowScripts: OLD.filter((s) => !fastScripts.includes(s)), packageScripts: scriptFiles, repoFiles });
 check('validateConfig: no check lost, every area script exists, every glob matches a file', problems.length === 0, problems.join('; '));
@@ -58,10 +62,11 @@ for (const s of OLD.filter((x) => !fastScripts.includes(x))) {
   check(`${s}: a change to it runs it`, r.mode === 'all' || (r.mode === 'areas' && r.areas.some((n) => running.includes(n))), `${r.mode} ${r.areas.join(',')} (runs in ${running.join(',')}; path in ${owners(s).join(',')})`);
 }
 
-// Where some paths land. All TypeScript under src/ is shared: the router imports every module's index.ts eagerly
-// (src/app/registry.ts, import.meta.glob), each index reaches its pages, and pages import across modules, so the
-// import guard below leaves no module file to a single area. Areas are the browser checks' own files and assets.
-const mode = (files) => { const r = classify(files, config); return r.mode === 'areas' ? `areas:${r.areas.join(',')}` : r.mode; };
+// Where some paths land. v2: TypeScript under src/ is decided by its importers (the reverse import closure, graph in
+// areas.json). The registry's eager glob of every module index and each index's lazy page imports are seams, so a
+// module file reaches only its module (entries: modules by the surfaces their routes declare); anything the shell
+// (src/app/**, src/main.tsx) or sign-in (src/auth/**) imports reaches a root and runs everything.
+const mode = (files) => { const r = classify(files, config, { graph }); return r.mode === 'areas' ? `areas:${r.areas.join(',')}` : r.mode; };
 const expect = (label, files, want) => { const got = mode(files); check(`${label} → ${want}`, got === want, got); };
 expect('agent and playbook files only', ['AGENTS.md', 'CLAUDE.md', 'docs/playbook-inbox.md', '.claude/settings.json'], 'none');
 expect('a harness only another QA workflow runs', ['scripts/h5-launch-harness.tsx'], 'none');
@@ -84,9 +89,18 @@ expect('sign-in code', ['src/auth/clerkFlows.ts'], 'all');
 expect('package.json', ['package.json'], 'all');
 expect('the lockfile', ['package-lock.json'], 'all');
 expect('the Hoy server', ['server/app.mjs'], 'all');
-expect('a shared component', ['src/components/atom/Button/Button.tsx'], 'all');
-expect('a module strings file (browser checks assert copy: never fast)', ['src/modules/staff/desk/strings.ts'], 'all');
-expect('a module page', ['src/modules/admin/ExpensesPage.tsx'], 'all');
+expect('a shared component sign-in uses (reaches src/auth)', ['src/components/atom/Button/Button.tsx'], 'all');
+expect('a module strings file (browser checks assert copy: never fast; v2: its module\'s areas)', ['src/modules/staff/desk/strings.ts'], 'areas:admin');
+expect('a module page', ['src/modules/admin/ExpensesPage.tsx'], 'areas:admin');
+expect('the website strings', ['src/modules/website/strings.ts'], 'areas:website');
+expect('a voucher redeem page (customer and admin routes share the module)', ['src/modules/vouchers/production/pages.tsx'], 'areas:admin,customer');
+expect('the teacher pages (staff side: admin)', ['src/modules/teacher/pages.ts'], 'areas:admin');
+expect('the app shell', ['src/app/App.tsx'], 'all');
+expect('the module registry', ['src/app/registry.ts'], 'all');
+expect('the data provider the shell mounts', ['src/data/DataContext.tsx'], 'all');
+expect('an ambient type file', ['src/vite-env.d.ts'], 'fast');
+expect('a build generator that reads src', ['scripts/gen-tokens.mjs'], 'all');
+expect('a harness no area script uses', ['scripts/booking-launch-harness.tsx'], 'fast');
 expect('the CI config', ['scripts/ci/areas.json'], 'all');
 expect('a workflow', ['.github/workflows/release.yml'], 'all');
 expect('a shared QA helper', ['scripts/lib/launch-qa.mjs'], 'all');
@@ -104,8 +118,13 @@ expect('a source PDF behind the docs gate', ['public/source/manual-de-marca.pdf'
 expect('two areas at once', ['scripts/test-r1-ui.mjs', 'public/images/x.jpg'], 'areas:admin,website');
 
 // The import guard (Company OS tools/ci/area-imports.mjs): no file in an area is imported from outside it.
-const imports = importProblems({ config, files: repoFiles, read: (f) => readFileSync(f, 'utf8'), aliases: { '@/': '' } });
+const imports = importProblems({ config, files: repoFiles, read, aliases: { '@/': '' } });
 check('area-imports: no area file is imported by a shared, unknown, fast or other-area file', imports.length === 0, imports.slice(0, 5).join('; '));
+
+// The walk fails closed only if it sees every import: no non-literal import(), no specifier that resolves to nothing,
+// no seam that cuts an edge to a file that is no entry, no dead glob (graphProblems, the shared script's own).
+const gp = graphProblems({ config, files: repoFiles, read });
+check('graphProblems: the import graph has no blind spot', gp.length === 0, gp.slice(0, 5).join('; '));
 
 console.log(failed ? `\n${failed} ci areas check(s) failed` : '\nci areas passed');
 process.exitCode = failed ? 1 : 0;

@@ -97,7 +97,7 @@ check('release: still refuses a version not higher than the last release', /is n
 check('release: the plan runs affected-areas in release mode (base: the last verified release)', /node scripts\/ci\/affected-areas\.mjs --release/.test(rel));
 check('release: a release always runs at least the fast checks (mode none counts as fast)', /none\) mode=fast/.test(rel));
 check('release: the area scripts run in the checks job', /\n  checks:\n[\s\S]*node scripts\/ci\/run-areas\.mjs --mode "\$MODE" --areas "\$AREAS"[\s\S]*\n  tag:\n/.test(rel));
-check('release: the tag message carries the marker line, written only by the tag job after the checks', /\n  tag:\n\s+needs: \[guard, checks\]/.test(rel) && /\n  tag:\n[\s\S]*printf '\\nchecks: areas-v1\\n'/.test(rel));
+check('release: the tag message carries the marker line, written only by the tag job after the checks', /\n  tag:\n\s+needs: \[guard, checks\]/.test(rel) && /\n  tag:\n[\s\S]*printf '\\nchecks: areas-v2\\n'/.test(rel));
 // Finding 1: actions/checkout rewrites an annotated tag as lightweight; the guard must re-fetch it (forced) before it reads the type.
 const prodGuard = flows['deploy-prod.yml'];
 const refetch = prodGuard.search(/git (?:-c [^\n]*)?fetch [^\n]*--force[^\n]*"refs\/tags\/\$TAG:refs\/tags\/\$TAG"/);

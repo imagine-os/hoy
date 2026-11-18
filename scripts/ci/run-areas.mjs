@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// run-areas v1
+// run-areas v2
 // Source: Company OS tools/ci/run-areas.mjs. Website repos copy this file verbatim to
 // scripts/ci/run-areas.mjs, next to affected-areas.mjs; change it in Company OS and copy it again.
 // Docs: Company OS tools/ci/README.md.
@@ -16,7 +16,7 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { DEFAULT_CONFIG, loadConfig, normalizeScript } from "./affected-areas.mjs";
 
-export const VERSION = "run-areas v1";
+export const VERSION = "run-areas v2";
 const DEFAULT_RUNNER = ["npm", "run"];
 
 /** The scripts to run, in config order, each once: {name, env}. Throws on an unknown area. */
