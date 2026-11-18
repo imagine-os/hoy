@@ -3,7 +3,7 @@
 //   recipe's public_site role and studio_private policies): >= 1.7.0, the first release after v1.6.0; the changelog
 //   says the recipe and the public_site read token (COMPANY_OS_READ_TOKEN) must be in place before this frontend
 //   deploys (playbook E9: `requires` cannot say that ordering), and names the pay-data move (M1) and its command.
-// - L7: the checks the branch added or changed run in CI (auth-checks.yml checks job: fast steps or area scripts).
+// - L7: the checks the branch added or changed run in CI (auth-checks.yml fake-clerk job: fast steps or area scripts).
 // - CI by area: SHA pins, no credentials kept, no ${{ }} in run:, the release marker, the tag as the version.
 // - L1, L9: recorded as known limits in the changelog.
 // Run: node scripts/test-release-wiring.mjs
@@ -28,15 +28,15 @@ check('M1 the changelog gives the pay-data move command (dry run, then --apply)'
 check('L1, L9 recorded as known limits (the signed-out strip\'s two shapes; the per-IP limit behind carrier NAT)', /known limit/i.test(note) && /\bL1\b/.test(note) && /\bL9\b/.test(note));
 
 // ── L7, CI by area ────────────────────────────────────────────────────────────────────────────────────────────────
-// The checks the branch added or changed still run: in auth-checks.yml's checks job, either as a fast step (always)
+// The checks the branch added or changed still run: in auth-checks.yml's fake-clerk job, either as a fast step (always)
 // or as an area script (scripts/ci/areas.json, run by scripts/ci/run-areas.mjs after the fast steps).
 const wf = readFileSync('.github/workflows/auth-checks.yml', 'utf8');
-const job = wf.slice(wf.indexOf('\n  checks:\n'), wf.indexOf('\n  real-clerk:'));
+const job = wf.slice(wf.indexOf('\n  fake-clerk:\n'), wf.indexOf('\n  real-clerk:'));
 const steps = job.split('\n      - ').map((s) => s.trim());
 const stepIndex = (re) => steps.findIndex((s) => re.test(s));
 const areas = existsSync('scripts/ci/areas.json') ? JSON.parse(readFileSync('scripts/ci/areas.json', 'utf8')) : { areas: {} };
 const areaScripts = new Set(Object.values(areas.areas).flatMap((a) => a.scripts.map((s) => (typeof s === 'string' ? s : s.name))));
-const fast = (script) => stepIndex(new RegExp(`^(name: [^\\n]*\\n\\s*)?run: node scripts/${script}\\.mjs$`, 'm'));
+const fast = (script) => stepIndex(new RegExp(`^\\s*run: node scripts/${script}\\.mjs$`, 'm'));
 const runAreas = stepIndex(/run: node scripts\/ci\/run-areas\.mjs/);
 const plan = stepIndex(/run: node scripts\/ci\/affected-areas\.mjs/);
 const reviewBuild = stepIndex(/run: npm run build$/m);
@@ -49,7 +49,7 @@ for (const s of ['test-companyos-provider', 'test-admin-activity', 'test-real-si
 check('L7 the area scripts run after the plan, both builds and the Hoy server\'s own dependencies', plan >= 0 && runAreas > Math.max(plan, prodBuild, reviewBuild, serverDeps) && Math.min(prodBuild, reviewBuild, serverDeps) >= 0, `${plan} ${prodBuild} ${reviewBuild} ${serverDeps} ${runAreas}`);
 check('L7 the area scripts get the production build as QA_PROD_DIST (browser checks, website rows and content)', /QA_PROD_DIST: \$\{\{ runner\.temp \}\}\/prod$/m.test(steps[runAreas] ?? ''), steps[runAreas]);
 check('ci1 the production build step copies the private docs pack beside the copied build (prod-private)', /cp -R dist-private "\$RUNNER_TEMP\/prod-private"/.test(steps[prodBuild] ?? ''), steps[prodBuild]);
-check('L7 test-real-signup runs offline in CI (no COS_LOCAL_API: its live part says it skipped)', !/COS_LOCAL_API/.test(job) && !/COS_LOCAL_API/.test(JSON.stringify(areas)));
+check('L7 test-real-signup runs offline in CI (no COS_LOCAL_API: its live part says it skipped)', !/COS_LOCAL_API:/.test(job) && !/COS_LOCAL_API/.test(JSON.stringify(areas)));
 check('ci-areas the fast steps run before the area scripts and skip only when nothing a check reads changed', /if: steps\.plan\.outputs\.mode != 'none'/.test(steps[prodBuild] ?? '') && /if: steps\.plan\.outputs\.mode == 'areas' \|\| steps\.plan\.outputs\.mode == 'all'/.test(steps[runAreas] ?? ''));
 check('ci-areas run-areas gets the mode and areas through env, never interpolated', /run: node scripts\/ci\/run-areas\.mjs --mode "\$MODE" --areas "\$AREAS"/.test(steps[runAreas] ?? '') && /MODE: \$\{\{ steps\.plan\.outputs\.mode \}\}/.test(steps[runAreas] ?? ''));
 check('ci-areas the plan compares the pull request\'s base and head commits, passed through env', /BASE_SHA: \$\{\{ github\.event\.pull_request\.base\.sha \}\}/.test(steps[plan] ?? '') && /HEAD_SHA: \$\{\{ github\.event\.pull_request\.head\.sha \}\}/.test(steps[plan] ?? '') && /--base "\$BASE_SHA" --head "\$HEAD_SHA"/.test(steps[plan] ?? ''), steps[plan]);
