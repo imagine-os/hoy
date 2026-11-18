@@ -25,6 +25,7 @@
 // Plain Node 20+, no dependencies; git is called with argument arrays, never through a shell.
 import { execFileSync } from "node:child_process";
 import { appendFileSync, readFileSync } from "node:fs";
+import { builtinModules } from "node:module";
 import { posix, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -393,6 +394,7 @@ export function classify(files, config, { protectedPaths = [], graph } = {}) {
 
 // ---- the import graph ---------------------------------------------------------------------------
 
+const BUILTINS = new Set(builtinModules);
 export const SOURCE = /\.(?:[cm]?[jt]sx?|css)$/;
 const EXTENSIONS = [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".mts", ".cts", ".css", ".json"];
 const SWAP = { ".js": [".ts", ".tsx"], ".jsx": [".tsx"], ".mjs": [".mts"], ".cjs": [".cts"] };
@@ -407,7 +409,8 @@ const COMMENTS = String.raw`(?:\/\*[^*]{0,500}\*\/\s*)*`;
  * export and CSS composes; a bare import "x"; require(), require.resolve(), new URL("x", import.meta.url), CSS @import,
  * a triple-slash reference), {kind: "lazy", spec} (import()), or {kind: "glob-eager" | "lazy-glob", patterns}
  * (import.meta.glob). opaque lists the import(), require() and import.meta.glob calls whose argument is not a literal,
- * and globs using syntax the matcher does not support: an edge the walk cannot see (buildGraph marks the file blind).
+ * globs using syntax the matcher does not support, require.context, createRequire, a worker given a path and
+ * import.meta.resolve: an edge the walk cannot see (buildGraph marks the file blind).
  * Comments and strings are read as code: an import mentioned in a comment is an extra edge, which can only widen a walk.
  * Every pattern is linear in the text (bounded windows, no nested unbounded quantifiers).
  */
@@ -422,7 +425,7 @@ export function importEdges(text) {
   const all = (re, kind) => {
     for (const m of text.matchAll(re)) push(kind, m[1]);
   };
-  all(new RegExp(String.raw`\bfrom\s*${SPEC}`, "g"), "static");
+  all(new RegExp(String.raw`\bfrom\s*${COMMENTS}${SPEC}`, "g"), "static");
   all(new RegExp(String.raw`(?<![\w$.])import\s*${COMMENTS}${SPEC}`, "g"), "static");
   all(new RegExp(String.raw`@import\s*${COMMENTS}(?:url\(\s*)?["']?([^"'\s)\n;]{1,500})`, "g"), "static");
   all(new RegExp(String.raw`\bnew\s+URL\s*\(\s*${SPEC}\s*,\s*import\.meta\.url`, "g"), "static");
@@ -432,6 +435,12 @@ export function importEdges(text) {
     const lit = /^(["'])([^"'\n]{1,500})\1\s*[,)]/.exec(rest) ?? /^`([^`$\n]{1,500})`\s*[,)]/.exec(rest);
     if (lit) push(m[1] === "import" ? "lazy" : "static", lit[2] ?? lit[1]);
     else opaque.push(`${m[1]}(${rest.slice(0, 40).split("\n")[0]}`);
+  }
+  // Loaders the parser cannot follow: webpack contexts, createRequire, workers given a path, import.meta.resolve.
+  // createRequire bound to the name `require` is read through its require() calls; any other use is opaque.
+  for (const m of text.matchAll(/\brequire\.context\s*\(|(?<!\brequire\s*=\s*)\bcreateRequire\s*\(|\bnew\s+(?:Shared)?Worker\s*\(\s*["'`]|\bimport\.meta\.resolve\s*\(/g)) {
+    if (/^createRequire/.test(m[0]) && /\bimport\s*\{[^}]*\bcreateRequire\b[^}]*\}\s*from\s*$/.test(text.slice(Math.max(0, m.index - 200), m.index))) continue;
+    opaque.push(text.slice(m.index, m.index + 40).split("\n")[0]);
   }
   for (const m of text.matchAll(/\bimport\.meta\.glob\b/g)) {
     const rest = text.slice(m.index + m[0].length, m.index + m[0].length + 1200);
@@ -481,12 +490,13 @@ function specifierBase(spec, importer, aliases) {
   const clean = spec.replace(/[?#].*$/, "");
   if (clean === "" || /^[a-z][a-z0-9+.-]*:/i.test(clean) || clean.startsWith("//")) return null;
   let base = null;
-  if (clean.startsWith("./") || clean.startsWith("../")) base = posix.join(posix.dirname(importer), clean);
+  if (clean === "." || clean === ".." || clean.startsWith("./") || clean.startsWith("../")) base = posix.join(posix.dirname(importer), clean);
   else {
     const prefix = Object.keys(aliases).filter((p) => clean.startsWith(p)).sort((a, b) => b.length - a.length)[0];
     if (prefix !== undefined) base = posix.normalize(aliases[prefix] + clean.slice(prefix.length));
     else if (importer.endsWith(".css") && !clean.startsWith("@") && !clean.startsWith("/")) base = posix.join(posix.dirname(importer), clean);
   }
+  if (base !== null) base = base.replace(/\/+$/, "");
   if (base === null || base === "" || base === "." || base.startsWith("../") || base === ".." || base.startsWith("/")) return null;
   return base;
 }
@@ -526,8 +536,9 @@ const blindKinds = new Set(["graph", "areas", "shared"]);
 
 /**
  * The import graph of one tree: {importers: Map<file, Set<importer>>, blind: [file]}. Every source file (SOURCE) is
- * read, not only graph.sources, so a shared or area file importing a graph file is seen. import() and import.meta.glob
- * edges (eager or not) from an importer to a target that a seam matches are left out; a static import is never a seam.
+ * read, not only graph.sources, so a shared or area file importing a graph file is seen. import() and lazy
+ * import.meta.glob edges from an importer to a target that a seam matches are left out; a static import and an eager
+ * glob (evaluated at load, like a static import) are never seams.
  * graphProblems checks that every target a seam cuts is an entry. `read(path)` returns the text (or throws).
  * blind lists the graph, area and shared files that could hide an edge: an opaque import, a glob that cannot be
  * expanded, text with NUL bytes (binary, UTF-16) or longer than MAX_SOURCE_LENGTH, and `links` (symlinks and
@@ -568,7 +579,7 @@ export function buildGraph({ config, files, read, into, links = [], blindInto })
           if (isBlindKind(file)) blind.add(file);
           continue;
         }
-        for (const t of targets) if (!isSeam(config, file, t)) link(t, file);
+        for (const t of targets) if (!(edge.kind === "lazy-glob" && isSeam(config, file, t))) link(t, file);
       } else {
         const t = resolveSpecifier(edge.spec, file, fileSet, aliases);
         if (t !== null && !(edge.kind === "lazy" && isSeam(config, file, t))) link(t, file);
@@ -584,7 +595,11 @@ export function buildGraph({ config, files, read, into, links = [], blindInto })
  * specifier in a graph source that resolves to no file; a roots, entries or seams glob that matches no file; a seam
  * that cuts nothing, or cuts an edge to a file that is no entry; a graph source that is also shared or in an area's paths.
  */
-export function graphProblems({ config, files, read }) {
+/** The package a bare specifier names ("@scope/pkg/sub" → "@scope/pkg", "react-dom/client" → "react-dom"). */
+const PACKAGE_NAME = /^(?:@[a-z0-9][\w.-]*\/)?[a-z0-9][\w.-]*(?:\/[\w.@~-]+)*$/i;
+const packageOf = (spec) => (spec.startsWith("@") ? spec.split("/").slice(0, 2).join("/") : spec.split("/")[0]);
+
+export function graphProblems({ config, files, read, packages }) {
   const problems = [];
   const g = config.graph;
   if (!g) return ["areas.json has no graph"];
@@ -622,11 +637,17 @@ export function graphProblems({ config, files, read }) {
         if (lintThis) problems.push(`${file}: import.meta.glob ${JSON.stringify(edge.patterns)} points outside the repo or at a bare package`);
         continue;
       }
-      if (lintThis && !edge.patterns) {
-        const cssPackage = file.endsWith(".css") && !edge.spec.startsWith("./") && !edge.spec.startsWith("../") && !Object.keys(aliases).some((a) => edge.spec.startsWith(a));
-        if (targets.length === 0 && !cssPackage && inCode.has(edge.spec) && specifierBase(edge.spec, file, aliases) !== null) problems.push(`${JSON.stringify(edge.spec)} in ${file} resolves to no file`);
+      if (lintThis && !edge.patterns && targets.length === 0 && inCode.has(edge.spec)) {
+        const spec = edge.spec.replace(/[?#].*$/, "");
+        const relative = spec.startsWith(".");
+        const aliased = Object.keys(aliases).some((a) => spec.startsWith(a));
+        const external = /^[a-z][a-z0-9+.-]*:/i.test(spec) || spec.startsWith("//") || spec.startsWith("/");
+        if (relative || aliased) problems.push(`${JSON.stringify(edge.spec)} in ${file} resolves to no file`);
+        else if (!external && packages && PACKAGE_NAME.test(spec) && !packages.includes(packageOf(spec)) && !BUILTINS.has(packageOf(spec))) {
+          problems.push(`${JSON.stringify(edge.spec)} in ${file} is no dependency in package.json, no node: builtin and no graph.aliases prefix`);
+        }
       }
-      if (edge.kind !== "static") {
+      if (edge.kind === "lazy" || edge.kind === "lazy-glob") {
         (g.seams ?? []).forEach((s, i) => {
           if (!matchGlob(s.from, file)) return;
           for (const t of targets) {

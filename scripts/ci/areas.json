@@ -167,16 +167,16 @@
     ],
     "entries": {
       "auth": [
-        "src/modules/{admin,customer,dev,docs,hub,identity,ops-manual,staff,teacher,vouchers}/**"
+        "src/modules/{admin,coming-soon,customer,dev,docs,hub,identity,ops-manual,staff,teacher,transfers,vouchers,website}/**"
       ],
       "customer": [
-        "src/modules/{admin,classSchedule,customer,hub,identity,launch-receipts,quotes,transfers,voucher-gifts,vouchers}/**"
+        "src/modules/{admin,classSchedule,coming-soon,customer,hub,identity,launch-receipts,quotes,transfers,voucher-gifts,vouchers,website}/**"
       ],
       "website": [
         "src/modules/{admin,classSchedule,coming-soon,customer,docs,hub,identity,ops-manual,promotions,promotions-guide,transfers,vouchers,website}/**"
       ],
       "admin": [
-        "src/modules/{admin,booking-policies,classSchedule,customer,launch-receipts,maintenance,marketing,media,notifications,products,promotions,staff,teacher,transfers,vouchers}/**"
+        "src/modules/{admin,booking-policies,classSchedule,coming-soon,customer,launch-receipts,maintenance,marketing,media,notifications,products,promotions,staff,teacher,transfers,vouchers,website}/**"
       ]
     },
     "seams": [

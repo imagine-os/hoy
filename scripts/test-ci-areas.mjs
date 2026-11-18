@@ -125,7 +125,8 @@ check('area-imports: no area file is imported by a shared, unknown, fast or othe
 
 // The walk fails closed only if it sees every import: no non-literal import(), no specifier that resolves to nothing,
 // no seam that cuts an edge to a file that is no entry, no dead glob (graphProblems, the shared script's own).
-const gp = graphProblems({ config, files: repoFiles, read });
+const pkg = JSON.parse(read('package.json'));
+const gp = graphProblems({ config, files: repoFiles, read, packages: [...Object.keys(pkg.dependencies ?? {}), ...Object.keys(pkg.devDependencies ?? {})] });
 // graph.dynamic declares test-route-connectivity.mjs as loading nothing the walk must follow: it bundles module files
 // with esbuild, which no import shows. That is sound only while it runs in every area (any area selected runs it).
 const everyArea = Object.values(config.areas).every((a) => a.scripts.includes('scripts/test-route-connectivity.mjs'));
@@ -147,7 +148,9 @@ const ownersOf = (u) => {
   const exact = hits.filter(([p]) => !p.includes(':') && !p.endsWith('*'));
   return [...new Set((exact.length ? exact : hits).map(([, m]) => m))];
 };
-const VISIT = /["'`]#?(\/(?:app|admin|staff|teach|docs|manual|dev|hub)[^"'`\s?#]*)/g;
+// Any route-like literal: after a quote, a backtick, a `#` (hash routes) or a `${…}` (`${base}/site/plans`), up to the
+// next quote, space, `?` or `#`. Only literals that match a module route count, so file paths and prose drop out.
+const VISIT = /(?:["'`}]|#)#?(\/(?:[a-z][a-z0-9_\-/:]*)?)(?=["'`\s?#)]|$)/gm;
 for (const [area, a] of Object.entries(config.areas)) {
   const missing = new Set();
   for (const sc of a.scripts.map((x) => (typeof x === 'string' ? x : x.name))) {
