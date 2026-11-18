@@ -27,8 +27,30 @@ name: Auth checks
 # client_state_invalid. Restore it on pull requests by deleting the `if:` on the real-clerk job.
 on:
   pull_request:
+    paths-ignore:
+      # Agent and playbook files only: no app code, build or test reads them
+      # (playbook rule E14; docs are not ignored because some checks read them).
+      - AGENTS.md
+      - CLAUDE.md
+      - docs/playbook-inbox.md
+      - .github/pull_request_template.md
+      - .github/playbook-entry.sha256
+      - .github/workflows/playbook-check.yml
+      - scripts/check-agent-entry.sh
+      - .claude/**
   push:
     branches: [main]
+    paths-ignore:
+      # Agent and playbook files only: no app code, build or test reads them
+      # (playbook rule E14; docs are not ignored because some checks read them).
+      - AGENTS.md
+      - CLAUDE.md
+      - docs/playbook-inbox.md
+      - .github/pull_request_template.md
+      - .github/playbook-entry.sha256
+      - .github/workflows/playbook-check.yml
+      - scripts/check-agent-entry.sh
+      - .claude/**
   workflow_dispatch:
     inputs:
       real_signup:
