@@ -36,7 +36,7 @@ names the exact value or copy ("make it 22px"), the request is the decision: do 
 | T2 | `sonnet`, medium | round 1 `opus`, round 2 a fresh `sonnet` |
 | T3 | `opus`, medium | both rounds `opus`, plus a security review |
 
-Every subagent call names its model; never let it inherit silently. Independent work runs in parallel
+Every subagent call names its model; never let it inherit silently. A local hook enforces this when Company OS sits beside this repository; elsewhere it is your responsibility. Independent work runs in parallel
 lanes (at most 4 at once); only a real dependency makes lanes sequential.
 No other model (for example fable) without the owner's explicit ask.
 
