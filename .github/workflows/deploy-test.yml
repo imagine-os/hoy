@@ -88,9 +88,17 @@ jobs:
       - name: Deploy wiring (IaC declares every server variable; summaries show the go-live switches)
         if: steps.release-checks.outputs.reuse != 'true'
         run: node scripts/test-deploy-wiring.mjs
-      - name: Build (production with Clerk, launch routes, no review tools; H-2), stamped with the release tag
+      # The build reports the tag's version only for a release tag (vMAJOR.MINOR.PATCH); any other ref (a branch, or a tag
+      # like v0.26.0-rc1) leaves RELEASE_TAG unset and the build falls back to package.json's version.
+      - name: Stamp the release tag (only vMAJOR.MINOR.PATCH)
         env:
-          RELEASE_TAG: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || '' }}
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          if [ "$REF_TYPE" = tag ] && [[ "$REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "RELEASE_TAG=$REF_NAME" >> "$GITHUB_ENV"
+          fi
+      - name: Build (production with Clerk, launch routes, no review tools; H-2), stamped with the release tag
         run: npm run build:production
       - name: Production bundle checks (H-2; refuses demo data, review tools, docs, screenshots)
         run: |

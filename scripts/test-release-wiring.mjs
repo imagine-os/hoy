@@ -38,7 +38,7 @@ const areas = existsSync('scripts/ci/areas.json') ? JSON.parse(readFileSync('scr
 const areaScripts = new Set(Object.values(areas.areas).flatMap((a) => a.scripts.map((s) => (typeof s === 'string' ? s : s.name))));
 const fast = (script) => stepIndex(new RegExp(`^\\s*run: node scripts/${script}\\.mjs$`, 'm'));
 const runAreas = stepIndex(/run: node scripts\/ci\/run-areas\.mjs/);
-const plan = stepIndex(/run: node scripts\/ci\/affected-areas\.mjs/);
+const plan = stepIndex(/node scripts\/ci\/affected-areas\.mjs/);
 const reviewBuild = stepIndex(/run: npm run build$/m);
 const prodBuild = stepIndex(/npm run build:production/);
 const serverDeps = stepIndex(/npm ci --prefix server/);
@@ -54,6 +54,17 @@ check('ci-areas the fast steps run before the area scripts and skip only when no
 check('ci-areas run-areas gets the mode and areas through env, never interpolated', /run: node scripts\/ci\/run-areas\.mjs --mode "\$MODE" --areas "\$AREAS"/.test(steps[runAreas] ?? '') && /MODE: \$\{\{ steps\.plan\.outputs\.mode \}\}/.test(steps[runAreas] ?? ''));
 check('ci-areas the plan compares the pull request\'s base and head commits, passed through env', /BASE_SHA: \$\{\{ github\.event\.pull_request\.base\.sha \}\}/.test(steps[plan] ?? '') && /HEAD_SHA: \$\{\{ github\.event\.pull_request\.head\.sha \}\}/.test(steps[plan] ?? '') && /--base "\$BASE_SHA" --head "\$HEAD_SHA"/.test(steps[plan] ?? ''), steps[plan]);
 check('ci-areas the fast steps run the areas test and the reuse test', fast('test-ci-areas') >= 0 && fast('test-release-check-reuse') >= 0);
+
+// Push to main: fast checks only (no area or browser checks), the same paths-ignore as pull requests.
+const onBlock = (t) => t.slice(t.indexOf('\non:\n'), t.indexOf('\npermissions:'));
+const trig = onBlock(wf);
+const ignoreOf = (t, ev) => { const m = new RegExp(`\\n  ${ev}:\\n(?:    branches: \\[main\\]\\n)?    paths-ignore:\\n((?:      .*\\n)+)`).exec(t); return m ? m[1].split('\n').filter((l) => /^\s+- /.test(l)).map((l) => l.trim()) : null; };
+check('ci-push auth-checks triggers on push to main', /\n  push:\n    branches: \[main\]\n/.test(trig), trig.slice(0, 200));
+check('ci-push the push trigger has the same paths-ignore as pull_request', ignoreOf(trig, 'push') !== null && ignoreOf(trig, 'push').length > 3 && JSON.stringify(ignoreOf(trig, 'push')) === JSON.stringify(ignoreOf(trig, 'pull_request')), JSON.stringify([ignoreOf(trig, 'push'), ignoreOf(trig, 'pull_request')]));
+check('ci-push the plan step reads the event name through env, not interpolated', /EVENT_NAME: \$\{\{ github\.event_name \}\}/.test(steps[plan] ?? '') && /"\$EVENT_NAME" = push/.test(steps[plan] ?? '') && /mode=fast/.test(steps[plan] ?? ''), steps[plan]);
+check('ci-push on push the plan gives mode fast without diffing', /if \[ "\$EVENT_NAME" = push \]; then[\s\S]*echo "mode=fast" >> "\$GITHUB_OUTPUT"[\s\S]*else[\s\S]*affected-areas\.mjs --base "\$BASE_SHA" --head "\$HEAD_SHA"/.test(steps[plan] ?? ''), steps[plan]);
+check('ci-push the area step needs mode areas or all, so on push (fast) no area check runs', /if: steps\.plan\.outputs\.mode == 'areas' \|\| steps\.plan\.outputs\.mode == 'all'/.test(steps[runAreas] ?? ''));
+check('ci-push the production-build artifact stays workflow_dispatch only (unchanged on push)', /uses: actions\/upload-artifact@[0-9a-f]{40} # v\d+\n\s+if: github\.event_name == 'workflow_dispatch'/.test(job));
 
 // ── Release path (CI by area; owner Q1 2026-11-18: the tag is the version) ───────────────────────────────────────
 const read = (f) => readFileSync(`.github/workflows/${f}`, 'utf8');
@@ -112,9 +123,26 @@ for (const wf of readdirSync('.github/workflows').filter((n) => /\.ya?ml$/.test(
     check(`${wf} ${name}: the encoded credential is masked with ::add-mask::`, /echo "::add-mask::\$auth"/.test(job));
   }
 }
-for (const f of ['release.yml', 'deploy-test.yml', 'deploy-prod.yml']) {
+for (const f of ['release.yml', 'deploy-prod.yml']) {
   const build = flows[f].split('\n      - ').find((s) => /run: npm run build:production$/m.test(s)) ?? '';
   check(`${f}: the production build stamps the version from the tag (RELEASE_TAG)`, /RELEASE_TAG: /.test(build), build.slice(0, 160));
+}
+// deploy-test: RELEASE_TAG is set (to $GITHUB_ENV) only for a ref named exactly vMAJOR.MINOR.PATCH; v0.26.0-rc1 leaves it unset.
+{
+  const dt = flows['deploy-test.yml'];
+  const stampStep = dt.split('\n      - ').find((s) => />> "\$GITHUB_ENV"/.test(s) && /RELEASE_TAG/.test(s)) ?? '';
+  const build = dt.split('\n      - ').find((s) => /run: npm run build:production$/m.test(s)) ?? '';
+  check('deploy-test: the build no longer sets RELEASE_TAG for any refs/tags/v* (an -rc tag would stop the build)', !/startsWith\(github\.ref/.test(dt) && !/RELEASE_TAG: /.test(build), build.slice(0, 160));
+  check('deploy-test: a shell step sets RELEASE_TAG only for ^v[0-9]+\\.[0-9]+\\.[0-9]+$, through env', /\^v\[0-9\]\+\\\.\[0-9\]\+\\\.\[0-9\]\+\$/.test(stampStep) && /REF_TYPE: \$\{\{ github\.ref_type \}\}/.test(stampStep) && /REF_NAME: \$\{\{ github\.ref_name \}\}/.test(stampStep), stampStep);
+  check('deploy-test: the stamp step runs before the build', stampStep !== '' && dt.indexOf(stampStep.slice(0, 60)) >= 0 && dt.indexOf(stampStep.slice(0, 60)) < dt.indexOf('npm run build:production'));
+  const body = /run: \|\n((?:\s{10,}.*\n?)+)/.exec(stampStep)?.[1] ?? '';
+  const { execFileSync } = await import('node:child_process');
+  const { mkdtempSync, readFileSync: rf } = await import('node:fs');
+  const { tmpdir } = await import('node:os'); const { join } = await import('node:path');
+  for (const [type, name, want] of [['tag', 'v0.26.0', 'RELEASE_TAG=v0.26.0'], ['tag', 'v0.26.0-rc1', ''], ['tag', 'v1.7', ''], ['branch', 'v1.2.3', ''], ['branch', 'main', ''], ['tag', 'v1.2.3\nX=1', '']]) {
+    const f = join(mkdtempSync(join(tmpdir(), 'ghenv-')), 'env'); execFileSync('bash', ['-c', 'touch "$GITHUB_ENV"; ' + body], { env: { PATH: process.env.PATH, GITHUB_ENV: f, REF_TYPE: type, REF_NAME: name } });
+    check(`deploy-test: ref ${type} ${JSON.stringify(name)} gives ${want || 'no RELEASE_TAG'}`, rf(f, 'utf8').trim() === want, rf(f, 'utf8'));
+  }
 }
 for (const f of ['deploy-test.yml', 'deploy-prod.yml']) {
   check(`${f}: reuses the Cut release pass on the exact commit`, /run: node scripts\/release-check-reuse\.mjs/.test(flows[f]));

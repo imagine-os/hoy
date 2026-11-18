@@ -1,5 +1,5 @@
 name: Auth checks
-# Sign-in, sign-up and sign-out on every pull request and on main (owner, 30 Oct 2026: these flows kept breaking on
+# Sign-in, sign-up and sign-out on every pull request and on every push to main (owner, 30 Oct 2026: these flows kept breaking on
 # the test environment). Not muted with the launch QA workflows.
 #
 #   fake-clerk   the production build on a fake Clerk (scripts/fixtures/fake-clerk.js) and a fake Company OS: every
@@ -33,14 +33,28 @@ name: Auth checks
 #          browser check. All of src/ is shared: the router imports every module eagerly and pages import across
 #          modules, so the import guard (scripts/ci/area-imports.mjs, run by scripts/test-ci-areas.mjs) leaves no
 #          module file to one area.
-# One job on purpose: parallel area jobs would each repeat about two minutes of setup. Main is not re-checked on push:
-# Cut release runs the fast checks plus every area changed since the last verified release on the exact commit it tags.
+# One job on purpose: parallel area jobs would each repeat about two minutes of setup. A push to main runs the fast
+# checks only (mode fast: no plan diff, no area or browser checks); Cut release runs the fast checks plus every area
+# changed since the last verified release on the exact commit it tags.
 #
 # Muted 2026-10-30: real-clerk runs only by hand (Run workflow) until it passes. Its last run got past Clerk's
 # CAPTCHA but Clerk refused the code step: POST /v1/client/sign_ups/<id>/prepare_verification → 400
 # client_state_invalid. Restore it on pull requests by deleting the `if:` on the real-clerk job AND changing the `if:` on the
 # production-build artifact upload (~line 192, now workflow_dispatch only), or real-clerk finds no artifact to download.
 on:
+  push:
+    branches: [main]
+    paths-ignore:
+      # Agent and playbook files only: no app code, build or test reads them
+      # (playbook rule E14; docs are not ignored because some checks read them).
+      - AGENTS.md
+      - CLAUDE.md
+      - docs/playbook-inbox.md
+      - .github/pull_request_template.md
+      - .github/playbook-entry.sha256
+      - .github/workflows/playbook-check.yml
+      - scripts/check-agent-entry.sh
+      - .claude/**
   pull_request:
     paths-ignore:
       # Agent and playbook files only: no app code, build or test reads them
@@ -80,13 +94,19 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      # By hand (Run workflow) there is no base: the plan says all.
+      # By hand (Run workflow) there is no base: the plan says all. A push to main is always mode fast.
       - name: Plan (which areas this change touches)
         id: plan
         env:
+          EVENT_NAME: ${{ github.event_name }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: node scripts/ci/affected-areas.mjs --base "$BASE_SHA" --head "$HEAD_SHA"
+        run: |
+          if [ "$EVENT_NAME" = push ]; then
+            echo "mode=fast" >> "$GITHUB_OUTPUT"
+          else
+            node scripts/ci/affected-areas.mjs --base "$BASE_SHA" --head "$HEAD_SHA"
+          fi
       - if: steps.plan.outputs.mode != 'none'
         run: npm ci
       - name: The Hoy server's own dependencies (the signed-out website check runs the real server)

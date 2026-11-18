@@ -62,7 +62,7 @@ The page's own thumbnails (what the canvas shows for it):
   the dev-mode toggle renders for super admin and developer.
 
 ## Sections (layout order)
-1. **BrandBand** — deep-blue band: wordmark, version `Badge` from `package.json`, `LangToggle`, a 44 × 44 theme button, and for a super admin the wireframe and dev-mode `Toggle`s. Cream ink, cream focus ring.
+1. **BrandBand** — deep-blue band: wordmark, version `Badge` (`__HOY_VERSION__`, stamped from `RELEASE_TAG` at build; `package.json` only as the dev fallback), `LangToggle`, a 44 × 44 theme button, and for a super admin the wireframe and dev-mode `Toggle`s. Cream ink, cream focus ring.
 2. **Hero** — eyebrow `tenant.legalName · tenant.city`, `h1`, the one-sentence lead, the brand tagline (`src/tenant/brand.ts` → `taglines.start`), and `BreathingRings` under a radial mask (hidden under 900 px).
 3. **SessionBar** — floats over the band edge: `RoleSwitcher`, a `Placeholder`-wrapped "Reportar un problema", and the `Ctrl + .` hint in dev mode.
 4. **Band A · Fuera del estudio** — Customer app (featured, full width, phone preview, secondary "Entrar o crear cuenta" → `/auth/sign-in`), Website, Teacher app.
