@@ -4,8 +4,8 @@
 # 💡 In plain words: every PR must say what it taught us, for the
 #    delivery playbook (Company OS docs/playbook/). So its description
 #    needs one line like
-#        Playbook inbox: https://github.com/…/docs/playbook/INBOX.md#…
-#        Playbook inbox: ../Company-OS/docs/playbook/INBOX.md
+#        Playbook inbox: https://github.com/…/docs/playbook-inbox.md#…
+#        Playbook inbox: docs/playbook-inbox.md
 #        Playbook inbox: none
 #    (the PR template already has it). No line, no green tick.
 #
@@ -40,7 +40,7 @@ jobs:
             echo "Playbook inbox declared."
             exit 0
           fi
-          echo "::error::The pull request description must have a line 'Playbook inbox: <link or path to the line in Company OS docs/playbook/INBOX.md>' or 'Playbook inbox: none'. Edit the description; this check re-runs by itself."
+          echo "::error::The pull request description must have a line 'Playbook inbox: <link or path to the line in this repository's docs/playbook-inbox.md>' or 'Playbook inbox: none'. Edit the description; this check re-runs by itself."
           exit 1
 
   agent-entry:
