@@ -273,8 +273,9 @@ export function fileKind(file, config, { protectedPaths = [] } = {}) {
 /**
  * The walk for one graph file: its reverse import closure (the file, its importers, theirs, …) over graph.importers.
  * Each closure file decides by where it sits: a graph.roots file → all; a graph source → the areas whose entries
- * match it; any other file by fileKind (shared, own or unknown → all; an area's paths → that area; ignore and fast
- * add nothing). No area at the end → all ("reaches no entry"). Returns {all: reason} or {hits: [[area, file, via]]}.
+ * match it, and a graph source that nothing imports and no entry lists is an entry point no area checks → all; any
+ * other file by fileKind (shared, own or unknown → all; an area's paths → that area; ignore and fast add nothing).
+ * No area at the end → all ("reaches no entry"). Returns {all: reason} or {hits: [[area, file]]}.
  */
 export function walk(file, config, graph) {
   const g = config.graph;
@@ -293,7 +294,13 @@ export function walk(file, config, graph) {
       return { all: `${JSON.stringify(file)} is imported by ${where.kind === "unknown" ? "unknown" : where.kind} file ${JSON.stringify(n)}` };
     }
     if (where.kind === "areas") for (const a of where.areas) hits.push([a, n]);
-    if (where.kind === "graph") for (const [a, globs] of Object.entries(g.entries)) if (matchesAny(globs, n)) hits.push([a, n]);
+    if (where.kind === "graph") {
+      const own = Object.entries(g.entries).filter(([, globs]) => matchesAny(globs, n));
+      if (own.length === 0 && n !== file && (graph.importers.get(n)?.size ?? 0) === 0) {
+        return { all: `${JSON.stringify(file)} is imported by ${JSON.stringify(n)}, which nothing imports and no graph.entries lists (an entry point no area checks)` };
+      }
+      for (const [a] of own) hits.push([a, n]);
+    }
     for (const imp of [...(graph.importers.get(n) ?? [])].sort()) {
       if (!parent.has(imp)) {
         parent.set(imp, n);
