@@ -45,7 +45,7 @@ Clerk session. Identity is `src/auth/`: Clerk signs the person in (`ProductionSe
   workflow, deployed with *Deploy frontend (prod)* after the Company OS release it needs. `company-os.json`
   (`{ "requires": ">=A.B.C" }`) says which Company OS that is; bump it in the same PR that starts using something
   newer. The check and the deploy refuse a missing or malformed file.
-- **Review rounds scale with the change's tier** (playbook rules E11 and E16, see AGENTS.md): none for T0, one for T1, two independent rounds on the whole change for T2 and T3.
+- **Review rounds scale with the change's tier** (playbook rules E11 and E16, see AGENTS.md): none for T0, one for T1; for T2 and T3 one independent round per lane when the work runs in parallel lanes, then two independent rounds on the whole change once every lane is merged (round 2 a fresh reviewer after round 1's fixes).
 - **Git:** plain commit messages, no AI attribution lines, no force pushes, never push to `main`; merges and releases follow AGENTS.md § 5 (an agent, with consent).
 
 ## Component library is a living inventory
