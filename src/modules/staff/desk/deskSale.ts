@@ -18,14 +18,15 @@ export function deskTrialBlock(product: { kind?: unknown; slug?: string | null }
 }
 
 /** HOY staff-only walk-in display hint. Server authorization and capacity remain authoritative.
- * New walk-ins are offered through start + 15 minutes (inclusive), never after the class ends.
+ * New walk-ins are offered before start + 15 minutes and before the class ends (exclusive).
+ * Missing or invalid class times fail closed; future classes remain offered as before.
  * This does not change customer booking or existing reservation check-in policy.
  */
 export function staffWalkInOpen(session: { starts_at: string; ends_at?: string; status?: string }, now: number): boolean {
   const start = Date.parse(session.starts_at);
-  const end = session.ends_at === undefined ? Infinity : Date.parse(session.ends_at);
-  return (!session.status || session.status === 'scheduled') && Number.isFinite(start)
-    && !Number.isNaN(end) && now <= start + 15 * 60_000 && now <= end;
+  const end = Date.parse(session.ends_at ?? "");
+  return (!session.status || session.status === 'scheduled') && Number.isFinite(now) && Number.isFinite(start)
+    && Number.isFinite(end) && end > start && now < start + 15 * 60_000 && now < end;
 }
 
 export function walkInSessions<T extends { session: { starts_at: string; ends_at?: string; status?: string } }>(list: T[], now: number): T[] {

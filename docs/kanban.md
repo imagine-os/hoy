@@ -1,3 +1,5 @@
+Staff walk-in boundary alignment (1.6.3): match live Company OS 1.19.0's exclusive +15-minute/class-end cutoff; fail closed for invalid class times. Targeted tests and build required, then two independent reviews and verified frontend-only release. No backend or customer-record changes. See changelog/_pending/staff-walkin-boundary-alignment.md.
+
 PR88 verification repair: preserve signup drafts across public-session serialization rewrites in legal popups. Retain genuine cross-tab logout and duplicate-charge guards; repair valid-room, cold-persona, independent-purchase and artifact-name fixtures without relaxing assertions. See frontend-completion/public-session-popup-noop.md.
 
 CU-04 remote demo signout: close mounted private tabs and invalidate pending signup/zero-charge checkout only on current explicit remote logout. Keep persona switches independent and retained history intact; real session revocation/email delivery remain separate. See frontend-completion/remote-demo-signout.md.
