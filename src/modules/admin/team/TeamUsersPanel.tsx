@@ -1,3 +1,4 @@
+import { accountHelp, type TeamHelpLink } from './accountHelp';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useSession } from '../../../auth/SessionProvider';
@@ -28,8 +29,8 @@ export function TeamUsersPanel() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
-  /** The invitation link when the invitation exists but its email didn't go out: shown once, to copy, never stored. */
-  const [link, setLink] = useState<{ email: string; url: string } | null>(null);
+  /** A failed-mail invitation or an existing account’s ordinary sign-in link; never persisted. */
+  const [link, setLink] = useState<TeamHelpLink | null>(null);
   /** A half-applied role change or removal, to run again on the refreshed list. */
   const [retry, setRetry] = useState<{ userId: string; next: TeamRoleKey | null } | null>(null);
   const [copied, setCopied] = useState(false);
@@ -70,11 +71,14 @@ export function TeamUsersPanel() {
   /** The email step of an invitation (§12: this app sends it). When only the email fails, the link is shown to copy. */
   const deliver = async (email: string, role: TeamRoleKey, res: InviteOutcome, done: string) => {
     const repair = res.repair ? ` ${t('team.repairNeeded')}` : '';
-    if (res.kind !== 'invited') return t(res.kind === 'added' ? 'team.added' : res.kind === 'has_account' ? 'team.hasAccount' : 'team.signedUp', { email, role: roleLabel(role) }) + repair;
+    if (res.kind !== 'invited') {
+      setLink(accountHelp(res, inviteRedirect(location.origin, role), email));
+      return t(res.kind === 'added' ? 'team.added' : res.kind === 'has_account' ? 'team.hasAccount' : 'team.signedUp', { email, role: roleLabel(role) }) + repair;
+    }
     try {
       await sendInvitationEmail(request!, { email, subject: t('team.mail.subject', { studio: tenant.name }), body: t('team.mail.body', { studio: tenant.name, role: roleLabel(role), url: res.url }) });
     } catch (e) {
-      setLink({ email, url: res.url });
+      setLink({ kind: 'invitation', email, url: res.url });
       throw Object.assign(new Error('mail_failed'), { teamText: t('team.mailFailed', { email, code: errorCode(e) }) + repair });
     }
     return t(done, { email, role: roleLabel(role) }) + repair;
@@ -137,8 +141,9 @@ export function TeamUsersPanel() {
         {notice && <p className="small rooms-free" role="status">{notice}</p>}
         {error && <p className="small register-diff" role="alert">{error}</p>}
         {link && (
-          <div className="row wrap">
-            <Field label={t('team.link', { email: link.email })}>{id => <Input id={id} readOnly value={link.url} onFocus={e => e.currentTarget.select()} />}</Field>
+          <div className="stack-sm">
+            {link.kind === 'sign_in' && <p className="small muted">{t('team.signInHelp')}</p>}
+            <Field label={t(link.kind === 'sign_in' ? 'team.signInLink' : 'team.link', { email: link.email })}>{id => <Input id={id} readOnly value={link.url} onFocus={e => e.currentTarget.select()} />}</Field>
             <Button size="sm" variant="secondary" icon="copy" onClick={() => void copyLink()}>{t(copied ? 'team.link.copied' : 'team.link.copy')}</Button>
           </div>
         )}
