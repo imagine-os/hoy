@@ -424,8 +424,11 @@ await test('no launch screen offers a payment delete: the generic tables screen,
   for (const f of ['src/modules/admin/FinancePage.tsx', 'src/modules/admin/MemberPage.tsx', 'src/modules/launch-receipts/launch/ReceiptPages.tsx', 'src/modules/transfers/launch/PendingPaymentsPage.tsx']) assert.doesNotMatch(await src(f), /'DELETE'|op: 'delete'|\.remove\(/, f);
 });
 await test('the new suites run on CI', async () => {
+  // Node-level checks run as fast steps in the workflow; browser checks run through the area map (scripts/ci/areas.json).
   const ci = await src('.github/workflows/auth-checks.yml');
-  assert.match(ci, /node scripts\/test-void-payment\.mjs/); assert.match(ci, /node scripts\/test-void-payment-ui\.mjs/);
+  const areas = JSON.parse(await src('scripts/ci/areas.json'));
+  const inAreas = Object.values(areas.areas).some((a) => a.scripts.some((x) => (typeof x === 'string' ? x : x.name) === 'scripts/test-void-payment-ui.mjs'));
+  assert.match(ci, /node scripts\/test-void-payment\.mjs/); assert.ok(inAreas || /node scripts\/test-void-payment-ui\.mjs/.test(ci), 'test-void-payment-ui runs on CI');
 });
 
 console.log(`\n${failures ? 'FAIL' : 'PASS'} void payment screens: ${passed} passed, ${failures} failed`);

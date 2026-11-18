@@ -1,7 +1,9 @@
 # Deploy Hoy's frontend (the Hoy server + website + app) to the `test` environment of Hoy's Railway
 # project: the `web` service, next to Company OS's `api` (Company OS ADR 0022 / 0025).
 #
-#   "Run workflow" button (any branch) ─► checks + bundle ─► infra + settings + deploy
+#   "Run workflow" button (any branch or release tag) ─► checks + bundle ─► infra + settings + deploy
+#   From a release tag, the checks are reused from Cut release's pass on the exact commit (release-check-reuse.mjs);
+#   the build, bundle checks, secret scans and smoke check always run. From a branch every check runs.
 #
 # By hand only: GitHub -> Actions -> "Deploy web (test)" -> Run workflow -> pick the branch.
 # Company OS must have deployed its `api` to Hoy's `test` environment first: this service's
@@ -44,31 +46,59 @@ env:
 
 jobs:
   # The gate: the server's tests, company-os.json, the frontend build, and the bundle that is deployed
-  # (secret scan included). The deploy job uploads exactly this bundle.
+  # (secret scan included). The deploy job uploads exactly this bundle. Built from a release tag, the build reports
+  # the tag's version; from a branch, package.json's.
   checks:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
+    permissions:
+      contents: read
+      actions: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
-          fetch-depth: 0 # the build dates screenshots from git history
-      - uses: actions/setup-node@v4
+          fetch-depth: '0' # the build dates screenshots from git history
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 24
           cache: npm
+      # E9: reuse only a successful Cut release run on this exact commit (its guard, checks and tag jobs all passed).
+      # Any doubt runs the checks below. The build, the bundle checks and the secret scans always run.
+      - name: Check exact-commit release evidence
+        id: release-checks
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          CHECKED_SHA: ${{ github.sha }}
+        run: node scripts/release-check-reuse.mjs
       - run: npm ci
       - run: npm ci --prefix server
       - name: Company OS requirement
+        if: steps.release-checks.outputs.reuse != 'true'
         run: node scripts/check-company-os.mjs
       - name: Hoy server tests
+        if: steps.release-checks.outputs.reuse != 'true'
         run: node scripts/test-hoy-server.mjs
       - name: Test gate (the passphrase in front of the test site; rule D5)
+        if: steps.release-checks.outputs.reuse != 'true'
         run: node scripts/test-test-gate.mjs
       - name: Docs gate (the Hub's docs for a signed-in super admin only; lane Y6)
+        if: steps.release-checks.outputs.reuse != 'true'
         run: node scripts/test-docs-gate.mjs
       - name: Deploy wiring (IaC declares every server variable; summaries show the go-live switches)
+        if: steps.release-checks.outputs.reuse != 'true'
         run: node scripts/test-deploy-wiring.mjs
-      - name: Build (production with Clerk, launch routes, no review tools; H-2)
+      # The build reports the tag's version only for a release tag (vMAJOR.MINOR.PATCH); any other ref (a branch, or a tag
+      # like v0.26.0-rc1) leaves RELEASE_TAG unset and the build falls back to package.json's version.
+      - name: Stamp the release tag (only vMAJOR.MINOR.PATCH)
+        env:
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          if [ "$REF_TYPE" = tag ] && [[ "$REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "RELEASE_TAG=$REF_NAME" >> "$GITHUB_ENV"
+          fi
+      - name: Build (production with Clerk, launch routes, no review tools; H-2), stamped with the release tag
         run: npm run build:production
       - name: Production bundle checks (H-2; refuses demo data, review tools, docs, screenshots)
         run: |
@@ -76,7 +106,7 @@ jobs:
           QA_PROD_ONLY=1 QA_PROD_DIST=dist QA_STRICT_DEMO_DATA=1 node scripts/test-auth-builds.mjs
       - name: Bundle (server + built frontend, secret scan)
         run: node server/make-bundle.mjs "$RUNNER_TEMP/web"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: web-bundle-${{ github.sha }}
           path: ${{ runner.temp }}/web
@@ -89,9 +119,11 @@ jobs:
     timeout-minutes: 30
     environment: test
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 24
           cache: npm
@@ -171,7 +203,7 @@ jobs:
           set_var TEST_GATE_PASSPHRASE "$TEST_GATE_PASSPHRASE"
           set_var COOKIE_SIGNING_SECRET "$COOKIE_SIGNING_SECRET"
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: web-bundle-${{ github.sha }}
           path: ${{ runner.temp }}/web

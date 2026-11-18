@@ -1,6 +1,8 @@
 import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
-const { version } = JSON.parse(readFileSync('package.json', 'utf8'));
+import { releaseVersion } from './lib/release-version.mjs';
+// The release tag when the release workflows build (RELEASE_TAG), else package.json's version.
+const version = releaseVersion(process.env, JSON.parse(readFileSync('package.json', 'utf8')).version);
 // PR workflows may check out head while GITHUB_SHA names GitHub's synthetic merge.
 // Describe the code actually built; the event SHA is a fallback only outside a Git checkout.
 let sourceCommit;

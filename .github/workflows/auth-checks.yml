@@ -1,5 +1,5 @@
 name: Auth checks
-# Sign-in, sign-up and sign-out on every pull request and on main (owner, 30 Oct 2026: these flows kept breaking on
+# Sign-in, sign-up and sign-out on every pull request and on every push to main (owner, 30 Oct 2026: these flows kept breaking on
 # the test environment). Not muted with the launch QA workflows.
 #
 #   fake-clerk   the production build on a fake Clerk (scripts/fixtures/fake-clerk.js) and a fake Company OS: every
@@ -22,11 +22,28 @@ name: Auth checks
 #                script as HOY_TEST_URL) and HOY_CLEANUP_ADMIN_EMAIL (a test-hoy Administration login in the same Clerk
 #                instance). It refuses a site that says it is production or uses another Clerk instance.
 #
+# CI by area (Company OS tools/ci, playbook E14): the fake-clerk job first plans what the pull request touches
+# (scripts/ci/affected-areas.mjs, scripts/ci/areas.json), then:
+#   none   only agent and playbook files, or harnesses only other QA workflows run: nothing else runs
+#   fast   CSS, docs, comms templates or a node-level check only: install, both builds (typecheck, spacing and manual
+#          lint) and every node-level check (about 35 s); the browser checks do not run
+#   areas  a browser check's own file or a public asset: fast, then the browser checks of that area
+#          (scripts/ci/run-areas.mjs)
+#   all    any TypeScript under src/, server/, package.json, the workflows, any unknown file: fast, then every
+#          browser check. All of src/ is shared: the router imports every module eagerly and pages import across
+#          modules, so the import guard (scripts/ci/area-imports.mjs, run by scripts/test-ci-areas.mjs) leaves no
+#          module file to one area.
+# One job on purpose: parallel area jobs would each repeat about two minutes of setup. A push to main runs the fast
+# checks only (mode fast: no plan diff, no area or browser checks); Cut release runs the fast checks plus every area
+# changed since the last verified release on the exact commit it tags.
+#
 # Muted 2026-10-30: real-clerk runs only by hand (Run workflow) until it passes. Its last run got past Clerk's
 # CAPTCHA but Clerk refused the code step: POST /v1/client/sign_ups/<id>/prepare_verification → 400
-# client_state_invalid. Restore it on pull requests by deleting the `if:` on the real-clerk job.
+# client_state_invalid. Restore it on pull requests by deleting the `if:` on the real-clerk job AND changing the `if:` on the
+# production-build artifact upload (~line 192, now workflow_dispatch only), or real-clerk finds no artifact to download.
 on:
-  pull_request:
+  push:
+    branches: [main]
     paths-ignore:
       # Agent and playbook files only: no app code, build or test reads them
       # (playbook rule E14; docs are not ignored because some checks read them).
@@ -38,8 +55,7 @@ on:
       - .github/workflows/playbook-check.yml
       - scripts/check-agent-entry.sh
       - .claude/**
-  push:
-    branches: [main]
+  pull_request:
     paths-ignore:
       # Agent and playbook files only: no app code, build or test reads them
       # (playbook rule E14; docs are not ignored because some checks read them).
@@ -70,151 +86,161 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: '0'
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: 22
           cache: npm
-      - run: npm ci
+      # By hand (Run workflow) there is no base: the plan says all. A push to main is always mode fast.
+      - name: Plan (which areas this change touches)
+        id: plan
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if [ "$EVENT_NAME" = push ]; then
+            echo "mode=fast" >> "$GITHUB_OUTPUT"
+          else
+            node scripts/ci/affected-areas.mjs --base "$BASE_SHA" --head "$HEAD_SHA"
+          fi
+      - if: steps.plan.outputs.mode != 'none'
+        run: npm ci
       - name: The Hoy server's own dependencies (the signed-out website check runs the real server)
+        if: steps.plan.outputs.mode != 'none'
         run: npm ci --prefix server
       # The private docs pack goes beside the copy: the docs gate serves `<dist>-private` (server/docsGate.mjs), and the
       # review build later removes dist-private from the checkout.
       - name: Production build
+        if: steps.plan.outputs.mode != 'none'
         run: npm run build:production && cp -R dist "$RUNNER_TEMP/prod" && cp -R dist-private "$RUNNER_TEMP/prod-private"
-      - uses: actions/upload-artifact@v7
+      # Node-level checks (about 35 s together): every pull request that touches anything a check reads runs them.
+      # They run on the production build in dist/, as before the split; the review build replaces it next.
+      - name: Identity rules
+        if: steps.plan.outputs.mode != 'none'
+        run: node scripts/test-auth-identity.mjs
+      - name: Jas's 1 Nov walkthrough, customer and identity rules (lane hoy-jas-1nov-customer)
+        if: steps.plan.outputs.mode != 'none'
+        run: node scripts/test-jas-1nov-customer.mjs
+      - name: View-as rules (read-only transport, sample person, provider alias)
+        if: steps.plan.outputs.mode != 'none'
+        run: node scripts/test-view-as.mjs
+      - name: Justin's Hub in production (read-only preview frames, real people, problem report)
+        if: steps.plan.outputs.mode != 'none'
+        run: node scripts/test-hub-production.mjs
+      - name: Pay page sits in the customer page frame (H-PAY)
+        if: steps.plan.outputs.mode != 'none'
+        run: node scripts/test-pay-page-frame.mjs
+      - name: Launch routes
+        if: steps.plan.outputs.mode != 'none'
+        run: node scripts/test-launch-routes.mjs
+      - name: Launch config and the role matrix (11 roles)
+        if: steps.plan.outputs.mode != 'none'
+        run: node scripts/test-launch-config.mjs
+      - name: Memberships read as packs (home plan card, dashboard tile)
+        if: steps.plan.outputs.mode != 'none'
+        run: node scripts/test-pack-reads.mjs
+      - name: Go-live lane H3 (class type, generic plan cards, /coming-soon once live, class_cancelled copy, Dashboard label)
+        if: steps.plan.outputs.mode != 'none'
+        run: node scripts/test-golive-h3.mjs
+      - name: A payment's date is its approval (approved_at)
+        if: steps.plan.outputs.mode != 'none'
+        run: node scripts/test-payment-paid-at.mjs
+      - name: Studio data adapters (settings split, holiday hours, inbox and notes, privacy request, legal publishing)
+        if: steps.plan.outputs.mode != 'none'
+        run: node scripts/test-companyos-studio-data.mjs
+      - name: Teacher codes (create body, share link, funnel, checkout code entry refusals; Hoy 12 Nov lane H-CODES)
+        if: steps.plan.outputs.mode != 'none'
+        run: node scripts/test-teacher-codes.mjs
+      - name: Launch flows on Company OS (profile, preferences, account, trial, payment instructions, studio return; lane H1)
+        if: steps.plan.outputs.mode != 'none'
+        run: node scripts/test-h1-connected-flows.mjs
+      - name: The Company OS provider (mapping, queries, batch and idempotency, polling, refusal copy)
+        if: steps.plan.outputs.mode != 'none'
+        run: node scripts/test-companyos-provider.mjs
+      - name: Jas 1 Nov, administration and front desk (wrapped /query rows, payment settings from /me roles, desk trial and classes, expense date, refusal copy)
+        if: steps.plan.outputs.mode != 'none'
+        run: node scripts/test-jas-1nov-admin.mjs
+      - name: Staff walk-in window (Jas 1 Nov follow-up)
+        if: steps.plan.outputs.mode != 'none'
+        run: node scripts/test-staff-walkin-window.mjs
+      - name: The payment void's screens at logic level (the write, who gets it, every refusal in words, a voided receipt)
+        if: steps.plan.outputs.mode != 'none'
+        run: node scripts/test-void-payment.mjs
+      - name: The activity log's audit read (paging, filters, refusals)
+        if: steps.plan.outputs.mode != 'none'
+        run: node scripts/test-admin-activity.mjs
+      - name: Public images and teacher profiles (names, upload path, photo id untrusted, replace order, teachers from Company OS)
+        if: steps.plan.outputs.mode != 'none'
+        run: node scripts/test-golive-images.mjs
+      - name: "Class images (schedule.image: upload and replace, occurrence reads its schedule's image, thumbnail order, who edits)"
+        if: steps.plan.outputs.mode != 'none'
+        run: node scripts/test-class-images.mjs
+      - name: The Hoy server (static, proxy, /files, /media, webhook, config)
+        if: steps.plan.outputs.mode != 'none'
+        run: node scripts/test-hoy-server.mjs
+      - name: Real sign-up check, offline part (options and site safety; the live part skips without COS_LOCAL_API)
+        if: steps.plan.outputs.mode != 'none'
+        run: node scripts/test-real-signup.mjs
+      - name: Pay data move out of the public settings (operator script, against a fake Company OS)
+        if: steps.plan.outputs.mode != 'none'
+        run: node scripts/test-move-private-settings.mjs
+      - name: The test site's passphrase gate (rule D5, through the real Hoy server)
+        if: steps.plan.outputs.mode != 'none'
+        run: node scripts/test-test-gate.mjs
+      - name: SEO, the public website on real paths (tags, JSON-LD, sitemap, robots, old addresses, www, noindex on test)
+        if: steps.plan.outputs.mode != 'none'
+        run: node scripts/test-seo.mjs
+      - name: Mats and several classes a day (Hoy 12 Nov, lane H-BOOK)
+        if: steps.plan.outputs.mode != 'none'
+        run: node scripts/test-hoy-12nov-book.mjs
+      - name: Late grace at the desk and the rejection reason (Hoy 12 Nov, lane FIX)
+        if: steps.plan.outputs.mode != 'none'
+        run: node scripts/test-hoy-12nov-fix.mjs
+      - name: "Review round 1 fixes (Hoy 12 Nov: site-path links, decline hint, neutral copy, check-in keeps its class)"
+        if: steps.plan.outputs.mode != 'none'
+        run: node scripts/test-hoy-12nov-r1.mjs
+      - name: "Review round 2 fixes (Hoy 12 Nov: one title table for server and browser, check-in follows the clock, decline hint)"
+        if: steps.plan.outputs.mode != 'none'
+        run: node scripts/test-hoy-12nov-r2.mjs
+      - name: Classes start at any minute (Hoy 12 Nov, owner)
+        if: steps.plan.outputs.mode != 'none'
+        run: node scripts/test-any-start-time.mjs
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        if: github.event_name == 'workflow_dispatch'
         with:
           name: production-build
           path: ${{ runner.temp }}/prod
           retention-days: 1
-      - name: Sign-in screens on the production build (fake Clerk)
-        run: node scripts/test-auth-production-ui.mjs
-        env:
-          QA_PROD_DIST: ${{ runner.temp }}/prod
-      - name: Identity rules
-        run: node scripts/test-auth-identity.mjs
-      - name: Jas's 1 Nov walkthrough, customer and identity rules (lane hoy-jas-1nov-customer)
-        run: node scripts/test-jas-1nov-customer.mjs
-      - name: Jas's 1 Nov walkthrough on the production build (enrolment name, consent hold, greeting, affiliate pack, calendar)
-        run: node scripts/test-jas-1nov-customer-ui.mjs
-        env:
-          QA_PROD_DIST: ${{ runner.temp }}/prod
-      - name: View-as rules (read-only transport, sample person, provider alias)
-        run: node scripts/test-view-as.mjs
-      - name: Justin's Hub in production (read-only preview frames, real people, problem report)
-        run: node scripts/test-hub-production.mjs
-      - name: Justin's Hub and view-as on the production build (super admin only, read-only)
-        run: node scripts/test-view-as-ui.mjs
-        env:
-          QA_PROD_DIST: ${{ runner.temp }}/prod
-      - name: Pay page sits in the customer page frame (H-PAY)
-        run: node scripts/test-pay-page-frame.mjs
-      - name: Launch routes
-        run: node scripts/test-launch-routes.mjs
-      - name: Launch config and the role matrix (11 roles)
-        run: node scripts/test-launch-config.mjs
-      - name: Memberships read as packs (home plan card, dashboard tile)
-        run: node scripts/test-pack-reads.mjs
-      - name: Go-live lane H3 (class type, generic plan cards, /coming-soon once live, class_cancelled copy, Dashboard label)
-        run: node scripts/test-golive-h3.mjs
-      - name: A payment's date is its approval (approved_at)
-        run: node scripts/test-payment-paid-at.mjs
-      - name: Studio data adapters (settings split, holiday hours, inbox and notes, privacy request, legal publishing)
-        run: node scripts/test-companyos-studio-data.mjs
-      - name: Route connectivity (every launch route on a working Company OS adapter; docs/route-connectivity.md)
-        run: node scripts/test-route-connectivity.mjs
-      - name: Teacher codes (create body, share link, funnel, checkout code entry refusals; Hoy 12 Nov lane H-CODES)
-        run: node scripts/test-teacher-codes.mjs
-      - name: Launch flows on Company OS (profile, preferences, account, trial, payment instructions, studio return; lane H1)
-        run: node scripts/test-h1-connected-flows.mjs
-      - name: The Company OS provider (mapping, queries, batch and idempotency, polling, refusal copy)
-        run: node scripts/test-companyos-provider.mjs
-      - name: Jas 1 Nov, administration and front desk (wrapped /query rows, payment settings from /me roles, desk trial and classes, expense date, refusal copy)
-        run: node scripts/test-jas-1nov-admin.mjs && node scripts/test-staff-walkin-window.mjs
-      - name: The payment void's screens at logic level (the write, who gets it, every refusal in words, a voided receipt)
-        run: node scripts/test-void-payment.mjs
-      - name: The activity log's audit read (paging, filters, refusals)
-        run: node scripts/test-admin-activity.mjs
-      - name: Public images and teacher profiles (names, upload path, photo id untrusted, replace order, teachers from Company OS)
-        run: node scripts/test-golive-images.mjs
-      - name: "Class images (schedule.image: upload and replace, occurrence reads its schedule's image, thumbnail order, who edits)"
-        run: node scripts/test-class-images.mjs
-      - name: The Hoy server (static, proxy, /files, /media, webhook, config)
-        run: node scripts/test-hoy-server.mjs
-      - name: Real sign-up check, offline part (options and site safety; the live part skips without COS_LOCAL_API)
-        run: node scripts/test-real-signup.mjs
-      - name: Pay data move out of the public settings (operator script, against a fake Company OS)
-        run: node scripts/test-move-private-settings.mjs
-      - name: The test site's passphrase gate (rule D5, through the real Hoy server)
-        run: node scripts/test-test-gate.mjs
-      - name: SEO, the public website on real paths (tags, JSON-LD, sitemap, robots, old addresses, www, noindex on test)
-        run: node scripts/test-seo.mjs
-      - name: Mats and several classes a day (Hoy 12 Nov, lane H-BOOK)
-        run: node scripts/test-hoy-12nov-book.mjs
-      - name: Late grace at the desk and the rejection reason (Hoy 12 Nov, lane FIX)
-        run: node scripts/test-hoy-12nov-fix.mjs
-      - name: "Review round 1 fixes (Hoy 12 Nov: site-path links, decline hint, neutral copy, check-in keeps its class)"
-        run: node scripts/test-hoy-12nov-r1.mjs
-      - name: "Review round 2 fixes (Hoy 12 Nov: one title table for server and browser, check-in follows the clock, decline hint)"
-        run: node scripts/test-hoy-12nov-r2.mjs
-      - name: Classes start at any minute (Hoy 12 Nov, owner)
-        run: node scripts/test-any-start-time.mjs
-      - name: Release wiring (company-os.json, release notes, these CI steps)
-        run: node scripts/test-release-wiring.mjs
-      - name: The signed-out website reads live data behind the real Hoy server (production build)
-        run: node scripts/test-website-signed-out-live.mjs
-        env:
-          QA_PROD_DIST: ${{ runner.temp }}/prod
-      - name: The test site's passphrase gate in the browser, then the app, then a signed-in call (production build)
-        run: node scripts/test-test-gate-ui.mjs
-        env:
-          QA_PROD_DIST: ${{ runner.temp }}/prod
-      - name: The activity log in the browser (production build)
-        run: node scripts/test-admin-activity-ui.mjs
-        env:
-          QA_PROD_DIST: ${{ runner.temp }}/prod
-      - name: Holiday hours, refusals in words, settings save failures (production build; review round 1)
-        run: node scripts/test-r1-ui.mjs
-        env:
-          QA_PROD_DIST: ${{ runner.temp }}/prod
-      - name: The payment void in the browser (Finance, the member's payments tab, the staff and customer receipts; production build)
-        run: node scripts/test-void-payment-ui.mjs
-        env:
-          QA_PROD_DIST: ${{ runner.temp }}/prod
-      - name: Public images and teacher profiles in the browser (real server, upload, replace, QR, signed-out site; production build)
-        run: node scripts/test-golive-images-ui.mjs
-        env:
-          QA_PROD_DIST: ${{ runner.temp }}/prod
-      - name: Jas 1 Nov, administration and front desk in the browser (Class schedule, error boundary, payment settings, desk expense, Finance, product master; production build)
-        run: node scripts/test-jas-1nov-admin-ui.mjs
-        env:
-          QA_PROD_DIST: ${{ runner.temp }}/prod
-      - name: Go-live lane H3 in the browser (class type, plan cards, /coming-soon once live; production build)
-        run: node scripts/test-golive-h3-ui.mjs
-        env:
-          QA_PROD_DIST: ${{ runner.temp }}/prod
-      - name: "SEO after hydration in the browser (titles, JSON-LD, reload, Back and Forward; real server, production build)"
-        run: node scripts/test-seo-ui.mjs
-        env:
-          QA_PROD_DIST: ${{ runner.temp }}/prod
       - name: Review build
+        if: steps.plan.outputs.mode != 'none'
         run: npm run build
-      - name: Website rows in the built site (review build, then the production build)
-        run: node scripts/test-launch-website-ui.mjs
-        env:
-          QA_PROD_DIST: ${{ runner.temp }}/prod
-      - name: Website content (review build, then the production build)
-        run: node scripts/test-launch-website-content.mjs
-        env:
-          QA_PROD_DIST: ${{ runner.temp }}/prod
       - name: What each build ships
+        if: steps.plan.outputs.mode != 'none'
         run: node scripts/test-auth-builds.mjs
         env:
           QA_PROD_DIST: ${{ runner.temp }}/prod
-      - name: Every role signs in to its home (production build) and the review build's matrix
-        run: node scripts/test-launch-roles-ui.mjs
+      - name: Release wiring (company-os.json, release notes, these CI steps, the release path)
+        if: steps.plan.outputs.mode != 'none'
+        run: node scripts/test-release-wiring.mjs
+      - name: CI areas (no check lost, every script and glob real)
+        if: steps.plan.outputs.mode != 'none'
+        run: node scripts/test-ci-areas.mjs
+      - name: Release check reuse (deploys reuse only a passed Cut release on the exact commit)
+        if: steps.plan.outputs.mode != 'none'
+        run: node scripts/test-release-check-reuse.mjs
+      # The browser checks read the production build from QA_PROD_DIST; the website rows and content checks and every
+      # role's home also read the review build in dist/.
+      - name: Area checks (scripts/ci/areas.json)
+        if: steps.plan.outputs.mode == 'areas' || steps.plan.outputs.mode == 'all'
         env:
+          MODE: ${{ steps.plan.outputs.mode }}
+          AREAS: ${{ steps.plan.outputs.areas }}
           QA_PROD_DIST: ${{ runner.temp }}/prod
+        run: node scripts/ci/run-areas.mjs --mode "$MODE" --areas "$AREAS"
 
   real-clerk:
     needs: fake-clerk
@@ -223,13 +249,15 @@ jobs:
     timeout-minutes: 10
     environment: test
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: 22
           cache: npm
       - run: npm ci
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           name: production-build
           path: ${{ runner.temp }}/prod
@@ -250,8 +278,10 @@ jobs:
     timeout-minutes: 10
     environment: test
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: 22
           cache: npm

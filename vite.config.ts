@@ -5,6 +5,7 @@ import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import { gzipSync } from 'node:zlib';
 import { docMeta, docMetaPlugin } from './scripts/lib/docmeta.mjs';
+import { releaseVersion } from './scripts/lib/release-version.mjs';
 
 const here = fileURLToPath(new URL('.', import.meta.url));
 
@@ -193,6 +194,8 @@ export default defineConfig({
     __MANUAL_CHAPTER_COUNT__: JSON.stringify(readdirSync(join(here, 'docs/ops-manual/es')).filter((f) => f.endsWith('.md')).length),
     // Which build this is, as a constant the bundler folds (src/config/launch.ts `PRODUCTION_BUILD`).
     __HOY_BUILD__: JSON.stringify(PRODUCTION ? 'production' : 'review'),
+    // The version the Hub shows: the release tag in the release workflows (RELEASE_TAG), else package.json's.
+    __HOY_VERSION__: JSON.stringify(releaseVersion(process.env, JSON.parse(readFileSync(join(here, 'package.json'), 'utf8')).version)),
   },
   plugins: [react(), docMetaPlugin(), ...(PRODUCTION ? [productionBuild()] : [reviewBuild()])],
   server: { port: 5173 },

@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link, matchPath, useNavigate } from 'react-router-dom';
 import pkg from '../../../package.json';
+
 import { useI18n } from '../../i18n/I18nProvider';
 import { useSession } from '../../auth/SessionProvider';
 import { useTheme } from '../../design/ThemeProvider';
@@ -38,6 +39,9 @@ import { HUB_EXPERIENCES, HUB_TOOL_LIST } from '../../hub/hubMap.data';
 import type { HubBand } from '../../hub/hubMap.types';
 import { hubMapUrl, loadHubMap } from '../../hub/hubMapClient';
 import './hub.css';
+
+// The release version stamped at build time (vite.config.ts), else package.json's (scripts that bundle without Vite).
+const VERSION = typeof __HOY_VERSION__ === 'string' ? __HOY_VERSION__ : pkg.version;
 
 interface SurfaceCard {
   key: HubSurfaceKey;
@@ -320,7 +324,7 @@ export function HubPage() {
             <header className="hub-head">
               <div className="hub-head-brand">
                 <Link to="/hub" aria-label={t('core.nav.hub')}><Wordmark height={Math.round(30 * ui)} variant="cream" /></Link>
-                <Badge tone="highlight">{t('hub.version', { v: pkg.version })}</Badge>
+                <Badge tone="highlight">{t('hub.version', { v: VERSION })}</Badge>
               </div>
               <div className="hub-head-tools">
                 <LangToggle />
@@ -413,7 +417,7 @@ export function HubPage() {
                 </div>
               ))}
             </dl>
-            <p className="muted xs hub-footline">{t(PRODUCTION_BUILD ? 'hub.footer.prod' : 'hub.footer', { v: pkg.version })}</p>
+            <p className="muted xs hub-footline">{t(PRODUCTION_BUILD ? 'hub.footer.prod' : 'hub.footer', { v: VERSION })}</p>
           </div>
         </footer>
       </div>

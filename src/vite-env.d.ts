@@ -6,3 +6,5 @@ declare const __COMPONENT_COUNT__: number;
 declare const __MANUAL_CHAPTER_COUNT__: number;
 /** `production` or `review`, set in vite.config.ts from VITE_HOY_BUILD; undeclared when a script bundles the app without Vite. */
 declare const __HOY_BUILD__: string;
+/** The release version (the tag in the release workflows, else package.json's), set in vite.config.ts; undeclared outside Vite. */
+declare const __HOY_VERSION__: string;

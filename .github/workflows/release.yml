@@ -2,14 +2,22 @@
 # release tag, so every tag looks the same and nobody has to remember the message format.
 #
 #   "Run workflow" (version X.Y.Z, one-line summary)
-#       ─► guard (main, version format, not taken, higher than the last tag, equal to package.json's
-#                 version, company-os.json valid) ─► checks (server tests + build + bundle)
-#       ─► tag (annotated, on the exact commit that was checked) ─► summary
+#       ─► guard (main, version format, not taken, higher than the last tag, company-os.json valid)
+#       ─► checks (the deploy gate: server, test gate, docs gate, deploy wiring, build, bundle; then the
+#                  Auth checks areas changed since the last verified release)
+#       ─► tag (annotated, on the exact commit that was checked, with the marker "checks: areas-v1") ─► summary
 #
 # How to run it: Actions -> "Cut release" -> Run workflow -> keep "Branch: main" -> version (e.g.
-# 0.26.0, without the v) -> summary -> Run. Bump package.json's "version" in the release pull request
-# first (it is what /health reports). Then deploy it: Actions -> "Deploy web (prod)" -> Use workflow
-# from -> Tags -> the new tag, after the Company OS release it requires is live.
+# 0.26.0, without the v) -> summary -> Run. No version-bump pull request (owner decision Q1, 2026-11-18): the
+# tag is the version, and every release build stamps it (RELEASE_TAG; /health and the Hub report it).
+# Then deploy it: Actions -> "Deploy web (prod)" -> Use workflow from -> Tags -> the new tag, after the
+# Company OS release it requires is live. Deploy test and Deploy prod reuse this run's checks for the
+# exact commit (scripts/release-check-reuse.mjs: the run and its guard, checks and tag jobs all passed).
+#
+# CI by area (Company OS tools/ci): the checks compare this commit with the newest earlier v* tag whose
+# message carries "checks: areas-v1" (written only by the tag job below, after the checks passed). Without
+# one (the first release under this scheme, a tag from before) every area runs. A release always runs at
+# least the deploy gate, even when only agent files changed.
 #
 # Version rules (semver): patch = fixes · minor = new features / additive · major = breaking changes.
 # The tag message carries "Requires Company OS >=A.B.C", copied from company-os.json (the single
@@ -22,7 +30,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "New version, MAJOR.MINOR.PATCH without the v (e.g. 0.26.0). Must be higher than the last release and equal to package.json's version."
+        description: "New version, MAJOR.MINOR.PATCH without the v (e.g. 0.26.0). Must be higher than the last release."
         required: true
         type: string
       summary:
@@ -65,14 +73,15 @@ jobs:
             exit 1
           fi
 
-      - uses: actions/checkout@v4
+      # fetch-depth 0 brings every tag; no credentials are kept for later steps.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
-          fetch-depth: 0
+          fetch-depth: '0'
+          persist-credentials: false
 
-      - name: Version is new, higher and package.json's; company-os.json is valid
+      - name: Version is new and higher; company-os.json is valid
         id: check
         run: |
-          git fetch --quiet --force --tags origin
           tag="v$VERSION"
           if git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
             echo "::error::$tag already exists. Choose the next version."
@@ -81,11 +90,6 @@ jobs:
           last="$(git tag -l 'v[0-9]*.[0-9]*.[0-9]*' | sort -V | tail -n 1)"
           if [ -n "$last" ] && [ "$(printf '%s\n%s\n' "$last" "$tag" | sort -V | tail -n 1)" != "$tag" ]; then
             echo "::error::$tag is not higher than the last release $last."
-            exit 1
-          fi
-          pkg="$(jq -er '.version' package.json)"
-          if [ "$pkg" != "$VERSION" ]; then
-            echo "::error::package.json says version $pkg, not $VERSION. Bump it on main in a pull request first."
             exit 1
           fi
           if ! requires="$(jq -er '.requires' company-os.json)" || ! printf '%s' "$requires" | grep -Eq '^>=[0-9]+\.[0-9]+\.[0-9]+$'; then
@@ -99,18 +103,32 @@ jobs:
   checks:
     needs: guard
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 60
     permissions:
       contents: read
+    env:
+      SHA: ${{ needs.guard.outputs.sha }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           ref: ${{ needs.guard.outputs.sha }}
-          fetch-depth: 0
-      - uses: actions/setup-node@v4
+          fetch-depth: '0'
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 24
           cache: npm
+      - name: Plan (areas changed since the last verified release)
+        id: plan
+        run: node scripts/ci/affected-areas.mjs --release --head "$SHA"
+      - name: A release always runs at least the fast checks
+        id: mode
+        env:
+          PLAN_MODE: ${{ steps.plan.outputs.mode }}
+        run: |
+          case "$PLAN_MODE" in none) mode=fast ;; fast|areas|all) mode="$PLAN_MODE" ;; *) mode=all ;; esac
+          echo "mode=$mode" >> "$GITHUB_OUTPUT"
+          echo "Release checks: $mode"
       - run: npm ci
       - run: npm ci --prefix server
       - name: Company OS requirement
@@ -121,14 +139,62 @@ jobs:
         run: node scripts/test-test-gate.mjs
       - name: Docs gate (the Hub's docs for a signed-in super admin only; lane Y6)
         run: node scripts/test-docs-gate.mjs
-      - name: Build (production with Clerk, launch routes, no review tools; H-2)
+      - name: Deploy wiring (IaC declares every server variable; summaries show the go-live switches)
+        run: node scripts/test-deploy-wiring.mjs
+      - name: Build (production with Clerk, launch routes, no review tools; H-2), stamped with the release tag
+        env:
+          RELEASE_TAG: v${{ inputs.version }}
         run: npm run build:production
       - name: Production bundle checks (H-2; refuses demo data, review tools, docs, screenshots)
         run: |
           node scripts/test-auth-identity.mjs
           QA_PROD_ONLY=1 QA_PROD_DIST=dist QA_STRICT_DEMO_DATA=1 node scripts/test-auth-builds.mjs
+      - name: Node-level checks (the same fast steps as a pull request, on this exact commit, every mode)
+        run: |
+          node scripts/test-jas-1nov-customer.mjs
+          node scripts/test-view-as.mjs
+          node scripts/test-hub-production.mjs
+          node scripts/test-pay-page-frame.mjs
+          node scripts/test-launch-routes.mjs
+          node scripts/test-launch-config.mjs
+          node scripts/test-pack-reads.mjs
+          node scripts/test-golive-h3.mjs
+          node scripts/test-payment-paid-at.mjs
+          node scripts/test-companyos-studio-data.mjs
+          node scripts/test-teacher-codes.mjs
+          node scripts/test-h1-connected-flows.mjs
+          node scripts/test-companyos-provider.mjs
+          node scripts/test-jas-1nov-admin.mjs
+          node scripts/test-staff-walkin-window.mjs
+          node scripts/test-void-payment.mjs
+          node scripts/test-admin-activity.mjs
+          node scripts/test-golive-images.mjs
+          node scripts/test-class-images.mjs
+          node scripts/test-real-signup.mjs
+          node scripts/test-move-private-settings.mjs
+          node scripts/test-seo.mjs
+          node scripts/test-hoy-12nov-book.mjs
+          node scripts/test-hoy-12nov-fix.mjs
+          node scripts/test-hoy-12nov-r1.mjs
+          node scripts/test-hoy-12nov-r2.mjs
+          node scripts/test-any-start-time.mjs
+          node scripts/test-release-wiring.mjs
+          node scripts/test-ci-areas.mjs
+          node scripts/test-release-check-reuse.mjs
       - name: Bundle (server + built frontend, secret scan)
         run: node server/make-bundle.mjs "$RUNNER_TEMP/web"
+      # The Auth checks areas, as on a pull request: the browser checks read the production build from QA_PROD_DIST
+      # (with its private docs pack beside it), the website checks also read the review build in dist/.
+      - name: Review build (for the area checks)
+        if: steps.mode.outputs.mode == 'areas' || steps.mode.outputs.mode == 'all'
+        run: cp -R dist "$RUNNER_TEMP/prod" && cp -R dist-private "$RUNNER_TEMP/prod-private" && npm run build
+      - name: Area checks (scripts/ci/areas.json)
+        if: steps.mode.outputs.mode == 'areas' || steps.mode.outputs.mode == 'all'
+        env:
+          MODE: ${{ steps.mode.outputs.mode }}
+          AREAS: ${{ steps.plan.outputs.areas }}
+          QA_PROD_DIST: ${{ runner.temp }}/prod
+        run: node scripts/ci/run-areas.mjs --mode "$MODE" --areas "$AREAS"
 
   tag:
     needs: [guard, checks]
@@ -139,11 +205,15 @@ jobs:
       SHA: ${{ needs.guard.outputs.sha }}
       REQUIRES: ${{ needs.guard.outputs.requires }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           ref: ${{ needs.guard.outputs.sha }}
-          fetch-depth: 0
+          persist-credentials: false
+      # The marker line "checks: areas-v1" tells the next release's plan that this commit passed its checks (Company
+      # OS tools/ci): this job runs only after the checks job succeeded. The token is used for the push only.
       - name: Create and push the annotated tag
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           tag="v$VERSION"
           git config user.name "github-actions[bot]"
@@ -153,9 +223,12 @@ jobs:
             printf 'Requires Company OS %s\n\n' "$REQUIRES"
             printf 'Cut by %s with the Cut release workflow: %s/%s/actions/runs/%s\n' \
               "$GITHUB_ACTOR" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID"
+            printf '\nchecks: areas-v1\n'
           } > "$RUNNER_TEMP/tag-message.txt"
           git tag -a "$tag" "$SHA" -F "$RUNNER_TEMP/tag-message.txt"
-          git push origin "refs/tags/$tag"
+          auth="$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
+          echo "::add-mask::$auth"
+          git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $auth" push origin "refs/tags/$tag"
           {
             echo "### Released $tag"
             echo ""

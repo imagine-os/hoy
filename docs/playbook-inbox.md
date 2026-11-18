@@ -4,3 +4,4 @@ What the delivery playbook got wrong, missed or made slow, noticed while working
 
 | Date | Where | What happened | Suggested change |
 |---|---|---|---|
+| 2026-11-18 | CI by area (Hoy) | The import guard (area-imports) makes all of `src/` shared here: the router eagerly globs every module's `index.ts`, each reaches its `pages.ts`, and `lazy(() => import(...))` counts as an import. A copy typo in a `strings.ts` therefore still runs every browser check (about 25 min); only CSS, docs and node-level check files get the fast path. | Let area-imports treat a dynamic `import()` from a page registry as a seam (opt-in), or move customer copy out of TypeScript, then re-split Hoy's areas by page. |

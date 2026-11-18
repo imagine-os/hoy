@@ -1,7 +1,8 @@
 # Deploy Hoy's frontend (the Hoy server + website + app) to PRODUCTION: Hoy's Railway project,
 # environment `production`, service `web`, next to Company OS's `api` (Company OS ADR 0025).
 #
-#   "Run workflow" (Use workflow from -> Tags -> vX.Y.Z) ─► guard ─► checks + bundle
+#   "Run workflow" (Use workflow from -> Tags -> vX.Y.Z) ─► guard ─► checks (reused from Cut release on the exact
+#                               commit when it passed there) + build + bundle
 #                               ─► [approval] ─► infra + settings + deploy ─► release
 #
 # Production only ever runs a RELEASE TAG: semver (vX.Y.Z), annotated, on a commit that is on main.
@@ -70,18 +71,29 @@ jobs:
             exit 1
           fi
 
-      - uses: actions/checkout@v4
+      # fetch-depth 0 brings every tag and origin/main; no credentials are kept for later steps.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
-          fetch-depth: 0
+          fetch-depth: '0'
+          persist-credentials: false
 
       - name: The tag exists, is annotated and is on main
         id: tag
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          if ! git fetch --quiet --force origin "refs/tags/$TAG:refs/tags/$TAG"; then
+          # actions/checkout rewrites an annotated tag as a lightweight one (it fetches the tag's commit), so the type
+          # check below would always refuse. Re-fetch the real tag object, forced, with a one-shot masked token header.
+          auth="$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
+          echo "::add-mask::$auth"
+          if ! git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $auth" fetch --quiet --force origin "refs/tags/$TAG:refs/tags/$TAG"; then
             echo "::error::Tag $TAG does not exist on GitHub. Create it with the 'Cut release' workflow."
             exit 1
           fi
-          git fetch --quiet --no-tags origin "+refs/heads/main:refs/remotes/origin/main"
+          if ! git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            echo "::error::Tag $TAG does not exist on GitHub. Create it with the 'Cut release' workflow."
+            exit 1
+          fi
           kind="$(git cat-file -t "refs/tags/$TAG")"
           if [ "$kind" != "tag" ]; then
             echo "::error::Tag $TAG is a lightweight tag (it points straight at a $kind). Release tags are annotated: create them with the 'Cut release' workflow."
@@ -126,28 +138,45 @@ jobs:
     timeout-minutes: 30
     permissions:
       contents: read
+      actions: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           ref: ${{ needs.guard.outputs.sha }}
-          fetch-depth: 0 # the build dates screenshots from git history
-      - uses: actions/setup-node@v4
+          fetch-depth: '0' # the build dates screenshots from git history
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 24
           cache: npm
+      # E9: reuse only a successful Cut release run on this exact commit (its guard, checks and tag jobs all passed).
+      # Any doubt runs the checks below. The build, the bundle checks and the secret scans always run.
+      - name: Check exact-commit release evidence
+        id: release-checks
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          CHECKED_SHA: ${{ needs.guard.outputs.sha }}
+        run: node scripts/release-check-reuse.mjs
       - run: npm ci
       - run: npm ci --prefix server
       - name: Company OS requirement
+        if: steps.release-checks.outputs.reuse != 'true'
         run: node scripts/check-company-os.mjs
       - name: Hoy server tests
+        if: steps.release-checks.outputs.reuse != 'true'
         run: node scripts/test-hoy-server.mjs
       - name: Test gate (the passphrase in front of the test site; rule D5)
+        if: steps.release-checks.outputs.reuse != 'true'
         run: node scripts/test-test-gate.mjs
       - name: Docs gate (the Hub's docs for a signed-in super admin only; lane Y6)
+        if: steps.release-checks.outputs.reuse != 'true'
         run: node scripts/test-docs-gate.mjs
       - name: Deploy wiring (IaC declares every server variable; summaries show the go-live switches)
+        if: steps.release-checks.outputs.reuse != 'true'
         run: node scripts/test-deploy-wiring.mjs
-      - name: Build (production with Clerk, launch routes, no review tools; H-2)
+      - name: Build (production with Clerk, launch routes, no review tools; H-2), stamped with the release tag
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
         run: npm run build:production
       - name: Production bundle checks (H-2; refuses demo data, review tools, docs, screenshots)
         run: |
@@ -155,7 +184,7 @@ jobs:
           QA_PROD_ONLY=1 QA_PROD_DIST=dist QA_STRICT_DEMO_DATA=1 node scripts/test-auth-builds.mjs
       - name: Bundle (server + built frontend, secret scan)
         run: node server/make-bundle.mjs "$RUNNER_TEMP/web"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: web-bundle-${{ needs.guard.outputs.sha }}
           path: ${{ runner.temp }}/web
@@ -170,9 +199,10 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           ref: ${{ github.ref }}
+          persist-credentials: false
 
       # The tag must still be the commit the guard checked (a tag can be moved).
       - name: Same commit as the guard checked
@@ -185,7 +215,7 @@ jobs:
             exit 1
           fi
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 24
           cache: npm
@@ -255,7 +285,7 @@ jobs:
               --service "$SERVICE" --environment "$RAILWAY_ENV" --skip-deploys
           done
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: web-bundle-${{ needs.guard.outputs.sha }}
           path: ${{ runner.temp }}/web
@@ -294,10 +324,11 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           ref: ${{ needs.guard.outputs.sha }}
-      - uses: actions/setup-node@v4
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 24
           cache: npm
@@ -315,7 +346,7 @@ jobs:
           WEBSITE_BASE_URL: https://hoyhumanclub.com/
           CHROMIUM_PATH: /usr/bin/google-chrome
           CURSOR_OUTPUT: qa/website-release/native-cursor
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
           name: website-live-${{ needs.guard.outputs.sha }}

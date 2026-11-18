@@ -1,4 +1,4 @@
-<!-- playbook-entry v1.16 start -->
+<!-- playbook-entry v1.17 start -->
 <!-- Copied from Company OS docs/playbook/templates/frontend-agents-entry.md by tools/playbook/sync-entry.mjs. Do not edit here; change the template and sync. -->
 # How we deliver: the Company OS playbook, for this repository
 
@@ -59,7 +59,7 @@ rollback tag are named.
 - Merge `main` into your branch only on a conflict, or once right before merging.
 - Run only the tests your change touches, locally: red first, then green. **Never run a full suite
   locally**; CI runs it.
-- A version-only release pull request needs no extra CI: *Cut release* runs the full checks on that commit.
+- CI runs by area (where the repo has an area map, `scripts/ci/areas.json`); the release version comes from the tag, so no version-bump pull request; deploys reuse the *Cut release* pass on the same commit.
 - T0 changes that arrive together go in one pull request and one release.
 - Every pull request description has: `Tier: T<n>` · `Requested: <UTC time>` · `Live: <UTC time, after release>`
   · `Playbook inbox: <link or path | none>` (the *Playbook check* workflow fails a PR without the `Playbook inbox:` line, and without this entry block in `AGENTS.md` and `@AGENTS.md` in `CLAUDE.md`; it does not check the `Tier`, `Requested` and `Live` lines, which the rule still requires).
@@ -109,4 +109,4 @@ rollback tag are named.
 Write what the playbook got wrong, missed or made slow in this repository's `docs/playbook-inbox.md`
 (one table line, same day), link it from the pull request, and end every plan and report with
 `Playbook impact: <lines added | none>`. The lines are moved into Company OS at each retrospective.
-<!-- playbook-entry v1.16 end -->
+<!-- playbook-entry v1.17 end -->

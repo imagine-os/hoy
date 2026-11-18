@@ -1,0 +1,154 @@
+{
+  "version": 1,
+  "runner": [
+    "node"
+  ],
+  "shared": [
+    "package.json",
+    "package-lock.json",
+    "tsconfig.json",
+    "vite.config.ts",
+    "index.html",
+    "company-os.json",
+    ".gitignore",
+    ".railway/**",
+    "server/**",
+    "src/**/*.{ts,tsx,json}",
+    "src/modules/hub/*.css",
+    "src/design/tokens.css",
+    "src/app/productionFrame.css",
+    "src/modules/{admin,customer,identity}/*.css",
+    "src/components/template/**/*.css",
+    "src/components/organism/{SessionCalendar,CalendarView,DataTable,TopBar,NavBar,Drawer}/*.css",
+    "src/components/{atom,molecule}/{Button,Input,Field,OtpInput,CheckboxField,Card}/*.css",
+    "src/styles/**",
+    "docs/route-connectivity.md",
+    "docs/source/index.json",
+    "scripts/ci/**",
+    "scripts/lib/**",
+    "scripts/fixtures/fake-clerk.js",
+    ".github/workflows/{auth-checks,release,deploy-test,deploy-prod,pages}.yml"
+  ],
+  "fast": [
+    "**/*.css",
+    "docs/{frontend-completion,pages,prompts,qa,reference,rules,plans,website,screenshots}/**",
+    "docs/changelog/_pending/**",
+    "docs/{app-store-compliance,architecture,data-model,decisions,delivery-room,design-system,flow-map,i18n,kanban,promotion-backend-readiness,roles,subscription-directory-status,voucher-backend-readiness,website-assets,website-motion-production,website-validation,website-versions,website-vision}.md",
+    "docs/website-capture-manifest.json",
+    "deploy/comms/**",
+    "reference/**",
+    "supabase/**",
+    "README.md",
+    "ROADMAP.md",
+    "scripts/test-{auth-identity,jas-1nov-customer,view-as,hub-production,pay-page-frame,launch-routes,launch-config,pack-reads,golive-h3,payment-paid-at,companyos-studio-data,teacher-codes,h1-connected-flows,companyos-provider,jas-1nov-admin,staff-walkin-window,void-payment,admin-activity,golive-images,class-images,hoy-server,real-signup,move-private-settings,test-gate,seo,hoy-12nov-book,hoy-12nov-fix,hoy-12nov-r1,hoy-12nov-r2,any-start-time}.mjs"
+  ],
+  "ignore": [
+    "AGENTS.md",
+    "CLAUDE.md",
+    "docs/playbook-inbox.md",
+    ".github/pull_request_template.md",
+    ".github/playbook-entry.sha256",
+    ".github/workflows/playbook-check.yml",
+    "scripts/check-agent-entry.sh",
+    ".claude/**",
+    "scripts/customer-cancel-harness.tsx",
+    "scripts/customer-read-context-harness.tsx",
+    "scripts/customer-registration-harness.tsx",
+    "scripts/desk-confirmation-harness.tsx",
+    "scripts/desk-settlement-customer-harness.tsx",
+    "scripts/email-edit-harness.tsx",
+    "scripts/email-test-harness.tsx",
+    "scripts/expense-table-harness.tsx",
+    "scripts/h5-launch-harness.tsx",
+    "scripts/launch-receipts-harness.tsx",
+    "scripts/package-booking-recovery-harness.tsx",
+    "scripts/profile-save-harness.tsx",
+    "scripts/rs05-cta-harness.tsx",
+    "scripts/schedule-support-harness.tsx",
+    "scripts/session-admission-harness.tsx",
+    "scripts/substitute-request-harness.tsx",
+    "scripts/teacher-ownership-harness.tsx",
+    "scripts/test-voucher-gifts.mjs",
+    "scripts/trial-eligibility-harness.tsx",
+    "scripts/vouchers-cos-harness.tsx",
+    "scripts/fixtures/class-description-harness.tsx"
+  ],
+  "areas": {
+    "auth": {
+      "paths": [
+        "docs/ops-manual/**",
+        "scripts/test-auth-production-ui.mjs",
+        "scripts/test-jas-1nov-customer-ui.mjs",
+        "scripts/test-view-as-ui.mjs",
+        "scripts/test-test-gate-ui.mjs",
+        "scripts/test-route-connectivity.mjs",
+        "scripts/test-launch-roles-ui.mjs",
+        "docs/README.md",
+        "docs/source/**",
+        "docs/changelog/**",
+        "public/source/**"
+      ],
+      "scripts": [
+        "scripts/test-auth-production-ui.mjs",
+        "scripts/test-jas-1nov-customer-ui.mjs",
+        "scripts/test-view-as-ui.mjs",
+        "scripts/test-test-gate-ui.mjs",
+        "scripts/test-route-connectivity.mjs",
+        "scripts/test-launch-roles-ui.mjs"
+      ]
+    },
+    "customer": {
+      "paths": [
+        "scripts/test-golive-h3-ui.mjs"
+      ],
+      "scripts": [
+        "scripts/test-jas-1nov-customer-ui.mjs",
+        "scripts/test-golive-h3-ui.mjs",
+        "scripts/test-void-payment-ui.mjs",
+        "scripts/test-route-connectivity.mjs",
+        "scripts/test-launch-roles-ui.mjs"
+      ]
+    },
+    "website": {
+      "paths": [
+        "public/**",
+        "scripts/test-website-signed-out-live.mjs",
+        "scripts/test-seo-ui.mjs",
+        "scripts/test-launch-website-ui.mjs",
+        "scripts/test-launch-website-content.mjs",
+        "scripts/test-golive-images-ui.mjs",
+        "docs/ops-manual/**",
+        "docs/README.md",
+        "docs/source/**",
+        "docs/changelog/**"
+      ],
+      "scripts": [
+        "scripts/test-website-signed-out-live.mjs",
+        "scripts/test-seo-ui.mjs",
+        "scripts/test-golive-images-ui.mjs",
+        "scripts/test-golive-h3-ui.mjs",
+        "scripts/test-launch-website-ui.mjs",
+        "scripts/test-launch-website-content.mjs",
+        "scripts/test-route-connectivity.mjs",
+        "scripts/test-launch-roles-ui.mjs"
+      ]
+    },
+    "admin": {
+      "paths": [
+        "scripts/test-admin-activity-ui.mjs",
+        "scripts/test-r1-ui.mjs",
+        "scripts/test-void-payment-ui.mjs",
+        "scripts/test-jas-1nov-admin-ui.mjs"
+      ],
+      "scripts": [
+        "scripts/test-admin-activity-ui.mjs",
+        "scripts/test-r1-ui.mjs",
+        "scripts/test-void-payment-ui.mjs",
+        "scripts/test-golive-images-ui.mjs",
+        "scripts/test-jas-1nov-admin-ui.mjs",
+        "scripts/test-route-connectivity.mjs",
+        "scripts/test-launch-roles-ui.mjs"
+      ]
+    }
+  }
+}
