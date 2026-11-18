@@ -13,3 +13,6 @@ qa/subscription-release/
 /qa/
 /docs/screenshots/M-14/
 /docs/screenshots/M-14a/
+# Agent tier and model log (local to each developer)
+.claude/tier
+.claude/model-log.jsonl

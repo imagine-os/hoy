@@ -1,0 +1,59 @@
+# ============================================================
+# 📒 PLAYBOOK CHECK — every pull request
+# ------------------------------------------------------------
+# 💡 In plain words: every PR must say what it taught us, for the
+#    delivery playbook (Company OS docs/playbook/). So its description
+#    needs one line like
+#        Playbook inbox: https://github.com/…/docs/playbook-inbox.md#…
+#        Playbook inbox: docs/playbook-inbox.md
+#        Playbook inbox: none
+#    (the PR template already has it). No line, no green tick.
+#
+# 🔒 The PR body is typed by people, so it reaches the script only
+#    through an env var (PR_BODY), never pasted into the script itself.
+#    Editing the description re-runs the check.
+# ============================================================
+name: Playbook check
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions: {}
+
+jobs:
+  playbook-inbox:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    permissions: {}
+    steps:
+      - name: The PR declares "Playbook inbox:"
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          # Accepted: "Playbook inbox: none", or a link or path (a URL, a
+          # [text](target) link, or anything with a / or .), optionally in bold
+          # or a list item. The template's "<link ...>" placeholder fails.
+          # Same pattern as Company OS's playbook-check.yml.
+          pattern='^[[:space:]>*_-]*playbook inbox[*_]*:[*_]*[[:space:]]*`?(none([^[:alnum:]]|$)|\[[^]]+\]\([^)]+\)|https?://[^[:space:]]+|[^[:space:]<`]*[/.][^[:space:]]*)'
+          if printf '%s\n' "$PR_BODY" | tr -d '\r' | grep -Eiq "$pattern"; then
+            echo "Playbook inbox declared."
+            exit 0
+          fi
+          echo "::error::The pull request description must have a line 'Playbook inbox: <link or path to the line in this repository's docs/playbook-inbox.md>' or 'Playbook inbox: none'. Edit the description; this check re-runs by itself."
+          exit 1
+
+  agent-entry:
+    # Only the description changed: nothing in the repository to check again.
+    if: github.event.action != 'edited'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    timeout-minutes: 2
+    steps:
+      - name: Checkout (no credentials kept)
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: AGENTS.md carries the playbook entry and CLAUDE.md imports it
+        run: scripts/check-agent-entry.sh
