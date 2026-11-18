@@ -7,7 +7,7 @@
 // - CI by area: SHA pins, no credentials kept, no ${{ }} in run:, the release marker, the tag as the version.
 // - L1, L9: recorded as known limits in the changelog.
 // Run: node scripts/test-release-wiring.mjs
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { reporter } from './lib/launch-qa.mjs';
 
 const { check, done } = reporter('release wiring');
@@ -100,7 +100,18 @@ const relChecks = rel.slice(rel.indexOf('\n  checks:\n'), rel.indexOf('\n  tag:\
 check('release: the checks job runs every fast node script that auth-checks.yml runs on a pull request', prFast.length > 20 && prFast.every((x) => relChecks.includes(`node ${x}`)), prFast.filter((x) => !relChecks.includes(`node ${x}`)).join(', '));
 check('release: the fast node scripts run in every mode (no mode condition on that step)', !/Node-level checks[^\n]*\n\s+if:/.test(relChecks) && /- name: Node-level checks/.test(relChecks));
 const nodeOf = (t) => [...t.matchAll(/node-version: (\d+)/g)].map((m) => m[1]);
-check('release: the checks job uses the same node version as the pull request job', nodeOf(relChecks).length > 0 && nodeOf(relChecks).every((v) => nodeOf(prJob).includes(v)), `${nodeOf(relChecks)} vs ${nodeOf(prJob)}`);
+check('release: the reused checks run on the production runtime (release checks node equals deploy-prod node)', nodeOf(relChecks).length > 0 && nodeOf(flows['deploy-prod.yml']).length > 0 && nodeOf(relChecks).every((v) => nodeOf(flows['deploy-prod.yml']).every((p) => p === v)), `${nodeOf(relChecks)} vs ${nodeOf(flows['deploy-prod.yml'])}`);
+// Review fix: every job that pushes or fetches with an extraheader builds it correctly, scoped, and masked.
+for (const wf of readdirSync('.github/workflows').filter((n) => /\.ya?ml$/.test(n))) {
+  const text = readFileSync(`.github/workflows/${wf}`, 'utf8');
+  const jobs = text.split(/\n(?=  [A-Za-z0-9_-]+:\n)/);
+  for (const job of jobs.filter((j) => /extraheader/.test(j))) {
+    const name = /^\s*([A-Za-z0-9_-]+):/.exec(job)?.[1] ?? '?';
+    check(`${wf} ${name}: extraheader credential uses printf 'x-access-token:%s' (never %%s)`, /printf 'x-access-token:%s'/.test(job) && !/%%s/.test(job));
+    check(`${wf} ${name}: extraheader is scoped to http.https://github.com/.extraheader`, /-c "http\.https:\/\/github\.com\/\.extraheader=/.test(job) && !/-c "http\.extraheader/.test(job));
+    check(`${wf} ${name}: the encoded credential is masked with ::add-mask::`, /echo "::add-mask::\$auth"/.test(job));
+  }
+}
 for (const f of ['release.yml', 'deploy-test.yml', 'deploy-prod.yml']) {
   const build = flows[f].split('\n      - ').find((s) => /run: npm run build:production$/m.test(s)) ?? '';
   check(`${f}: the production build stamps the version from the tag (RELEASE_TAG)`, /RELEASE_TAG: /.test(build), build.slice(0, 160));

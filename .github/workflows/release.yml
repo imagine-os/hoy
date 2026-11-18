@@ -116,7 +116,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
       - name: Plan (areas changed since the last verified release)
         id: plan
@@ -226,7 +226,7 @@ jobs:
             printf '\nchecks: areas-v1\n'
           } > "$RUNNER_TEMP/tag-message.txt"
           git tag -a "$tag" "$SHA" -F "$RUNNER_TEMP/tag-message.txt"
-          auth="$(printf 'x-access-token:%%s' "$GH_TOKEN" | base64 -w0)"
+          auth="$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
           echo "::add-mask::$auth"
           git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $auth" push origin "refs/tags/$tag"
           {

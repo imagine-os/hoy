@@ -38,7 +38,8 @@ name: Auth checks
 #
 # Muted 2026-10-30: real-clerk runs only by hand (Run workflow) until it passes. Its last run got past Clerk's
 # CAPTCHA but Clerk refused the code step: POST /v1/client/sign_ups/<id>/prepare_verification → 400
-# client_state_invalid. Restore it on pull requests by deleting the `if:` on the real-clerk job.
+# client_state_invalid. Restore it on pull requests by deleting the `if:` on the real-clerk job AND changing the `if:` on the
+# production-build artifact upload (~line 192, now workflow_dispatch only), or real-clerk finds no artifact to download.
 on:
   pull_request:
     paths-ignore:
