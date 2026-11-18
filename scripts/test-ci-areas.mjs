@@ -10,8 +10,8 @@
 //   and pinned files land where they should (a module page → its areas, the app shell → all).
 // Run: node scripts/test-ci-areas.mjs
 import { execFileSync } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
-import { buildGraph, classify, configProblems, graphProblems, validateConfig } from './ci/affected-areas.mjs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { buildGraph, classify, configProblems, graphProblems, matchGlob, validateConfig } from './ci/affected-areas.mjs';
 import { importProblems } from './ci/area-imports.mjs';
 
 let failed = 0;
@@ -63,9 +63,11 @@ for (const s of OLD.filter((x) => !fastScripts.includes(x))) {
 }
 
 // Where some paths land. v2: TypeScript under src/ is decided by its importers (the reverse import closure, graph in
-// areas.json). The registry's eager glob of every module index and each index's lazy page imports are seams, so a
-// module file reaches only its module (entries: modules by the surfaces their routes declare); anything the shell
-// (src/app/**, src/main.tsx) or sign-in (src/auth/**) imports reaches a root and runs everything.
+// areas.json). Each module index's lazy page imports are seams, so a file only module pages import reaches only those
+// modules (entries: modules by the surfaces their routes declare). A module index and what it imports statically
+// (strings, specs, route lists) reach the registry, a root: App merges every module's strings into one dictionary
+// that any page reads by key, so a strings change runs everything. Anything the shell (src/app/**, src/main.tsx) or
+// sign-in (src/auth/**) imports reaches a root too.
 const mode = (files) => { const r = classify(files, config, { graph }); return r.mode === 'areas' ? `areas:${r.areas.join(',')}` : r.mode; };
 const expect = (label, files, want) => { const got = mode(files); check(`${label} → ${want}`, got === want, got); };
 expect('agent and playbook files only', ['AGENTS.md', 'CLAUDE.md', 'docs/playbook-inbox.md', '.claude/settings.json'], 'none');
@@ -90,11 +92,11 @@ expect('package.json', ['package.json'], 'all');
 expect('the lockfile', ['package-lock.json'], 'all');
 expect('the Hoy server', ['server/app.mjs'], 'all');
 expect('a shared component sign-in uses (reaches src/auth)', ['src/components/atom/Button/Button.tsx'], 'all');
-expect('a module strings file (browser checks assert copy: never fast; v2: its module\'s areas)', ['src/modules/staff/desk/strings.ts'], 'areas:admin');
-expect('a module page', ['src/modules/admin/ExpensesPage.tsx'], 'areas:admin');
-expect('the website strings', ['src/modules/website/strings.ts'], 'areas:website');
-expect('a voucher redeem page (customer and admin routes share the module)', ['src/modules/vouchers/production/pages.tsx'], 'areas:admin,customer');
-expect('the teacher pages (staff side: admin)', ['src/modules/teacher/pages.ts'], 'areas:admin');
+expect('a module strings file (one global dictionary: every page reads any key)', ['src/modules/staff/desk/strings.ts'], 'all');
+expect('a module page (admin, customer, website and auth checks all visit admin routes)', ['src/modules/admin/ExpensesPage.tsx'], 'areas:admin,auth,customer,website');
+expect('the website strings', ['src/modules/website/strings.ts'], 'all');
+expect('a voucher redeem page (every area visits a voucher route)', ['src/modules/vouchers/production/pages.tsx'], 'areas:admin,auth,customer,website');
+expect('the teacher pages (admin and auth visit /teach)', ['src/modules/teacher/pages.ts'], 'areas:admin,auth');
 expect('the app shell', ['src/app/App.tsx'], 'all');
 expect('the module registry', ['src/app/registry.ts'], 'all');
 expect('the data provider the shell mounts', ['src/data/DataContext.tsx'], 'all');
@@ -124,7 +126,40 @@ check('area-imports: no area file is imported by a shared, unknown, fast or othe
 // The walk fails closed only if it sees every import: no non-literal import(), no specifier that resolves to nothing,
 // no seam that cuts an edge to a file that is no entry, no dead glob (graphProblems, the shared script's own).
 const gp = graphProblems({ config, files: repoFiles, read });
+// graph.dynamic declares test-route-connectivity.mjs as loading nothing the walk must follow: it bundles module files
+// with esbuild, which no import shows. That is sound only while it runs in every area (any area selected runs it).
+const everyArea = Object.values(config.areas).every((a) => a.scripts.includes('scripts/test-route-connectivity.mjs'));
+check('test-route-connectivity runs in every area (its graph.dynamic [] declaration relies on it)', everyArea && Object.hasOwn(config.graph.dynamic, 'scripts/test-route-connectivity.mjs'));
 check('graphProblems: the import graph has no blind spot', gp.length === 0, gp.slice(0, 5).join('; '));
+
+// Every route an area's browser check visits belongs to a module the area's graph.entries list: a change that only
+// that module's pages import must run the check. Routes come from each module's index.ts (`path: '…'`); visits are the
+// route-like string literals in the area's scripts. route-connectivity and launch-roles visit every route and run in
+// every area, so they are left out.
+const routeOwners = [];
+for (const m of readdirSync('src/modules')) {
+  const f = `src/modules/${m}/index.ts`;
+  if (existsSync(f)) for (const x of read(f).matchAll(/path\s*:\s*['"]([^'"]+)['"]/g)) routeOwners.push([x[1], m]);
+}
+const routeRe = (p) => new RegExp(`^${p.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/:[A-Za-z]+/g, '[^/]+').replace(/\*$/, '.*')}/?$`);
+const ownersOf = (u) => {
+  const hits = routeOwners.filter(([p]) => routeRe(p).test(u));
+  const exact = hits.filter(([p]) => !p.includes(':') && !p.endsWith('*'));
+  return [...new Set((exact.length ? exact : hits).map(([, m]) => m))];
+};
+const VISIT = /["'`]#?(\/(?:app|admin|staff|teach|docs|manual|dev|hub)[^"'`\s?#]*)/g;
+for (const [area, a] of Object.entries(config.areas)) {
+  const missing = new Set();
+  for (const sc of a.scripts.map((x) => (typeof x === 'string' ? x : x.name))) {
+    if (/route-connectivity|launch-roles/.test(sc)) continue;
+    for (const m of read(sc).matchAll(VISIT)) {
+      for (const mod of ownersOf(m[1].replace(/\$\{[^}]*\}/g, 'x'))) {
+        if (!(config.graph.entries[area] ?? []).some((g) => matchGlob(g, `src/modules/${mod}/index.ts`))) missing.add(`${mod} (${sc.replace('scripts/', '')} visits ${m[1]})`);
+      }
+    }
+  }
+  check(`graph.entries.${area} covers every module its browser checks visit`, missing.size === 0, [...missing].slice(0, 6).join('; '));
+}
 
 console.log(failed ? `\n${failed} ci areas check(s) failed` : '\nci areas passed');
 process.exitCode = failed ? 1 : 0;

@@ -167,26 +167,28 @@
     ],
     "entries": {
       "auth": [
-        "src/modules/{identity,docs,ops-manual,dev}/**"
+        "src/modules/{admin,customer,dev,docs,hub,identity,ops-manual,staff,teacher,vouchers}/**"
       ],
       "customer": [
-        "src/modules/{customer,identity,vouchers,voucher-gifts,launch-receipts,transfers,quotes}/**"
+        "src/modules/{admin,classSchedule,customer,hub,identity,launch-receipts,quotes,transfers,voucher-gifts,vouchers}/**"
       ],
       "website": [
-        "src/modules/{website,coming-soon,hub,promotions-guide,promotions,customer,identity,docs,ops-manual}/**"
+        "src/modules/{admin,classSchedule,coming-soon,customer,docs,hub,identity,ops-manual,promotions,promotions-guide,transfers,vouchers,website}/**"
       ],
       "admin": [
-        "src/modules/{admin,booking-policies,classSchedule,products,promotions,marketing,staff,maintenance,transfers,vouchers,launch-receipts,teacher,notifications,media}/**"
+        "src/modules/{admin,booking-policies,classSchedule,customer,launch-receipts,maintenance,marketing,media,notifications,products,promotions,staff,teacher,transfers,vouchers}/**"
       ]
     },
     "seams": [
       {
-        "from": "src/app/registry.ts",
-        "to": "src/modules/*/index.ts"
-      },
-      {
         "from": "src/modules/*/index.ts"
       }
-    ]
+    ],
+    "dynamic": {
+      "scripts/ci/affected-areas.mjs": [],
+      "scripts/ci/area-imports.mjs": [],
+      "vite.config.ts": [],
+      "scripts/test-route-connectivity.mjs": []
+    }
   }
 }

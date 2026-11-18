@@ -13,7 +13,7 @@
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { DEFAULT_CONFIG, fileKind, importEdges, loadConfig, resolveSpecifier, SOURCE } from "./affected-areas.mjs";
+import { DEFAULT_CONFIG, fileKind, importEdges, loadConfig, oneLine, resolveSpecifier, SOURCE } from "./affected-areas.mjs";
 
 export const VERSION = "area-imports v2";
 export { resolveSpecifier };
@@ -77,13 +77,13 @@ function main(argv) {
     }
     config = loadConfig(config);
   } catch (err) {
-    console.log(`::error::area-imports: ${String(err.message).split("\n")[0]}`);
+    console.log(`::error::area-imports: ${oneLine(err.message)}`);
     return 2;
   }
   const files = execFileSync("git", ["ls-files", "-z"], { encoding: "utf8", maxBuffer: 1 << 28 }).split("\0").filter(Boolean);
   const problems = importProblems({ config, files, read: (p) => readFileSync(p, "utf8"), aliases: Object.keys(aliases).length ? aliases : undefined });
   console.log(`${VERSION}: ${problems.length} problem(s)`);
-  for (const p of problems) console.log(`  ${p.replace(/[\r\n]/g, " ")}`);
+  for (const p of problems) console.log(`  ${oneLine(p)}`);
   return problems.length ? 1 : 0;
 }
 

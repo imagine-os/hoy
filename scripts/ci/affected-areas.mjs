@@ -36,9 +36,11 @@ export const DEFAULT_TAG_MATCH = "v*";
 const AREA_NAME = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const SCRIPT_NAME = /^[A-Za-z0-9_][A-Za-z0-9:._/-]*$/;
 const ENV_NAME = /^[A-Za-z_][A-Za-z0-9_]*$/;
+// Variables an area script's env may not set: they change how node, the loader, the shell or the runner behave.
+const ENV_DENIED = /^(?:NODE_OPTIONS|NODE_PATH|NODE_EXTRA_CA_CERTS|LD_[A-Z_]*|DYLD_[A-Z_]*|BASH_ENV|ENV|PATH|HOME|SHELL|IFS|GITHUB_[A-Z_]*|RUNNER_[A-Z_]*|ACTIONS_[A-Z_]*)$/;
 const REF = /^[A-Za-z0-9_][A-Za-z0-9_./@^~{}+-]*$/;
 const TOP_KEYS = ["version", "runner", "shared", "fast", "ignore", "areas", "graph"];
-const GRAPH_KEYS = ["aliases", "sources", "roots", "entries", "seams"];
+const GRAPH_KEYS = ["aliases", "sources", "roots", "entries", "seams", "dynamic"];
 const SEAM_KEYS = ["from", "to"];
 const AREA_KEYS = ["paths", "scripts"];
 const ZERO_SHA = /^0+$/;
@@ -47,34 +49,51 @@ const ZERO_SHA = /^0+$/;
 // Anchored at the repo root, "/" separated. `**` = any number of folders (zero included), `*` = any
 // characters inside one segment, `?` = one character, `{a,b}` = alternatives (may nest). Dotfiles match.
 
-/** Brace expansion: "a/{b,c}/*.{ts,tsx}" → four globs. */
+export const MAX_GLOB_ALTERNATIVES = 256;
+const MAX_GLOB_LENGTH = 1000;
+const MAX_GLOBSTARS = 4;
+
+/** Brace expansion: "a/{b,c}/*.{ts,tsx}" → four globs. Throws past MAX_GLOB_ALTERNATIVES or MAX_GLOB_LENGTH. */
 export function expandBraces(glob) {
-  const open = glob.indexOf("{");
-  if (open === -1) return [glob];
-  let depth = 0;
-  const commas = [];
-  for (let i = open; i < glob.length; i++) {
-    const c = glob[i];
-    if (c === "{") depth++;
-    else if (c === "}" && --depth === 0) {
-      const parts = [];
-      let from = open + 1;
-      for (const at of commas) {
-        parts.push(glob.slice(from, at));
-        from = at + 1;
-      }
-      parts.push(glob.slice(from, i));
-      const rest = glob.slice(i + 1);
-      return parts.flatMap((p) => expandBraces(glob.slice(0, open) + p + rest));
-    } else if (c === "," && depth === 1) commas.push(i);
-  }
-  return [glob]; // unbalanced: literal
+  if (glob.length > MAX_GLOB_LENGTH) throw new Error(`glob longer than ${MAX_GLOB_LENGTH} characters`);
+  const out = [];
+  const expand = (g, done) => {
+    const open = g.indexOf("{", done);
+    if (open === -1) {
+      if (out.length >= MAX_GLOB_ALTERNATIVES) throw new Error(`glob has too many alternatives (over ${MAX_GLOB_ALTERNATIVES})`);
+      out.push(g);
+      return;
+    }
+    let depth = 0;
+    const commas = [];
+    for (let i = open; i < g.length; i++) {
+      const c = g[i];
+      if (c === "{") depth++;
+      else if (c === "}" && --depth === 0) {
+        const parts = [];
+        let from = open + 1;
+        for (const at of commas) {
+          parts.push(g.slice(from, at));
+          from = at + 1;
+        }
+        parts.push(g.slice(from, i));
+        const rest = g.slice(i + 1);
+        for (const part of parts) expand(g.slice(0, open) + part + rest, open);
+        return;
+      } else if (c === "," && depth === 1) commas.push(i);
+    }
+    expand(g, open + 1); // unbalanced: this brace is literal
+  };
+  expand(glob, 0);
+  return out;
 }
 
 const cache = new Map();
 export function globToRegExp(glob) {
   if (cache.has(glob)) return cache.get(glob);
-  const alternatives = expandBraces(glob).map((g) => {
+  const alternatives = expandBraces(glob).map((raw) => {
+    const g = raw.replace(/(?:\*\*\/)+/g, "**/").replace(/(?:\/\*\*)+$/, "/**");
+    if ((g.match(/\*\*/g) ?? []).length > MAX_GLOBSTARS) throw new Error(`glob has more than ${MAX_GLOBSTARS} ** segments`);
     let out = "";
     for (let i = 0; i < g.length; i++) {
       const c = g[i];
@@ -126,6 +145,12 @@ function globProblems(where, globs, problems, { required = false } = {}) {
   for (const g of globs) {
     if (typeof g !== "string" || g === "" || g !== g.trim() || g.includes("//") || g.includes("\\") || /[\x00-\x1f\x7f]/.test(g) || g.startsWith("/") || g.split("/").some((p) => p === ".." || p === ".")) {
       problems.push(`${where}: ${JSON.stringify(g)} is not a repo-relative glob`);
+      continue;
+    }
+    try {
+      globToRegExp(g);
+    } catch (err) {
+      problems.push(`${where}: ${JSON.stringify(g)}: ${err.message}`);
     }
   }
 }
@@ -158,7 +183,8 @@ export function configProblems(config) {
       continue;
     }
     for (const key of Object.keys(area)) if (!AREA_KEYS.includes(key)) problems.push(`${at}: unknown key ${JSON.stringify(key)}`);
-    globProblems(`${at}.paths`, area.paths, problems, { required: true });
+    const listedByGraph = isObject(config.graph) && isObject(config.graph.entries) && Object.hasOwn(config.graph.entries, name);
+    globProblems(`${at}.paths`, area.paths, problems, { required: !listedByGraph || area.paths !== undefined });
     if (!Array.isArray(area.scripts) || area.scripts.length === 0) {
       problems.push(`${at}.scripts: must be a non-empty array`);
       continue;
@@ -173,6 +199,7 @@ export function configProblems(config) {
         problems.push(`${at}.scripts: ${script}: env must map variable names to strings`);
         continue;
       }
+      for (const k of Object.keys(env)) if (ENV_DENIED.test(k)) problems.push(`${at}.scripts: ${script}: ${k} may not be set`);
       if (seen.has(script) && !sameEnv(seen.get(script), env)) problems.push(`${at}.scripts: ${script} is listed with a different env in another area`);
       else seen.set(script, env);
     }
@@ -201,6 +228,14 @@ function graphConfigProblems(config, problems) {
   else for (const [name, globs] of Object.entries(g.entries)) {
     if (!isObject(config.areas) || !Object.hasOwn(config.areas, name)) problems.push(`graph.entries.${name}: not an area`);
     globProblems(`graph.entries.${name}`, globs, problems, { required: true });
+  }
+  if (g.dynamic !== undefined) {
+    if (!isObject(g.dynamic)) problems.push("graph.dynamic: must map a file to the globs it loads");
+    else for (const [file, globs] of Object.entries(g.dynamic)) {
+      if (unsafe(file)) problems.push(`graph.dynamic: ${JSON.stringify(file)} is not a repo path`);
+      globProblems(`graph.dynamic[${JSON.stringify(file)}]`, globs, problems, { required: false });
+      if (globs === undefined) problems.push(`graph.dynamic[${JSON.stringify(file)}]: must be an array of globs (empty: loads nothing in the repo)`);
+    }
   }
   if (g.seams !== undefined) {
     if (!Array.isArray(g.seams)) problems.push("graph.seams: must be an array of {from, to?}");
@@ -234,7 +269,9 @@ export function validateConfig(config, { workflowScripts = [], packageScripts, r
   if (repoFiles) {
     const globs = [
       ...["shared", "fast", "ignore"].flatMap((k) => (config[k] ?? []).map((g) => [k, g])),
-      ...Object.entries(config.areas).flatMap(([name, a]) => a.paths.map((g) => [`areas.${name}.paths`, g])),
+      ...Object.entries(config.areas).flatMap(([name, a]) => (a.paths ?? []).map((g) => [`areas.${name}.paths`, g])),
+      ...Object.entries(config.graph?.entries ?? {}).flatMap(([name, globs]) => globs.map((g) => [`graph.entries.${name}`, g])),
+      ...["sources", "roots"].flatMap((k) => (config.graph?.[k] ?? []).map((g) => [`graph.${k}`, g])),
     ];
     for (const [where, g] of globs) if (!repoFiles.some((f) => matchGlob(g, f))) problems.push(`${where}: ${g} matches no file`);
   }
@@ -272,24 +309,26 @@ export function fileKind(file, config, { protectedPaths = [] } = {}) {
 
 /**
  * The walk for one graph file: its reverse import closure (the file, its importers, theirs, …) over graph.importers.
- * Each closure file decides by where it sits: a graph.roots file → all; a graph source → the areas whose entries
+ * Each closure file decides by where it sits: a graph source matching graph.roots → all; a graph source → the areas whose entries
  * match it, and a graph source that nothing imports and no entry lists is an entry point no area checks → all; any
  * other file by fileKind (shared, own or unknown → all; an area's paths → that area; ignore and fast add nothing).
  * No area at the end → all ("reaches no entry"). Returns {all: reason} or {hits: [[area, file]]}.
  */
 export function walk(file, config, graph) {
   const g = config.graph;
+  const blind = [...(graph.blind ?? [])];
+  if (blind.length) return { all: `the import graph has a blind spot: ${JSON.stringify(blind[0])}${blind.length > 1 ? ` and ${blind.length - 1} more` : ""}` };
   const parent = new Map([[file, null]]);
   const queue = [file];
   const hits = [];
   for (let i = 0; i < queue.length; i++) {
     const n = queue[i];
-    if (matchesAny(g.roots, n)) {
+    const where = n === file ? { kind: "graph", areas: [] } : fileKind(n, config);
+    if (where.kind === "graph" && matchesAny(g.roots, n)) {
       if (n === file) return { all: `${JSON.stringify(file)} is a graph root` };
       const through = parent.get(n);
       return { all: `${JSON.stringify(file)} reaches root ${JSON.stringify(n)}${through && through !== file ? ` through ${JSON.stringify(through)}` : ""}` };
     }
-    const where = n === file ? { kind: "graph", areas: [] } : fileKind(n, config);
     if (where.kind === "unsafe" || where.kind === "own" || where.kind === "shared" || where.kind === "unknown") {
       return { all: `${JSON.stringify(file)} is imported by ${where.kind === "unknown" ? "unknown" : where.kind} file ${JSON.stringify(n)}` };
     }
@@ -358,12 +397,19 @@ export const SOURCE = /\.(?:[cm]?[jt]sx?|css)$/;
 const EXTENSIONS = [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".mts", ".cts", ".css", ".json"];
 const SWAP = { ".js": [".ts", ".tsx"], ".jsx": [".tsx"], ".mjs": [".mts"], ".cjs": [".cts"] };
 
+/** Source texts longer than this are not parsed: the file is a blind spot (the walk gives all). */
+export const MAX_SOURCE_LENGTH = 2_000_000;
+const SPEC = `["']([^"'\\n]{1,500})["']`;
+const COMMENTS = String.raw`(?:\/\*[^*]{0,500}\*\/\s*)*`;
+
 /**
- * Imports in a source text: {edges, opaque}. An edge is {kind: "static", spec} (import … from, bare import,
- * export … from, require(), CSS @import), {kind: "lazy", spec} (import()), or {kind: "glob-eager" | "lazy-glob",
- * patterns} (import.meta.glob). opaque lists the import(), require() and import.meta.glob calls whose argument is not
- * a literal: an edge the walk cannot see (graphProblems reports them). Comments are read as code: an import
- * mentioned in a comment is an extra edge, which can only widen a walk.
+ * Imports in a source text: {edges, opaque}. An edge is {kind: "static", spec} (anything followed by from "x": import,
+ * export and CSS composes; a bare import "x"; require(), require.resolve(), new URL("x", import.meta.url), CSS @import,
+ * a triple-slash reference), {kind: "lazy", spec} (import()), or {kind: "glob-eager" | "lazy-glob", patterns}
+ * (import.meta.glob). opaque lists the import(), require() and import.meta.glob calls whose argument is not a literal,
+ * and globs using syntax the matcher does not support: an edge the walk cannot see (buildGraph marks the file blind).
+ * Comments and strings are read as code: an import mentioned in a comment is an extra edge, which can only widen a walk.
+ * Every pattern is linear in the text (bounded windows, no nested unbounded quantifiers).
  */
 export function importEdges(text) {
   const edges = [];
@@ -373,22 +419,28 @@ export function importEdges(text) {
     const key = `${kind}\0${spec}`;
     if (!seen.has(key)) seen.add(key) && edges.push({ kind, spec });
   };
-  for (const m of text.matchAll(/\bimport\s+(?:[^'"`;()]*?\bfrom\s*)?["']([^"'\n]+)["']/g)) push("static", m[1]);
-  for (const m of text.matchAll(/\bexport\s*[^'"`;()]*?\bfrom\s*["']([^"'\n]+)["']/g)) push("static", m[1]);
-  for (const m of text.matchAll(/@import\s+(?:url\(\s*)?["']([^"'\n]+)["']/g)) push("static", m[1]);
-  for (const m of text.matchAll(/(?<![.\w$])(import|require)\s*\(\s*/g)) {
-    const rest = text.slice(m.index + m[0].length, m.index + m[0].length + 500);
-    const lit = /^(["'])([^"'\n]+)\1\s*[,)]/.exec(rest) ?? /^`([^`$\n]+)`\s*[,)]/.exec(rest);
+  const all = (re, kind) => {
+    for (const m of text.matchAll(re)) push(kind, m[1]);
+  };
+  all(new RegExp(String.raw`\bfrom\s*${SPEC}`, "g"), "static");
+  all(new RegExp(String.raw`(?<![\w$.])import\s*${COMMENTS}${SPEC}`, "g"), "static");
+  all(new RegExp(String.raw`@import\s*${COMMENTS}(?:url\(\s*)?["']?([^"'\s)\n;]{1,500})`, "g"), "static");
+  all(new RegExp(String.raw`\bnew\s+URL\s*\(\s*${SPEC}\s*,\s*import\.meta\.url`, "g"), "static");
+  all(new RegExp(String.raw`\/\/\/\s*<reference\s+path\s*=\s*${SPEC}`, "g"), "static");
+  for (const m of text.matchAll(/(?<![.\w$])(import|require(?:\.resolve)?)\s*\(\s*/g)) {
+    const rest = text.slice(m.index + m[0].length, m.index + m[0].length + 520);
+    const lit = /^(["'])([^"'\n]{1,500})\1\s*[,)]/.exec(rest) ?? /^`([^`$\n]{1,500})`\s*[,)]/.exec(rest);
     if (lit) push(m[1] === "import" ? "lazy" : "static", lit[2] ?? lit[1]);
     else opaque.push(`${m[1]}(${rest.slice(0, 40).split("\n")[0]}`);
   }
   for (const m of text.matchAll(/\bimport\.meta\.glob\b/g)) {
-    const rest = text.slice(m.index + m[0].length, m.index + m[0].length + 2000);
-    const call = /^\s*(?:<(?:[^<>]|<(?:[^<>]|<[^<>]*>)*>)*>)?\s*\(\s*(\[[^\]]*\]|(["'])[^"'\n]*\2)\s*(,\s*\{[^}]*\})?\s*\)/.exec(rest);
+    const rest = text.slice(m.index + m[0].length, m.index + m[0].length + 1200);
+    const call = /^\s*(?:<(?:[^<>]|<(?:[^<>]|<[^<>]*>)*>)*>)?\s*\(\s*(\[[^\]]{0,1000}\]|(["'])[^"'\n]{0,500}\2)\s*(,\s*\{[^}]{0,500}\})?\s*\)/.exec(rest);
+    if (!call && !/^\s*(?:<[^()]{0,500}>)?\s*\(/.test(rest)) continue; // prose, not a call
     const patterns = call ? [...call[1].matchAll(/(["'])([^"'\n]*)\1/g)].map((x) => x[2]) : [];
     const listOnly = call && call[1].startsWith("[") ? call[1].slice(1, -1).replace(/(["'])[^"'\n]*\1/g, "").replace(/[\s,]/g, "") === "" : true;
-    if (!call && !/^\s*(?:<[^()]*>)?\s*\(/.test(rest)) continue; // prose, not a call
-    if (!call || patterns.length === 0 || !listOnly) {
+    const unsupported = patterns.some((p) => /[[\]()]/.test(p.replace(/^!/, "")));
+    if (!call || patterns.length === 0 || !listOnly || unsupported) {
       opaque.push(`import.meta.glob${rest.slice(0, 40).split("\n")[0]}`);
       continue;
     }
@@ -468,33 +520,62 @@ function globTargets(patterns, importer, files, aliases) {
 
 const isSeam = (config, from, to) => (config.graph?.seams ?? []).some((s) => matchGlob(s.from, from) && (s.to === undefined || matchGlob(s.to, to)));
 
+// Files whose hidden edges matter: graph sources, area checks and shared code (helpers the checks run). An unknown
+// file is not run by any area check, so an import it hides cannot change what an area checks.
+const blindKinds = new Set(["graph", "areas", "shared"]);
+
 /**
- * The import graph of one tree: {importers: Map<file, Set<importer>>}. Every source file (SOURCE) is read, not only
- * graph.sources, so a shared or area file importing a graph file is seen. import() and import.meta.glob edges (eager
- * or not) from an importer to a target that a seam matches are left out; a static import is never a seam.
+ * The import graph of one tree: {importers: Map<file, Set<importer>>, blind: [file]}. Every source file (SOURCE) is
+ * read, not only graph.sources, so a shared or area file importing a graph file is seen. import() and import.meta.glob
+ * edges (eager or not) from an importer to a target that a seam matches are left out; a static import is never a seam.
  * graphProblems checks that every target a seam cuts is an entry. `read(path)` returns the text (or throws).
+ * blind lists the graph, area and shared files that could hide an edge: an opaque import, a glob that cannot be
+ * expanded, text with NUL bytes (binary, UTF-16) or longer than MAX_SOURCE_LENGTH, and `links` (symlinks and
+ * submodules, from git). While any exist, every walk gives all. graph.dynamic declares what such a file loads: its
+ * globs become static edges and the file is no blind spot for its opaque imports.
  */
-export function buildGraph({ config, files, read, into }) {
+export function buildGraph({ config, files, read, into, links = [], blindInto }) {
   const aliases = config.graph?.aliases ?? {};
   const fileSet = new Set(files);
   const importers = into ?? new Map();
+  const blind = blindInto ?? new Set();
+  const isBlindKind = (f) => blindKinds.has(fileKind(f, config).kind);
   const link = (target, importer) => {
     if (target === null || target === importer) return;
     (importers.get(target) ?? importers.set(target, new Set()).get(target)).add(importer);
   };
+  const dynamic = config.graph?.dynamic ?? {};
+  for (const l of links) if (!unsafe(l) && isBlindKind(l)) blind.add(l);
+  for (const [file, globs] of Object.entries(dynamic)) {
+    if (!fileSet.has(file)) continue;
+    for (const t of files) if (globs.some((glob) => matchGlob(glob, t))) link(t, file);
+  }
   for (const file of files) {
     if (!SOURCE.test(file) || unsafe(file)) continue;
     const text = String(read(file) ?? "");
-    for (const edge of importEdges(text).edges) {
+    if (text.length > MAX_SOURCE_LENGTH || text.includes("\0")) {
+      if (isBlindKind(file)) blind.add(file);
+      continue;
+    }
+    const { edges, opaque } = importEdges(text);
+    if (opaque.length && isBlindKind(file) && !Object.hasOwn(dynamic, file)) blind.add(file);
+    for (const edge of edges) {
       if (edge.patterns) {
-        for (const t of globTargets(edge.patterns, file, files, aliases) ?? []) if (!isSeam(config, file, t)) link(t, file);
+        let targets;
+        try {
+          targets = globTargets(edge.patterns, file, files, aliases) ?? [];
+        } catch {
+          if (isBlindKind(file)) blind.add(file);
+          continue;
+        }
+        for (const t of targets) if (!isSeam(config, file, t)) link(t, file);
       } else {
         const t = resolveSpecifier(edge.spec, file, fileSet, aliases);
         if (t !== null && !(edge.kind === "lazy" && isSeam(config, file, t))) link(t, file);
       }
     }
   }
-  return { importers };
+  return { importers, blind: [...blind].sort() };
 }
 
 /**
@@ -509,21 +590,42 @@ export function graphProblems({ config, files, read }) {
   if (!g) return ["areas.json has no graph"];
   const aliases = g.aliases ?? {};
   const fileSet = new Set(files);
-  const sources = files.filter((f) => SOURCE.test(f) && matchesAny(g.sources, f) && !unsafe(f));
   const seamUsed = new Array((g.seams ?? []).length).fill(false);
-  for (const file of sources) {
+  for (const file of files) {
+    if (unsafe(file)) continue;
     const where = fileKind(file, config);
-    if (where.kind === "shared") problems.push(`${file} is in graph.sources and in shared`);
-    for (const a of where.areas) problems.push(`${file} is in graph.sources and in areas.${a}.paths`);
-    if (where.kind !== "graph") continue;
+    const isSource = matchesAny(g.sources, file);
+    if (isSource && !SOURCE.test(file) && !file.endsWith(".json")) problems.push(`${file} is in graph.sources but its imports are not read (only .js, .ts, .jsx, .tsx, .mjs, .cjs and .css files are)`);
+    if (!SOURCE.test(file)) continue;
+    if (isSource && where.kind === "shared") problems.push(`${file} is in graph.sources and in shared`);
+    if (isSource) for (const a of where.areas) problems.push(`${file} is in graph.sources and in areas.${a}.paths`);
+    const lintThis = where.kind === "graph";
+    const cutsHere = (g.seams ?? []).some((s) => matchGlob(s.from, file));
+    if (!lintThis && !cutsHere) continue;
     const text = String(read(file) ?? "");
+    if (text.length > MAX_SOURCE_LENGTH || text.includes("\0")) {
+      if (lintThis) problems.push(`${file}: binary, UTF-16 or longer than ${MAX_SOURCE_LENGTH} characters: the walk cannot read it`);
+      continue;
+    }
     const { edges, opaque } = importEdges(text);
-    for (const o of opaque) problems.push(`${file}: a non-literal ${JSON.stringify(o)} the walk cannot follow`);
+    if (lintThis && !Object.hasOwn(g.dynamic ?? {}, file)) for (const o of opaque) problems.push(`${file}: a non-literal or unsupported ${JSON.stringify(o)} the walk cannot follow (declare what it loads in graph.dynamic)`);
     const inCode = new Set(importEdges(stripComments(text)).edges.map((e) => e.spec).filter(Boolean));
     for (const edge of edges) {
-      const targets = edge.patterns ? globTargets(edge.patterns, file, files, aliases) ?? [] : [resolveSpecifier(edge.spec, file, fileSet, aliases)].filter((t) => t !== null);
-      if (!edge.patterns && targets.length === 0 && inCode.has(edge.spec) && specifierBase(edge.spec, file, aliases) !== null) problems.push(`${JSON.stringify(edge.spec)} in ${file} resolves to no file`);
-      if (edge.patterns && globTargets(edge.patterns, file, files, aliases) === null) problems.push(`${file}: import.meta.glob ${JSON.stringify(edge.patterns)} points outside the repo or at a bare package`);
+      let targets;
+      try {
+        targets = edge.patterns ? globTargets(edge.patterns, file, files, aliases) : [resolveSpecifier(edge.spec, file, fileSet, aliases)].filter((t) => t !== null);
+      } catch (err) {
+        problems.push(`${file}: import.meta.glob ${JSON.stringify(edge.patterns)}: ${err.message}`);
+        continue;
+      }
+      if (edge.patterns && targets === null) {
+        if (lintThis) problems.push(`${file}: import.meta.glob ${JSON.stringify(edge.patterns)} points outside the repo or at a bare package`);
+        continue;
+      }
+      if (lintThis && !edge.patterns) {
+        const cssPackage = file.endsWith(".css") && !edge.spec.startsWith("./") && !edge.spec.startsWith("../") && !Object.keys(aliases).some((a) => edge.spec.startsWith(a));
+        if (targets.length === 0 && !cssPackage && inCode.has(edge.spec) && specifierBase(edge.spec, file, aliases) !== null) problems.push(`${JSON.stringify(edge.spec)} in ${file} resolves to no file`);
+      }
       if (edge.kind !== "static") {
         (g.seams ?? []).forEach((s, i) => {
           if (!matchGlob(s.from, file)) return;
@@ -540,6 +642,10 @@ export function graphProblems({ config, files, read }) {
     for (const glob of globs ?? []) if (!files.some((f) => matchGlob(glob, f))) problems.push(`${where}: ${glob} matches no file`);
   };
   unmatched("graph.roots", g.roots);
+  for (const [file, globs] of Object.entries(g.dynamic ?? {})) {
+    if (!fileSet.has(file)) problems.push(`graph.dynamic: ${file} is no file`);
+    unmatched(`graph.dynamic[${JSON.stringify(file)}]`, globs);
+  }
   for (const [a, globs] of Object.entries(g.entries)) unmatched(`graph.entries.${a}`, globs);
   (g.seams ?? []).forEach((s, i) => {
     unmatched(`graph.seams[${i}].from`, [s.from]);
@@ -563,7 +669,7 @@ export function validRef(ref) {
   return typeof ref === "string" && REF.test(ref) && !ref.includes("..") && !ref.endsWith(".lock");
 }
 
-const git = (args, cwd) => execFileSync("git", args, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+const git = (args, cwd) => execFileSync("git", args, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], maxBuffer: 1 << 30 });
 
 /** Files changed between the merge base of base and head, and head (renames as delete + add). Throws on a git error. */
 export function changedFiles(base, head, cwd = process.cwd()) {
@@ -586,7 +692,8 @@ export function treeFiles(ref, cwd = process.cwd()) {
     return { mode, type, sha, path: line.slice(tab + 1) };
   });
   const files = entries.map((e) => e.path);
-  const wanted = entries.filter((e) => e.type === "blob" && SOURCE.test(e.path) && !unsafe(e.path));
+  const links = entries.filter((e) => e.mode === "120000" || e.type === "commit").map((e) => e.path);
+  const wanted = entries.filter((e) => e.type === "blob" && e.mode !== "120000" && SOURCE.test(e.path) && !unsafe(e.path));
   const text = new Map();
   if (wanted.length) {
     const out = execFileSync("git", ["cat-file", "--batch"], { cwd, input: wanted.map((e) => e.sha).join("\n") + "\n", maxBuffer: 1 << 30, stdio: ["pipe", "pipe", "pipe"] });
@@ -600,17 +707,18 @@ export function treeFiles(ref, cwd = process.cwd()) {
       at = nl + 1 + size + 1;
     }
   }
-  return { files, read: (p) => text.get(p) ?? "" };
+  return { files, links, read: (p) => text.get(p) ?? "" };
 }
 
 /** The import graph over several commits (the union of their edges), so a deleted or moved file keeps its old importers. */
 export function treeGraph({ config, refs, cwd = process.cwd() }) {
   const importers = new Map();
+  const blind = new Set();
   for (const ref of refs) {
-    const { files, read } = treeFiles(ref, cwd);
-    buildGraph({ config, files, read, into: importers });
+    const { files, read, links } = treeFiles(ref, cwd);
+    buildGraph({ config, files, read, links, into: importers, blindInto: blind });
   }
-  return { importers };
+  return { importers, blind: [...blind].sort() };
 }
 
 /**
@@ -645,8 +753,11 @@ function parseArgs(argv) {
   return opts;
 }
 
+/** Text on one line: control characters and Unicode line breaks become spaces (the runner splits on \r too). */
+export const oneLine = (text) => String(text).replace(/[\x00-\x1f\x7f\x85\u2028\u2029]/g, " ");
+
 /** One stdout line that can never start with a workflow command. */
-const say = (text) => console.log(`  ${String(text).replace(/[\r\n]/g, " ")}`);
+const say = (text) => console.log(`  ${oneLine(text)}`);
 
 function emit(result, base) {
   const out = process.env.GITHUB_OUTPUT;
@@ -666,14 +777,14 @@ export function main(argv = process.argv.slice(2)) {
     if (typeof opts.marker !== "string" || opts.marker.trim() === "") throw new Error("--marker must not be empty");
     if (!/^[A-Za-z0-9_][A-Za-z0-9_.*?/-]*$/.test(opts.tagMatch)) throw new Error("--tag-match is not a tag pattern");
   } catch (err) {
-    console.log(`::error::affected-areas: ${err.message}`);
+    console.log(`::error::affected-areas: ${oneLine(err.message)}`);
     return 2;
   }
   let config;
   try {
     config = loadConfig(opts.config);
   } catch (err) {
-    console.log(`::error::affected-areas: invalid ${opts.config}: ${String(err.message).split("\n")[0]}`);
+    console.log(`::error::affected-areas: invalid ${oneLine(opts.config)}: ${oneLine(err.message)}`);
     return 1;
   }
   const allAreas = Object.keys(config.areas).sort();
@@ -685,7 +796,7 @@ export function main(argv = process.argv.slice(2)) {
     try {
       found = releaseBase(opts.head, { marker: opts.marker, match: opts.tagMatch });
     } catch (err) {
-      console.log(`::warning::Could not read the release tags (${String(err.message).split("\n")[0]}): running every check.`);
+      console.log(`::warning::Could not read the release tags (${oneLine(String(err.message).split("\n")[0])}): running every check.`);
       emit(all("no verified baseline: the tags could not be read"));
       return 0;
     }
@@ -707,7 +818,7 @@ export function main(argv = process.argv.slice(2)) {
   try {
     files = changedFiles(base, opts.head);
   } catch (err) {
-    console.log(`::warning::Could not list the changed files (${String(err.message).split("\n")[0].replace(/[\r\n]/g, " ")}): running every check.`);
+    console.log(`::warning::Could not list the changed files (${oneLine(String(err.message).split("\n")[0])}): running every check.`);
     emit(all("the diff failed"), base);
     return 0;
   }
@@ -717,7 +828,7 @@ export function main(argv = process.argv.slice(2)) {
     try {
       graph = treeGraph({ config, refs: [mergeBase(base, opts.head), opts.head] });
     } catch (err) {
-      console.log(`::warning::Could not build the import graph (${String(err.message).split("\n")[0].replace(/[\r\n]/g, " ")}): running every check.`);
+      console.log(`::warning::Could not build the import graph (${oneLine(String(err.message).split("\n")[0])}): running every check.`);
       emit(all("the import graph could not be built"), base);
       return 0;
     }
