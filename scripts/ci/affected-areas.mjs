@@ -214,7 +214,7 @@ const unsafe = (file) => typeof file !== "string" || file === "" || /[\x00-\x1f\
 
 /**
  * The mode for a list of changed files. Per file, in order: unsafe → all; a protected path (the config in use
- * and the two scripts, opts.protectedPaths) → all; shared → all; ignore → skipped; fast → fast; an area's paths → that area (every area it matches); otherwise unknown → all.
+ * and the three scripts, opts.protectedPaths) → all; shared → all; ignore → skipped; fast → fast; an area's paths → that area (every area it matches); otherwise unknown → all.
  * Returns {mode, areas, reasons}; areas are sorted and unique (every area for mode all, none for none and fast).
  */
 export function classify(files, config, { protectedPaths = [] } = {}) {
@@ -242,12 +242,12 @@ export function classify(files, config, { protectedPaths = [] } = {}) {
   return { mode: "areas", areas: names.filter((n) => hit.has(n)), reasons };
 }
 
-/** Repo paths of the config in use and the two scripts beside it (a change to them always gives all). */
+/** Repo paths of the config in use and the three scripts beside it (a change to them always gives all). */
 export function ownPaths(configPath, cwd = process.cwd()) {
   const rel = relative(cwd, configPath).split(sep).join("/");
   const dir = posix.dirname(rel);
   const at = (f) => (dir === "." ? f : `${dir}/${f}`);
-  return [rel, at("affected-areas.mjs"), at("run-areas.mjs")];
+  return [rel, at("affected-areas.mjs"), at("run-areas.mjs"), at("area-imports.mjs")];
 }
 
 // ---- git --------------------------------------------------------------------------------------

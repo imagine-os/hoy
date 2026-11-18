@@ -59,7 +59,7 @@ rollback tag are named.
 - Merge `main` into your branch only on a conflict, or once right before merging.
 - Run only the tests your change touches, locally: red first, then green. **Never run a full suite
   locally**; CI runs it.
-- CI runs by area (`scripts/ci/areas.json`); the release version comes from the tag, so no version-bump pull request; deploys reuse the *Cut release* pass on the same commit.
+- CI runs by area (where the repo has an area map, `scripts/ci/areas.json`); the release version comes from the tag, so no version-bump pull request; deploys reuse the *Cut release* pass on the same commit.
 - T0 changes that arrive together go in one pull request and one release.
 - Every pull request description has: `Tier: T<n>` · `Requested: <UTC time>` · `Live: <UTC time, after release>`
   · `Playbook inbox: <link or path | none>` (the *Playbook check* workflow fails a PR without the `Playbook inbox:` line, and without this entry block in `AGENTS.md` and `@AGENTS.md` in `CLAUDE.md`; it does not check the `Tier`, `Requested` and `Live` lines, which the rule still requires).
