@@ -30,7 +30,7 @@ export { strings as customerStrings } from './src/modules/customer/strings';`,
 
   // ── F1b (owner, 2026-11-11, supersedes F1): no late grace; no check-in after the class has ended (the UI only hints)
   const now = Date.parse('2026-11-12T18:08:00Z');
-  const at = (minutesAgo) => ({ session: { starts_at: new Date(now - minutesAgo * 60000).toISOString() } });
+  const at = (minutesAgo) => ({ session: { starts_at: new Date(now - minutesAgo * 60000).toISOString(), ends_at: new Date(now + (60 - minutesAgo) * 60000).toISOString(), status: 'scheduled' } });
   check('Public policy retains no grace; desk offers the new staff-only 15-minute window', () => {
     assert.equal('lateGraceMinutes' in m.BOOKING_POLICY_DEFAULTS, false);
     const list = [at(8), at(20), at(-30), { session: { starts_at: 'junk' } }];

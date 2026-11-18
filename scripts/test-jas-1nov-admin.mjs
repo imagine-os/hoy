@@ -318,7 +318,7 @@ await test('PRO-04 desk: still offered to a new customer, a declined trial payme
 await test('REC-06 sell and check in: a class beyond the walk-in window is not listed; start instant and future are', () => {
   const { walkInSessions } = need('deskSale');
   const now = Date.parse('2026-11-02T14:30:00Z');
-  const s = (id, starts_at) => ({ session: { id, starts_at } });
+  const s = (id, starts_at) => ({ session: { id, starts_at, ends_at: Number.isFinite(Date.parse(starts_at)) ? new Date(Date.parse(starts_at) + 60 * 60_000).toISOString() : 'junk', status: 'scheduled' } });
   const list = [s('past', '2026-11-02T12:00:00Z'), s('running', '2026-11-02T14:00:00Z'), s('now', '2026-11-02T14:30:00Z'), s('later', '2026-11-02T16:00:00Z')];
   assert.deepEqual(walkInSessions(list, now).map((x) => x.session.id), ['now', 'later']);
   assert.deepEqual(walkInSessions([s('bad', 'not-a-date')], now), [], 'hostile: an unreadable start is not offered');
@@ -327,12 +327,12 @@ await test('REC-06 sell and check in: a class beyond the walk-in window is not l
 await test('REC-06 evening in Bogotá (UTC already tomorrow): at 20:30 a 19:00 class is gone and a 21:00 one is offered', () => {
   const { walkInSessions } = need('deskSale');
   const now = Date.parse('2026-11-03T01:30:00Z'); // 2 Nov, 20:30 in Bogotá
-  const list = [{ session: { id: 'c19', starts_at: '2026-11-03T00:00:00Z' } }, { session: { id: 'c21', starts_at: '2026-11-03T02:00:00Z' } }];
+  const list = [{ session: { id: 'c19', starts_at: '2026-11-03T00:00:00Z', ends_at: '2026-11-03T01:00:00Z', status: 'scheduled' } }, { session: { id: 'c21', starts_at: '2026-11-03T02:00:00Z', ends_at: '2026-11-03T03:00:00Z', status: 'scheduled' } }];
   assert.deepEqual(walkInSessions(list, now).map((x) => x.session.id), ['c21']);
 });
 await test('REC-06 a class chosen for check-in that has since started is no longer the choice (nothing is sent for it)', () => {
   const { chosenSession, walkInSessions } = need('deskSale');
-  const list = [{ session: { id: 'c19', starts_at: '2026-11-02T19:00:00Z' } }, { session: { id: 'c21', starts_at: '2026-11-02T21:00:00Z' } }];
+  const list = [{ session: { id: 'c19', starts_at: '2026-11-02T19:00:00Z', ends_at: '2026-11-02T20:00:00Z', status: 'scheduled' } }, { session: { id: 'c21', starts_at: '2026-11-02T21:00:00Z', ends_at: '2026-11-02T22:00:00Z', status: 'scheduled' } }];
   assert.equal(chosenSession(walkInSessions(list, Date.parse('2026-11-02T18:00:00Z')), 'c19'), 'c19', 'still to come: kept');
   assert.equal(chosenSession(walkInSessions(list, Date.parse('2026-11-02T19:15:00.001Z')), 'c19'), '', 'started while the form was open: dropped');
   assert.equal(chosenSession(list, ''), '');
@@ -342,7 +342,7 @@ await test('REC-06 a class chosen for check-in that has since started is no long
 await test('REC-06 r1: a chosen class that has started is named on screen (es and en note); none, a later class or another day\'s is not', () => {
   const { startedChoice, walkInSessions, deskStrings } = need('deskSale');
   assert.equal(typeof startedChoice, 'function', 'startedChoice is exported');
-  const all = [{ session: { id: 'c19', starts_at: '2026-11-02T19:00:00Z' } }, { session: { id: 'c21', starts_at: '2026-11-02T21:00:00Z' } }];
+  const all = [{ session: { id: 'c19', starts_at: '2026-11-02T19:00:00Z', ends_at: '2026-11-02T20:00:00Z', status: 'scheduled' } }, { session: { id: 'c21', starts_at: '2026-11-02T21:00:00Z', ends_at: '2026-11-02T22:00:00Z', status: 'scheduled' } }];
   const offered = walkInSessions(all, Date.parse('2026-11-02T19:15:00.001Z'));
   assert.equal(startedChoice(all, offered, 'c19'), true, 'chosen, then started: the note shows');
   assert.equal(startedChoice(all, offered, 'c21'), false, 'still offered: no note');
