@@ -65,11 +65,17 @@ const mode = (files) => { const r = classify(files, config); return r.mode === '
 const expect = (label, files, want) => { const got = mode(files); check(`${label} → ${want}`, got === want, got); };
 expect('agent and playbook files only', ['AGENTS.md', 'CLAUDE.md', 'docs/playbook-inbox.md', '.claude/settings.json'], 'none');
 expect('a harness only another QA workflow runs', ['scripts/h5-launch-harness.tsx'], 'none');
-expect('a component stylesheet', ['src/components/atom/Button/Button.css'], 'fast');
-expect('a module stylesheet', ['src/modules/admin/admin.css'], 'fast');
-expect('the design tokens stylesheet', ['src/design/tokens.css'], 'fast');
-expect('a changelog entry and the kanban', ['docs/changelog/_pending/x.md', 'docs/kanban.md'], 'fast');
-expect('the calendar stylesheet (read by a node-level check, which the fast steps run)', ['src/components/organism/SessionCalendar/SessionCalendar.css'], 'fast');
+expect('a component stylesheet no layout check reads', ['src/components/atom/Avatar/Avatar.css'], 'fast');
+expect('a module stylesheet no check reads (docs viewer)', ['src/modules/docs/docs.css'], 'fast');
+// Layout checks read these: phone-width overflow on the activity log (admin/table CSS), the calendar cells inside
+// .calendar-window (customer), overflow on sign-in. Fast beats areas, so they are shared.
+expect('the admin stylesheet (activity log has no horizontal scroll at phone width)', ['src/modules/admin/admin.css'], 'all');
+expect('the table stylesheets (activity log at phone width)', ['src/modules/admin/tables.css', 'src/components/organism/DataTable/DataTable.css'], 'all');
+expect('the customer stylesheet (calendar cells)', ['src/modules/customer/customer.css'], 'all');
+expect('the identity stylesheet (sign-in overflow)', ['src/modules/identity/identity.css'], 'all');
+expect('the design tokens stylesheet', ['src/design/tokens.css'], 'all');
+expect('a pending changelog note and the kanban', ['docs/changelog/_pending/x.md', 'docs/kanban.md'], 'fast');
+expect('the calendar stylesheet (cells inside .calendar-window are measured)', ['src/components/organism/SessionCalendar/SessionCalendar.css'], 'all');
 expect('a node-level check', ['scripts/test-hoy-12nov-book.mjs'], 'fast');
 expect('the comms templates (read by node-level checks only)', ['deploy/comms/hoy-templates.json'], 'fast');
 expect('the global stylesheet', ['src/styles/global.css'], 'all');
@@ -88,7 +94,13 @@ expect('the browser checks\' fake Clerk', ['scripts/fixtures/fake-clerk.js'], 'a
 expect('an unknown root file', ['new-file.txt'], 'all');
 expect('a browser check runs in its area', ['scripts/test-r1-ui.mjs'], 'areas:admin');
 expect('a public image', ['public/images/x.jpg'], 'areas:website');
-expect('the operations manual', ['docs/ops-manual/es/00-index.md'], 'areas:auth');
+expect('the operations manual (view-as reads it through the docs gate; the website check opens /manual)', ['docs/ops-manual/es/00-index.md'], 'areas:auth,website');
+expect('a numbered changelog entry (rendered at /docs/changelog)', ['docs/changelog/0004-docs-content-canvas.md'], 'areas:auth,website');
+expect('a pending changelog note stays fast', ['docs/changelog/_pending/x.md'], 'fast');
+expect('the docs overview (/docs)', ['docs/README.md'], 'areas:auth,website');
+expect('the source documents index (imported by the manual module: shared)', ['docs/source/index.json'], 'all');
+expect('the source documents readme', ['docs/source/README.md'], 'areas:auth,website');
+expect('a source PDF behind the docs gate', ['public/source/manual-de-marca.pdf'], 'areas:auth,website');
 expect('two areas at once', ['scripts/test-r1-ui.mjs', 'public/images/x.jpg'], 'areas:admin,website');
 
 // The import guard (Company OS tools/ci/area-imports.mjs): no file in an area is imported from outside it.

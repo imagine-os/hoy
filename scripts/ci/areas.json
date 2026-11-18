@@ -15,8 +15,15 @@
     "server/**",
     "src/**/*.{ts,tsx,json}",
     "src/modules/hub/*.css",
+    "src/design/tokens.css",
+    "src/app/productionFrame.css",
+    "src/modules/{admin,customer,identity}/*.css",
+    "src/components/template/**/*.css",
+    "src/components/organism/{SessionCalendar,CalendarView,DataTable,TopBar,NavBar,Drawer}/*.css",
+    "src/components/{atom,molecule}/{Button,Input,Field,OtpInput,CheckboxField,Card}/*.css",
     "src/styles/**",
     "docs/route-connectivity.md",
+    "docs/source/index.json",
     "scripts/ci/**",
     "scripts/lib/**",
     "scripts/fixtures/fake-clerk.js",
@@ -24,8 +31,9 @@
   ],
   "fast": [
     "**/*.css",
-    "docs/{changelog,frontend-completion,pages,prompts,qa,reference,rules,plans,website,source,screenshots}/**",
-    "docs/{README,app-store-compliance,architecture,data-model,decisions,delivery-room,design-system,flow-map,i18n,kanban,promotion-backend-readiness,roles,subscription-directory-status,voucher-backend-readiness,website-assets,website-motion-production,website-validation,website-versions,website-vision}.md",
+    "docs/{frontend-completion,pages,prompts,qa,reference,rules,plans,website,screenshots}/**",
+    "docs/changelog/_pending/**",
+    "docs/{app-store-compliance,architecture,data-model,decisions,delivery-room,design-system,flow-map,i18n,kanban,promotion-backend-readiness,roles,subscription-directory-status,voucher-backend-readiness,website-assets,website-motion-production,website-validation,website-versions,website-vision}.md",
     "docs/website-capture-manifest.json",
     "deploy/comms/**",
     "reference/**",
@@ -74,7 +82,11 @@
         "scripts/test-view-as-ui.mjs",
         "scripts/test-test-gate-ui.mjs",
         "scripts/test-route-connectivity.mjs",
-        "scripts/test-launch-roles-ui.mjs"
+        "scripts/test-launch-roles-ui.mjs",
+        "docs/README.md",
+        "docs/source/**",
+        "docs/changelog/**",
+        "public/source/**"
       ],
       "scripts": [
         "scripts/test-auth-production-ui.mjs",
@@ -104,7 +116,11 @@
         "scripts/test-seo-ui.mjs",
         "scripts/test-launch-website-ui.mjs",
         "scripts/test-launch-website-content.mjs",
-        "scripts/test-golive-images-ui.mjs"
+        "scripts/test-golive-images-ui.mjs",
+        "docs/ops-manual/**",
+        "docs/README.md",
+        "docs/source/**",
+        "docs/changelog/**"
       ],
       "scripts": [
         "scripts/test-website-signed-out-live.mjs",

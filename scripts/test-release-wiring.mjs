@@ -87,6 +87,20 @@ check('release: the plan runs affected-areas in release mode (base: the last ver
 check('release: a release always runs at least the fast checks (mode none counts as fast)', /none\) mode=fast/.test(rel));
 check('release: the area scripts run in the checks job', /\n  checks:\n[\s\S]*node scripts\/ci\/run-areas\.mjs --mode "\$MODE" --areas "\$AREAS"[\s\S]*\n  tag:\n/.test(rel));
 check('release: the tag message carries the marker line, written only by the tag job after the checks', /\n  tag:\n\s+needs: \[guard, checks\]/.test(rel) && /\n  tag:\n[\s\S]*printf '\\nchecks: areas-v1\\n'/.test(rel));
+// Finding 1: actions/checkout rewrites an annotated tag as lightweight; the guard must re-fetch it (forced) before it reads the type.
+const prodGuard = flows['deploy-prod.yml'];
+const refetch = prodGuard.search(/git (?:-c [^\n]*)?fetch [^\n]*--force[^\n]*"refs\/tags\/\$TAG:refs\/tags\/\$TAG"/);
+const catFile = prodGuard.search(/git cat-file -t "refs\/tags\/\$TAG"/);
+check('deploy-prod: the guard force re-fetches the tag before the annotated check (checkout makes it lightweight)', refetch >= 0 && catFile > refetch, `${refetch} ${catFile}`);
+check('deploy-prod: the tag re-fetch authenticates with a one-shot extraheader from env, masked', /GH_TOKEN: \$\{\{ github\.token \}\}/.test(prodGuard) && /::add-mask::/.test(prodGuard) && /http\.https:\/\/github\.com\/\.extraheader/.test(prodGuard));
+// Finding 2: Cut release runs every fast node script that pull requests run; derived from auth-checks.yml so the two cannot drift.
+const prJob = flows['auth-checks.yml'].slice(flows['auth-checks.yml'].indexOf('\n  fake-clerk:\n'), flows['auth-checks.yml'].indexOf('\n  real-clerk:'));
+const prFast = [...prJob.matchAll(/^\s+run: node (scripts\/test-[a-z0-9.-]+\.mjs)\s*$/gm)].map((m) => m[1]);
+const relChecks = rel.slice(rel.indexOf('\n  checks:\n'), rel.indexOf('\n  tag:\n'));
+check('release: the checks job runs every fast node script that auth-checks.yml runs on a pull request', prFast.length > 20 && prFast.every((x) => relChecks.includes(`node ${x}`)), prFast.filter((x) => !relChecks.includes(`node ${x}`)).join(', '));
+check('release: the fast node scripts run in every mode (no mode condition on that step)', !/Node-level checks[^\n]*\n\s+if:/.test(relChecks) && /- name: Node-level checks/.test(relChecks));
+const nodeOf = (t) => [...t.matchAll(/node-version: (\d+)/g)].map((m) => m[1]);
+check('release: the checks job uses the same node version as the pull request job', nodeOf(relChecks).length > 0 && nodeOf(relChecks).every((v) => nodeOf(prJob).includes(v)), `${nodeOf(relChecks)} vs ${nodeOf(prJob)}`);
 for (const f of ['release.yml', 'deploy-test.yml', 'deploy-prod.yml']) {
   const build = flows[f].split('\n      - ').find((s) => /run: npm run build:production$/m.test(s)) ?? '';
   check(`${f}: the production build stamps the version from the tag (RELEASE_TAG)`, /RELEASE_TAG: /.test(build), build.slice(0, 160));

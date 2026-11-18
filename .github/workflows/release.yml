@@ -116,7 +116,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: 24
+          node-version: 22
           cache: npm
       - name: Plan (areas changed since the last verified release)
         id: plan
@@ -149,6 +149,38 @@ jobs:
         run: |
           node scripts/test-auth-identity.mjs
           QA_PROD_ONLY=1 QA_PROD_DIST=dist QA_STRICT_DEMO_DATA=1 node scripts/test-auth-builds.mjs
+      - name: Node-level checks (the same fast steps as a pull request, on this exact commit, every mode)
+        run: |
+          node scripts/test-jas-1nov-customer.mjs
+          node scripts/test-view-as.mjs
+          node scripts/test-hub-production.mjs
+          node scripts/test-pay-page-frame.mjs
+          node scripts/test-launch-routes.mjs
+          node scripts/test-launch-config.mjs
+          node scripts/test-pack-reads.mjs
+          node scripts/test-golive-h3.mjs
+          node scripts/test-payment-paid-at.mjs
+          node scripts/test-companyos-studio-data.mjs
+          node scripts/test-teacher-codes.mjs
+          node scripts/test-h1-connected-flows.mjs
+          node scripts/test-companyos-provider.mjs
+          node scripts/test-jas-1nov-admin.mjs
+          node scripts/test-staff-walkin-window.mjs
+          node scripts/test-void-payment.mjs
+          node scripts/test-admin-activity.mjs
+          node scripts/test-golive-images.mjs
+          node scripts/test-class-images.mjs
+          node scripts/test-real-signup.mjs
+          node scripts/test-move-private-settings.mjs
+          node scripts/test-seo.mjs
+          node scripts/test-hoy-12nov-book.mjs
+          node scripts/test-hoy-12nov-fix.mjs
+          node scripts/test-hoy-12nov-r1.mjs
+          node scripts/test-hoy-12nov-r2.mjs
+          node scripts/test-any-start-time.mjs
+          node scripts/test-release-wiring.mjs
+          node scripts/test-ci-areas.mjs
+          node scripts/test-release-check-reuse.mjs
       - name: Bundle (server + built frontend, secret scan)
         run: node server/make-bundle.mjs "$RUNNER_TEMP/web"
       # The Auth checks areas, as on a pull request: the browser checks read the production build from QA_PROD_DIST

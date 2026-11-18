@@ -79,7 +79,17 @@ jobs:
 
       - name: The tag exists, is annotated and is on main
         id: tag
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
+          # actions/checkout rewrites an annotated tag as a lightweight one (it fetches the tag's commit), so the type
+          # check below would always refuse. Re-fetch the real tag object, forced, with a one-shot masked token header.
+          auth="$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
+          echo "::add-mask::$auth"
+          if ! git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $auth" fetch --quiet --force origin "refs/tags/$TAG:refs/tags/$TAG"; then
+            echo "::error::Tag $TAG does not exist on GitHub. Create it with the 'Cut release' workflow."
+            exit 1
+          fi
           if ! git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
             echo "::error::Tag $TAG does not exist on GitHub. Create it with the 'Cut release' workflow."
             exit 1
