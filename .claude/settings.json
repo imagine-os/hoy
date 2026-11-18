@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Agent|Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=\"$CLAUDE_PROJECT_DIR/../Company-OS/tools/agent-guard/model-guard.mjs\"; if [ -f \"$f\" ]; then node \"$f\"; fi"
+          }
+        ]
+      }
+    ]
+  }
+}
