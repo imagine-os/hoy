@@ -13,3 +13,5 @@ Intent: a change to one module's page or copy must not run every browser check (
 - Cut release writes `checks: areas-v2`. The first release after this finds only v1-marked tags and runs every area.
 
 Replay (Company OS `tools/ci/replay.mjs`, last 15 merges to main): as merged, 0 of 15 narrow, because each also changed a workflow, the lockfile or a CI script. Of the last 15 merges that touched `src/`, the `src/` part narrows in 2, and area script runs drop from 240 to 233. Real gains need per-module strings and checks that stay on one surface; see the Company OS PR.
+
+Rollback: revert this PR. The v1 scripts trust only `checks: areas-v1`, so they ignore tags written with `checks: areas-v2`, and the next release runs every area (slower, never fewer checks). No tag needs deleting.
