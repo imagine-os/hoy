@@ -195,7 +195,10 @@ try {
     assert.equal(hidden.modality_id, 'mod_pulso', 'a schedule the reader cannot see: the title');
     const none = fromRecord(adapters.class_sessions, { id: 'o6', data: { title: 'Morning flow', schedule: 's1', schedule_row: { id: 's1' } } });
     assert.equal(none.modality_id, null, 'no type anywhere: none (the class is not open for booking)');
-    assert.deepEqual(planQuery(adapters.class_sessions, undefined).spec.include, [{ field: 'schedule', as: 'schedule_row', fields: ['modality', 'image'] }], 'one read brings the schedule\'s class type and image');
+    assert.deepEqual(planQuery(adapters.class_sessions, undefined).spec.include, [
+      { field: 'schedule', as: 'schedule_row', fields: ['modality', 'image'] },
+      { field: 'coach', as: 'coach_row', fields: ['default_class_photo'] },
+    ], 'one read brings the schedule type/cover and assigned coach default without asking for the portrait');
     const data = toData(adapters.class_sessions, { modality_id: 'mod_pulso', booked_count: 9, starts_at: '2026-11-01T07:00:00-05:00', level: 'all' }, 'update');
     assert.deepEqual(data, { modality: 'pulso', starts_at: '2026-11-01T12:00:00.000Z' }, 'server count and derived columns are never sent');
   });
@@ -334,6 +337,27 @@ try {
     api.put('credit_entry', { lot: lot.id, person: 'p1', delta: 4, reason: 'grant' });
     const g = await p.get('class_ledger', lot.id);
     assert.equal(g.id, lot.id); assert.equal(g.delta, 4); assert.equal(g.expires_at, '2026-12-31');
+  });
+  await test('get: a class uses its actual coach default or schedule cover in the same occurrence query', async () => {
+    const api = fakeApi(), p = make(api);
+    const originalCover = UUID(), substituteCover = UUID(), classCover = UUID();
+    const original = api.put('coach', { default_class_photo: originalCover });
+    const substitute = api.put('coach', { default_class_photo: substituteCover, photo: UUID() });
+    const portraitOnly = api.put('coach', { photo: UUID() });
+    const schedule = api.put('schedule', { coach: original.id, modality: 'solido' });
+    const withCover = api.put('schedule', { coach: original.id, modality: 'solido', image: classCover });
+    const base = { title: 'Morning flow', starts_at: '2026-11-02T12:00:00Z', ends_at: '2026-11-02T12:50:00Z' };
+    const a = api.put('occurrence', { ...base, coach: substitute.id, schedule: schedule.id });
+    const b = api.put('occurrence', { ...base, coach: substitute.id, schedule: withCover.id });
+    const c = api.put('occurrence', { ...base, coach: portraitOnly.id, schedule: schedule.id });
+    const first = await p.get('class_sessions', a.id);
+    assert.equal(first.modality_id, 'mod_solido');
+    assert.equal(first.image_url, `/media/${substituteCover}`);
+    assert.equal((await p.get('class_sessions', b.id)).image_url, `/media/${classCover}`);
+    assert.equal((await p.get('class_sessions', c.id)).image_url, null, 'a website portrait is never a class cover');
+    assert.equal(queriesOf(api, 'occurrence').length, 3, 'exactly one request per class lookup');
+    assert.equal(queriesOf(api, 'coach').length, 0);
+    assert.equal(queriesOf(api, 'schedule').length, 0);
   });
   await test('signed out: the website reads the live timetable, teachers, rooms and prices, with no token from the browser', async () => {
     const api = fakeApi(); const p = make(api, { getToken: async () => null });

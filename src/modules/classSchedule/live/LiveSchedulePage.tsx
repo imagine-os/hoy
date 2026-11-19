@@ -17,10 +17,10 @@ import { refusalCopy } from '../../../data/companyos/refusals';
 import { useData, useTable } from '../../../data/DataContext';
 import type { ModalityRow } from '../../../data/schema';
 import { SharedImageField } from '../../../components/organism/SharedImageField/SharedImageField';
-import { COACH_PHOTO, SCHEDULE_IMAGE, ImageDraft, coachPhotoUrl, saveThenRemoveOld, type ImagePort, type ImageSaveNotice } from '../../../data/companyos/publicImages';
+import { COACH_CLASS_COVER, COACH_FIELDS, COACH_PHOTO, SCHEDULE_IMAGE, ImageDraft, coachPhotoUrl, saveThenRemoveOld, type ImagePort, type ImageSaveNotice } from '../../../data/companyos/publicImages';
 import {
   WEEKDAYS, cancelOccurrenceOps, createCoachOps, createResourceOps, createScheduleOps, generateOps, publishScheduleOps,
-  coachProfileOf, scheduleImageOf, schedulePublishBlocked, scheduleProblems, scheduleTypeHint, updateCoachOps, updateResourceOps, updateScheduleOps, type CoachProfile, type ScheduleDraft,
+  coachProfileOf, scheduleImageOf, schedulePublishBlocked, scheduleProblems, scheduleTypeHint, updateCoachClassCoverOps, updateCoachOps, updateResourceOps, updateScheduleOps, type CoachProfile, type ScheduleDraft,
 } from './scheduleOps';
 
 import { downloadScheduleWorkbook, exportRows } from './scheduleExport';
@@ -192,6 +192,7 @@ function Teachers({ rows, canWrite, busy, photoBusy, setPhotoBusy, run }: { rows
   const { t, lang } = useI18n();
   const [edit, setEdit] = useState<{ id: string | null; personId: string; name: string; email: string; phone: string; active: boolean; profile: CoachProfile; photoAtOpen: unknown; draft: ImageDraft; key: string } | null>(null);
   const [photoNotice, setPhotoNotice] = useState<ImageSaveNotice>(null);
+  const [cover, setCover] = useState<{ id: string; saved: unknown; photo: string | null; draft: ImageDraft; key: string } | null>(null);
   const { rows: classTypes } = useTable<ModalityRow>('modalities');
   const data = useData();
   const person = (c: CosRow) => (c.person ?? {}) as { id?: string; name?: string; email?: string; phone?: string };
@@ -199,7 +200,24 @@ function Teachers({ rows, canWrite, busy, photoBusy, setPhotoBusy, run }: { rows
   const setProfile = (change: Partial<CoachProfile>) => setEdit(e => e && { ...e, profile: { ...e.profile, ...change } });
   return <div className="stack">
     {photoNotice && <p className="small register-diff" role="status">{photoNotice === 'old_image_remains' ? t('media.picker.oldRemains') : refusalCopy(photoNotice, lang)}</p>}
-    {canWrite && <Button icon="plus" onClick={() => setEdit({ id: null, personId: '', name: '', email: '', phone: '', active: true, profile: coachProfileOf({}), photoAtOpen: undefined, draft: new ImageDraft(data as unknown as ImagePort), key: newActionKey() })}>{t('live.new')}</Button>}
+    {canWrite && <Button icon="plus" disabled={!!cover || busy || photoBusy} onClick={() => setEdit({ id: null, personId: '', name: '', email: '', phone: '', active: true, profile: coachProfileOf({}), photoAtOpen: undefined, draft: new ImageDraft(data as unknown as ImagePort), key: newActionKey() })}>{t('live.new')}</Button>}
+    {cover && canWrite && <Card title={t('live.f.classCover')}>
+      <p className="small muted">{t('live.f.classCoverHint')}</p>
+      <SharedImageField key={cover.id} label={t('live.f.classCover')} value={cover.photo} disabled={busy}
+        owner={{ ...COACH_CLASS_COVER, ownerId: cover.id }} saved={coachPhotoUrl(cover.saved)} draft={cover.draft}
+        onBusyChange={setPhotoBusy} onChange={photo => setCover({ ...cover, photo, key: newActionKey() })} />
+      <div className="row wrap">
+        <Button disabled={busy || photoBusy || cover.photo === coachPhotoUrl(cover.saved)} loading={busy} onClick={async () => {
+          const owner = { ...COACH_CLASS_COVER, ownerId: cover.id };
+          setPhotoNotice(null);
+          const out = await saveThenRemoveOld(data as unknown as ImagePort, { saved: cover.saved, next: cover.photo, owner, draft: cover.draft },
+            () => run(updateCoachClassCoverOps(cover.id, cover.photo, cover.saved), cover.key, t('live.saved')));
+          setPhotoNotice(out.notice);
+          if (out.result) setCover(null);
+        }}>{t('live.save')}</Button>
+        <Button variant="ghost" disabled={busy || photoBusy} onClick={() => setCover(null)}>{t('core.common.cancel')}</Button>
+      </div>
+    </Card>}
     {edit && <Card title={edit.id ? t('live.edit') : t('live.new')}>
       <div className="grid grid-2">
         <Field label={t('live.f.name')} required>{id => <Input id={id} value={edit.name} onChange={e => setEdit({ ...edit, name: e.target.value })} />}</Field>
@@ -213,8 +231,14 @@ function Teachers({ rows, canWrite, busy, photoBusy, setPhotoBusy, run }: { rows
       <Toggle checked={edit.active} onChange={on => setEdit({ ...edit, active: on })} label={t('live.f.active')} />
       <div className="row wrap"><Button disabled={busy || photoBusy || !edit.name.trim()} loading={busy} onClick={async () => { const d = { name: edit.name, email: edit.email, phone: edit.phone, active: edit.active, profile: edit.profile, photoAtOpen: edit.photoAtOpen }; setPhotoNotice(null); const out = await saveThenRemoveOld(data as unknown as ImagePort, { saved: edit.photoAtOpen, next: edit.profile.photo, owner: edit.id ? { ...COACH_PHOTO, ownerId: edit.id } : undefined, draft: edit.draft }, () => run(edit.id ? updateCoachOps(edit.id, edit.personId, d) : createCoachOps(d), edit.key, t('live.saved'))); setPhotoNotice(out.notice); if (out.result) setEdit(null); }}>{t('live.save')}</Button><Button variant="ghost" disabled={busy || photoBusy} onClick={() => setEdit(null)}>{t('core.common.cancel')}</Button></div>
     </Card>}
-    {sorted.length === 0 ? <EmptyState compact title={t('live.empty')} /> : sorted.map(c => <Card key={c.id} padding="sm" title={str(person(c).name) || '—'} actions={canWrite && <Button size="sm" variant="outline" onClick={() => setEdit({ id: c.id, personId: str(person(c).id), name: str(person(c).name), email: str(person(c).email), phone: str(person(c).phone), active: c.active !== false, profile: coachProfileOf(c), photoAtOpen: c.photo, draft: new ImageDraft(data as unknown as ImagePort), key: newActionKey() })}>{t('live.edit')}</Button>}>
-      <p className="small">{c.active === false ? <Badge>{t('live.draft')}</Badge> : <Badge tone="success">{t('live.f.active')}</Badge>}</p>
+    {sorted.length === 0 ? <EmptyState compact title={t('live.empty')} /> : sorted.map(c => <Card key={c.id} padding="sm" title={str(person(c).name) || '—'} actions={canWrite && <div className="row wrap">
+      <Button size="sm" variant="outline" disabled={!!cover || busy || photoBusy} onClick={() => setEdit({ id: c.id, personId: str(person(c).id), name: str(person(c).name), email: str(person(c).email), phone: str(person(c).phone), active: c.active !== false, profile: coachProfileOf(c), photoAtOpen: c.photo, draft: new ImageDraft(data as unknown as ImagePort), key: newActionKey() })}>{t('live.edit')}</Button>
+      <Button size="sm" variant="outline" disabled={!!edit || !!cover || busy || photoBusy} onClick={() => {
+        setPhotoNotice(null);
+        setCover({ id: c.id, saved: c[COACH_FIELDS.classCover], photo: coachPhotoUrl(c[COACH_FIELDS.classCover]), draft: new ImageDraft(data as unknown as ImagePort), key: newActionKey() });
+      }}>{t('live.f.classCover')}</Button>
+    </div>}>
+      <p className="small">{c.active === false ? <Badge>{t('live.draft')}</Badge> : <Badge tone="success">{t('live.f.active')}</Badge>} {coachPhotoUrl(c[COACH_FIELDS.classCover]) && <Badge tone="neutral">{t('live.f.classCoverSet')}</Badge>}</p>
     </Card>)}
   </div>;
 }

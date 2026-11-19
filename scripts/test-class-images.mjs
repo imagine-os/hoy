@@ -75,6 +75,24 @@ await test('read: the occurrence query asks for the schedule\'s image in the sam
   assert.ok(inc.fields.includes('image') && inc.fields.includes('modality'), JSON.stringify(inc));
 });
 
+await test('teacher default cover: explicit class cover wins; uses the assigned teacher, never the portrait', () => {
+  needs(provider);
+  const coach_row = { default_class_photo: NEW_ID, photo: OLD };
+  assert.equal(session({ coach_row }, { image: ID }).image_url, `/media/${ID}`);
+  assert.equal(session({ coach_row }, {}).image_url, `/media/${NEW_ID}`);
+  assert.equal(session({ coach_row }).image_url, `/media/${NEW_ID}`);
+  assert.equal(session({ coach_row: { photo: OLD } }).image_url, null);
+  const include = provider.adapters.class_sessions.include.find((i) => i.field === 'coach');
+  assert.deepEqual(include.fields, ['default_class_photo']);
+});
+await test('teacher default cover: one guarded coach update never overwrites the website portrait', () => {
+  needs(ops);
+  assert.deepEqual(ops.updateCoachClassCoverOps('c1', `/media/${NEW_ID}`, OLD), [
+    { op: 'update', entity: 'coach', id: 'c1', data: { default_class_photo: NEW_ID }, ifMatch: { field: 'default_class_photo', value: OLD } },
+  ]);
+  assert.deepEqual(ops.updateCoachClassCoverOps('c1', null, OLD)[0].data, { default_class_photo: null });
+});
+
 // ── Editor: what the form writes ─────────────────────────────────────────────────────────────────────────────────
 const draft = { title: 'Fuego', weekday: 1, start_time: '07:00', resource: 'r1', coach: 'c1', capacity: 10, valid_from: '2026-11-12', active: true, modality: 'fuego' };
 await test('editor: create writes the image as a bare id; none writes nothing', () => {
