@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// run-areas v1
+// run-areas v2
 // Source: Company OS tools/ci/run-areas.mjs. Website repos copy this file verbatim to
 // scripts/ci/run-areas.mjs, next to affected-areas.mjs; change it in Company OS and copy it again.
 // Docs: Company OS tools/ci/README.md.
@@ -14,9 +14,9 @@
 // Area names come from $GITHUB_OUTPUT, so they are checked against areas.json before anything runs.
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { DEFAULT_CONFIG, loadConfig, normalizeScript } from "./affected-areas.mjs";
+import { DEFAULT_CONFIG, loadConfig, normalizeScript, oneLine } from "./affected-areas.mjs";
 
-export const VERSION = "run-areas v1";
+export const VERSION = "run-areas v2";
 const DEFAULT_RUNNER = ["npm", "run"];
 
 /** The scripts to run, in config order, each once: {name, env}. Throws on an unknown area. */
@@ -80,7 +80,7 @@ export function main(argv = process.argv.slice(2)) {
     }
     console.log(`${VERSION}: mode ${opts.mode}: ${scripts.length} script(s): ${scripts.map((s) => s.name).join(", ")}`);
   } catch (err) {
-    console.log(`::error::run-areas: ${String(err.message).split("\n")[0]}`);
+    console.log(`::error::run-areas: ${oneLine(err.message)}`);
     return 2;
   }
   const results = [];

@@ -5,11 +5,13 @@
 // - every area script is a file that exists (runner ["node"]: an area script is a file path, run as `node <file>`);
 // - every glob matches at least one tracked file, and the shape is valid (validateConfig, the shared script's own);
 // - a few paths land where they should (shared → all, agent files → none, CSS → fast, an area's file → that area);
-// - no file in an area is imported from outside it (area-imports, the shared import guard).
+// - no file in an area is imported from outside it (area-imports, the shared import guard);
+// - v2: src/ is classified by its importers (graph in areas.json): graphProblems finds no import the walk cannot see,
+//   and pinned files land where they should (a module page → its areas, the app shell → all).
 // Run: node scripts/test-ci-areas.mjs
 import { execFileSync } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
-import { classify, configProblems, validateConfig } from './ci/affected-areas.mjs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { buildGraph, classify, configProblems, graphProblems, matchGlob, validateConfig } from './ci/affected-areas.mjs';
 import { importProblems } from './ci/area-imports.mjs';
 
 let failed = 0;
@@ -45,6 +47,8 @@ check('the fake-clerk job has fast steps and run-areas', job.includes('node scri
 check('the by-hand real-clerk and real-signup jobs still run test-auth-real-clerk', /\n  real-clerk:[\s\S]*node scripts\/test-auth-real-clerk\.mjs\n[\s\S]*\n  real-signup:[\s\S]*node scripts\/test-auth-real-clerk\.mjs --real-api/.test(wf));
 
 const repoFiles = execFileSync('git', ['ls-files', '-z'], { encoding: 'utf8' }).split('\0').filter(Boolean);
+const read = (f) => readFileSync(f, 'utf8');
+const graph = buildGraph({ config, files: repoFiles.filter((f) => existsSync(f)), read });
 const scriptFiles = repoFiles.filter((f) => /^scripts\/test-[a-z0-9.-]+\.mjs$/.test(f));
 const problems = validateConfig(config, { workflowScripts: OLD.filter((s) => !fastScripts.includes(s)), packageScripts: scriptFiles, repoFiles });
 check('validateConfig: no check lost, every area script exists, every glob matches a file', problems.length === 0, problems.join('; '));
@@ -58,10 +62,13 @@ for (const s of OLD.filter((x) => !fastScripts.includes(x))) {
   check(`${s}: a change to it runs it`, r.mode === 'all' || (r.mode === 'areas' && r.areas.some((n) => running.includes(n))), `${r.mode} ${r.areas.join(',')} (runs in ${running.join(',')}; path in ${owners(s).join(',')})`);
 }
 
-// Where some paths land. All TypeScript under src/ is shared: the router imports every module's index.ts eagerly
-// (src/app/registry.ts, import.meta.glob), each index reaches its pages, and pages import across modules, so the
-// import guard below leaves no module file to a single area. Areas are the browser checks' own files and assets.
-const mode = (files) => { const r = classify(files, config); return r.mode === 'areas' ? `areas:${r.areas.join(',')}` : r.mode; };
+// Where some paths land. v2: TypeScript under src/ is decided by its importers (the reverse import closure, graph in
+// areas.json). Each module index's lazy page imports are seams, so a file only module pages import reaches only those
+// modules (entries: modules by the surfaces their routes declare). A module index and what it imports statically
+// (strings, specs, route lists) reach the registry, a root: App merges every module's strings into one dictionary
+// that any page reads by key, so a strings change runs everything. Anything the shell (src/app/**, src/main.tsx) or
+// sign-in (src/auth/**) imports reaches a root too.
+const mode = (files) => { const r = classify(files, config, { graph }); return r.mode === 'areas' ? `areas:${r.areas.join(',')}` : r.mode; };
 const expect = (label, files, want) => { const got = mode(files); check(`${label} → ${want}`, got === want, got); };
 expect('agent and playbook files only', ['AGENTS.md', 'CLAUDE.md', 'docs/playbook-inbox.md', '.claude/settings.json'], 'none');
 expect('a harness only another QA workflow runs', ['scripts/h5-launch-harness.tsx'], 'none');
@@ -84,9 +91,18 @@ expect('sign-in code', ['src/auth/clerkFlows.ts'], 'all');
 expect('package.json', ['package.json'], 'all');
 expect('the lockfile', ['package-lock.json'], 'all');
 expect('the Hoy server', ['server/app.mjs'], 'all');
-expect('a shared component', ['src/components/atom/Button/Button.tsx'], 'all');
-expect('a module strings file (browser checks assert copy: never fast)', ['src/modules/staff/desk/strings.ts'], 'all');
-expect('a module page', ['src/modules/admin/ExpensesPage.tsx'], 'all');
+expect('a shared component sign-in uses (reaches src/auth)', ['src/components/atom/Button/Button.tsx'], 'all');
+expect('a module strings file (one global dictionary: every page reads any key)', ['src/modules/staff/desk/strings.ts'], 'all');
+expect('a module page (admin, customer, website and auth checks all visit admin routes)', ['src/modules/admin/ExpensesPage.tsx'], 'areas:admin,auth,customer,website');
+expect('the website strings', ['src/modules/website/strings.ts'], 'all');
+expect('a voucher redeem page (every area visits a voucher route)', ['src/modules/vouchers/production/pages.tsx'], 'areas:admin,auth,customer,website');
+expect('the teacher pages (admin and auth visit /teach)', ['src/modules/teacher/pages.ts'], 'areas:admin,auth');
+expect('the app shell', ['src/app/App.tsx'], 'all');
+expect('the module registry', ['src/app/registry.ts'], 'all');
+expect('the data provider the shell mounts', ['src/data/DataContext.tsx'], 'all');
+expect('an ambient type file', ['src/vite-env.d.ts'], 'fast');
+expect('a build generator that reads src', ['scripts/gen-tokens.mjs'], 'all');
+expect('a harness no area script uses', ['scripts/booking-launch-harness.tsx'], 'fast');
 expect('the CI config', ['scripts/ci/areas.json'], 'all');
 expect('a workflow', ['.github/workflows/release.yml'], 'all');
 expect('a shared QA helper', ['scripts/lib/launch-qa.mjs'], 'all');
@@ -104,8 +120,49 @@ expect('a source PDF behind the docs gate', ['public/source/manual-de-marca.pdf'
 expect('two areas at once', ['scripts/test-r1-ui.mjs', 'public/images/x.jpg'], 'areas:admin,website');
 
 // The import guard (Company OS tools/ci/area-imports.mjs): no file in an area is imported from outside it.
-const imports = importProblems({ config, files: repoFiles, read: (f) => readFileSync(f, 'utf8'), aliases: { '@/': '' } });
+const imports = importProblems({ config, files: repoFiles, read, aliases: { '@/': '' } });
 check('area-imports: no area file is imported by a shared, unknown, fast or other-area file', imports.length === 0, imports.slice(0, 5).join('; '));
+
+// The walk fails closed only if it sees every import: no non-literal import(), no specifier that resolves to nothing,
+// no seam that cuts an edge to a file that is no entry, no dead glob (graphProblems, the shared script's own).
+const pkg = JSON.parse(read('package.json'));
+const gp = graphProblems({ config, files: repoFiles, read, packages: [...Object.keys(pkg.dependencies ?? {}), ...Object.keys(pkg.devDependencies ?? {})] });
+// graph.dynamic declares test-route-connectivity.mjs as loading nothing the walk must follow: it bundles module files
+// with esbuild, which no import shows. That is sound only while it runs in every area (any area selected runs it).
+const everyArea = Object.values(config.areas).every((a) => a.scripts.includes('scripts/test-route-connectivity.mjs'));
+check('test-route-connectivity runs in every area (its graph.dynamic [] declaration relies on it)', everyArea && Object.hasOwn(config.graph.dynamic, 'scripts/test-route-connectivity.mjs'));
+check('graphProblems: the import graph has no blind spot', gp.length === 0, gp.slice(0, 5).join('; '));
+
+// Every route an area's browser check visits belongs to a module the area's graph.entries list: a change that only
+// that module's pages import must run the check. Routes come from each module's index.ts (`path: '…'`); visits are the
+// route-like string literals in the area's scripts. route-connectivity and launch-roles visit every route and run in
+// every area, so they are left out.
+const routeOwners = [];
+for (const m of readdirSync('src/modules')) {
+  const f = `src/modules/${m}/index.ts`;
+  if (existsSync(f)) for (const x of read(f).matchAll(/path\s*:\s*['"]([^'"]+)['"]/g)) routeOwners.push([x[1], m]);
+}
+const routeRe = (p) => new RegExp(`^${p.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/:[A-Za-z]+/g, '[^/]+').replace(/\*$/, '.*')}/?$`);
+const ownersOf = (u) => {
+  const hits = routeOwners.filter(([p]) => routeRe(p).test(u));
+  const exact = hits.filter(([p]) => !p.includes(':') && !p.endsWith('*'));
+  return [...new Set((exact.length ? exact : hits).map(([, m]) => m))];
+};
+// Any route-like literal: after a quote, a backtick, a `#` (hash routes) or a `${…}` (`${base}/site/plans`), up to the
+// next quote, space, `?` or `#`. Only literals that match a module route count, so file paths and prose drop out.
+const VISIT = /(?:["'`}]|#)#?(\/(?:[a-z][a-z0-9_\-/:]*)?)(?=["'`\s?#)]|$)/gm;
+for (const [area, a] of Object.entries(config.areas)) {
+  const missing = new Set();
+  for (const sc of a.scripts.map((x) => (typeof x === 'string' ? x : x.name))) {
+    if (/route-connectivity|launch-roles/.test(sc)) continue;
+    for (const m of read(sc).matchAll(VISIT)) {
+      for (const mod of ownersOf(m[1].replace(/\$\{[^}]*\}/g, 'x'))) {
+        if (!(config.graph.entries[area] ?? []).some((g) => matchGlob(g, `src/modules/${mod}/index.ts`))) missing.add(`${mod} (${sc.replace('scripts/', '')} visits ${m[1]})`);
+      }
+    }
+  }
+  check(`graph.entries.${area} covers every module its browser checks visit`, missing.size === 0, [...missing].slice(0, 6).join('; '));
+}
 
 console.log(failed ? `\n${failed} ci areas check(s) failed` : '\nci areas passed');
 process.exitCode = failed ? 1 : 0;

@@ -5,7 +5,7 @@
 #       ─► guard (main, version format, not taken, higher than the last tag, company-os.json valid)
 #       ─► checks (the deploy gate: server, test gate, docs gate, deploy wiring, build, bundle; then the
 #                  Auth checks areas changed since the last verified release)
-#       ─► tag (annotated, on the exact commit that was checked, with the marker "checks: areas-v1") ─► summary
+#       ─► tag (annotated, on the exact commit that was checked, with the marker "checks: areas-v2") ─► summary
 #
 # How to run it: Actions -> "Cut release" -> Run workflow -> keep "Branch: main" -> version (e.g.
 # 0.26.0, without the v) -> summary -> Run. No version-bump pull request (owner decision Q1, 2026-11-18): the
@@ -15,7 +15,7 @@
 # exact commit (scripts/release-check-reuse.mjs: the run and its guard, checks and tag jobs all passed).
 #
 # CI by area (Company OS tools/ci): the checks compare this commit with the newest earlier v* tag whose
-# message carries "checks: areas-v1" (written only by the tag job below, after the checks passed). Without
+# message carries "checks: areas-v2" (written only by the tag job below, after the checks passed). Without
 # one (the first release under this scheme, a tag from before) every area runs. A release always runs at
 # least the deploy gate, even when only agent files changed.
 #
@@ -209,7 +209,7 @@ jobs:
         with:
           ref: ${{ needs.guard.outputs.sha }}
           persist-credentials: false
-      # The marker line "checks: areas-v1" tells the next release's plan that this commit passed its checks (Company
+      # The marker line "checks: areas-v2" tells the next release's plan that this commit passed its checks (Company
       # OS tools/ci): this job runs only after the checks job succeeded. The token is used for the push only.
       - name: Create and push the annotated tag
         env:
@@ -223,7 +223,7 @@ jobs:
             printf 'Requires Company OS %s\n\n' "$REQUIRES"
             printf 'Cut by %s with the Cut release workflow: %s/%s/actions/runs/%s\n' \
               "$GITHUB_ACTOR" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID"
-            printf '\nchecks: areas-v1\n'
+            printf '\nchecks: areas-v2\n'
           } > "$RUNNER_TEMP/tag-message.txt"
           git tag -a "$tag" "$SHA" -F "$RUNNER_TEMP/tag-message.txt"
           auth="$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
