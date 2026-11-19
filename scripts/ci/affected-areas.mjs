@@ -420,7 +420,9 @@ export function importEdges(text) {
   const seen = new Set();
   const push = (kind, spec) => {
     const key = `${kind}\0${spec}`;
-    if (!seen.has(key)) seen.add(key) && edges.push({ kind, spec });
+    if (seen.has(key)) return;
+    seen.add(key);
+    edges.push({ kind, spec });
   };
   const all = (re, kind) => {
     for (const m of text.matchAll(re)) push(kind, m[1]);
@@ -455,7 +457,9 @@ export function importEdges(text) {
     }
     const eager = /\beager\s*:\s*true\b/.test(call[3] ?? "");
     const key = `glob\0${eager}\0${patterns.join("\0")}`;
-    if (!seen.has(key)) seen.add(key) && edges.push({ kind: eager ? "glob-eager" : "lazy-glob", patterns });
+    if (seen.has(key)) continue;
+    seen.add(key);
+    edges.push({ kind: eager ? "glob-eager" : "lazy-glob", patterns });
   }
   return { edges, opaque };
 }
