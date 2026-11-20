@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useI18n } from '../../../i18n/I18nProvider';
+import { refusalText } from '../../admin/timetableSave';
 import { useSession } from '../../../auth/SessionProvider';
 import { addDays, dateKey, formatDateTime, studioDate, STUDIO_TIMEZONE } from '../../../i18n/format';
 import { Card } from '../../../components/molecule/Card/Card';
@@ -73,7 +74,11 @@ export function LiveSchedulePage() {
     if (!q.request || busy) return null;
     setBusy(true); setMessage(null);
     try { const ids = await batch(q.request, ops, key); setMessage({ tone: 'ok', text: ok }); q.reload(); return ids; }
-    catch (e) { setMessage({ tone: 'error', text: deskErrorText(errorCode(e), t) }); return null; }
+    catch (e) {
+      const code = errorCode(e);
+      setMessage({ tone: 'error', text: code === 'resource_overlap' ? refusalText(e, lang) : deskErrorText(code, t) });
+      return null;
+    }
     finally { setBusy(false); }
   };
 
@@ -138,8 +143,8 @@ function Classes({ rows, rooms, coaches, roomName, coachName, weekday, scope, ca
           <Field label={t('live.f.room')}>{id => <Select id={id} value={edit.draft.resource} onChange={e => { const r = rooms.find(x => x.id === e.target.value); setEdit({ ...edit, draft: { ...edit.draft, resource: e.target.value, capacity: r ? num(r.capacity) : edit.draft.capacity } }); }}><option value="">—</option>{rooms.map(r => <option key={r.id} value={r.id}>{str(r.name)} · {t('live.rooms.mats', { n: num(r.capacity) })}</option>)}</Select>}</Field>
           <Field label={t('live.f.teacher')}>{id => <Select id={id} value={edit.draft.coach} onChange={e => setEdit({ ...edit, draft: { ...edit.draft, coach: e.target.value } })}><option value="">—</option>{coaches.filter(c => c.active !== false).map(c => <option key={c.id} value={c.id}>{coachName(c.id)}</option>)}</Select>}</Field>
           <Field label={t('live.f.capacity')}>{id => <Input id={id} inputMode="numeric" value={String(edit.draft.capacity)} onChange={e => setEdit({ ...edit, draft: { ...edit.draft, capacity: Number(e.target.value.replace(/\D/g, '')) || 0 } })} />}</Field>
-          <Field label={t('live.f.from')}>{id => <Input id={id} type="date" value={edit.draft.valid_from} onChange={e => setEdit({ ...edit, draft: { ...edit.draft, valid_from: e.target.value } })} />}</Field>
-          <Field label={t('live.f.until')}>{id => <Input id={id} type="date" value={edit.draft.valid_until ?? ''} onChange={e => setEdit({ ...edit, draft: { ...edit.draft, valid_until: e.target.value } })} />}</Field>
+          <Field label={t('live.f.from')} hint={t('live.f.fromHint')}>{id => <Input id={id} type="date" value={edit.draft.valid_from} onChange={e => setEdit({ ...edit, draft: { ...edit.draft, valid_from: e.target.value } })} />}</Field>
+          <Field label={t('live.f.until')} hint={t('live.f.untilHint')}>{id => <Input id={id} type="date" value={edit.draft.valid_until ?? ''} onChange={e => setEdit({ ...edit, draft: { ...edit.draft, valid_until: e.target.value } })} />}</Field>
         </div>
         <Field label={t('live.f.description')} hint={t('live.f.descriptionHint')}>{id => <textarea id={id} className="input adm-textarea" rows={4} maxLength={CLASS_DESCRIPTION_LIMIT} value={edit.draft.description ?? ''} disabled={busy} onChange={e => setEdit({ ...edit, draft: { ...edit.draft, description: e.target.value }, key: newActionKey() })} />}</Field>
         {canEditImage && (edit.id ? <SharedImageField key={edit.id} label={t('live.f.classImage')} value={edit.draft.image ?? null} disabled={busy} owner={{ ...SCHEDULE_IMAGE, ownerId: edit.id }} saved={coachPhotoUrl(edit.draft.imageAtOpen)} draft={edit.imageDraft} onBusyChange={setPhotoBusy} onChange={image => setEdit({ ...edit, draft: { ...edit.draft, image } })} /> : <p className="xs muted">{t('live.f.classImageAfterSave')}</p>)}
@@ -153,6 +158,9 @@ function Classes({ rows, rooms, coaches, roomName, coachName, weekday, scope, ca
           <Button size="sm" variant="tonal" disabled={busy || schedulePublishBlocked(r)} onClick={() => run(publishScheduleOps(r.id, r.active === false), newActionKey(), t('live.saved'))}>{r.active === false ? t('live.publish') : t('live.unpublish')}</Button>
         </div>}>
           <p className="small">{coachName(r.coach)} · {roomName(r.resource)} · {t('live.rooms.mats', { n: num(r.capacity) })} <Badge tone={r.active === false ? 'neutral' : 'success'}>{r.active === false ? t('live.draft') : t('live.published')}</Badge> {str(r.modality) ? <Badge>{typeName(r.modality)}</Badge> : <Badge tone="warn">{t('live.noType')}</Badge>}</p>
+           {str(r.valid_until)
+             ? <p className="small muted">{t('live.validity.bounded', { from: str(r.valid_from).slice(0, 10) || '—', until: str(r.valid_until).slice(0, 10) })}</p>
+             : <p className="small muted">{t('live.validity.open', { from: str(r.valid_from).slice(0, 10) || '—' })}</p>}
           {canWrite && scheduleTypeHint(r) && <p className="xs muted" data-type-hint>{t(`live.typeHint.${scheduleTypeHint(r)}`)}</p>}
         </Card>
       ))}
@@ -181,6 +189,7 @@ function Dates({ rows, schedules, rooms, roomName, coachName, canWrite, busy, ru
       }}>{t('live.applyRoom', { room: str(room.name), n: capacity })}</Button>}
       {cancel?.id === o.id && <div className="stack-sm">
         <p className="xs">{t('live.cancel.body', { n: booked })}</p>
+        <p className="xs">{t('live.cancel.oneDate')}</p>
         <Field label={t('live.cancel.reason')} required>{id => <Input id={id} value={cancel.reason} onChange={e => setCancel({ ...cancel, reason: e.target.value })} autoFocus />}</Field>
         <div className="row wrap"><Button variant="danger" disabled={busy || !cancel.reason.trim()} loading={busy} onClick={async () => { if (await run(cancelOccurrenceOps(o.id, cancel.reason), cancel.key, t('live.cancel.done'))) setCancel(null); }}>{t('live.cancel.confirm', { n: booked })}</Button><Button variant="ghost" onClick={() => setCancel(null)}>{t('core.common.cancel')}</Button></div>
       </div>}
