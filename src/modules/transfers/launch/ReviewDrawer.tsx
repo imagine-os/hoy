@@ -10,6 +10,7 @@ import type { ProductRow } from '../../products/launch/productMaster';
 import { CosError, refusalKey } from './cos';
 import { amountDiffers, reviewOps, runPaymentOps, type PendingItem } from './payments';
 import { useAction, useCos } from './useCos';
+import './ReviewDrawer.css';
 
 /** Receipt images are shown only as PNG/JPEG, whatever type the stream reports (never HTML or script in this origin). */
 const IMAGE_TYPES = ['image/png', 'image/jpeg'];
@@ -62,7 +63,7 @@ export function ReviewDrawer({ item, customer, current, onClose, onDone }: { ite
         : image ? <img src={image} alt={t('payLaunch.review.receiptAlt')} style={{ width: '100%', height: 'auto' }} />
           : imageError ? <Notice tone="warn">{t('payLaunch.review.receiptUnavailable')}</Notice> : <p role="status">{t('payLaunch.loading')}</p>}
       <Notice>{t('payLaunch.review.compare')}</Notice>
-      <label className="row"><input type="checkbox" checked={compared} disabled={locked} onChange={(e) => setCompared(e.target.checked)} /> {t('payLaunch.review.compared')}</label>
+      <label className="payment-review-comparison"><input type="checkbox" checked={compared} disabled={locked} onChange={(e) => setCompared(e.target.checked)} /> <span>{t('payLaunch.review.compared')}</span></label>
       <Field label={t('payLaunch.review.received')} required>{(id) => <Input id={id} name="received" type="number" inputMode="numeric" min={1} step={1} value={amount} disabled={locked} onChange={(e) => edit(() => setAmount(e.target.value))} />}</Field>
       {differs && <Notice tone="warn">{t('payLaunch.review.differs')}</Notice>}
       <Field label={t('payLaunch.review.reason')} hint={t('payLaunch.review.reasonHint')}>{(id) => <Input id={id} name="reason" maxLength={500} value={reason} disabled={locked} onChange={(e) => edit(() => setReason(e.target.value))} />}</Field>

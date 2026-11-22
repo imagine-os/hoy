@@ -1,0 +1,30 @@
+.payment-review-comparison {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-md);
+  min-height: 44px;
+  padding: var(--sp-md);
+  border: 2px solid var(--color-primary);
+  border-radius: var(--r-ctl);
+  background: var(--color-surface-2);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.payment-review-comparison input[type="checkbox"] {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  margin: 0;
+  accent-color: var(--color-primary);
+}
+
+.payment-review-comparison:focus-within {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.payment-review-comparison span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
