@@ -140,6 +140,7 @@ function JoinScreen({ code, occurrence }: { code: string; occurrence: string | n
         <Button loading={action.busy} disabled={action.busy || !picked} onClick={() => picked && void book(picked)}>{t('vouchers.group.join.book')}</Button>
       </div>
     </Card>}
+    {view.lead && <Notice tone="info" data-lead-note>{view.places ? t('vouchers.group.join.leadNote', { n: view.places }) : t('vouchers.group.join.leadNoteUnknown')}</Notice>}
     {action.uncertain ? <Notice tone="warn">{t('vouchers.group.join.uncertain')}</Notice> : errorText && <Notice tone="danger">{errorText}</Notice>}
     <p className="xs muted">{t('vouchers.group.join.rules')}</p>
   </Shell>;
