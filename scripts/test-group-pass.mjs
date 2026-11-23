@@ -420,5 +420,56 @@ await test('website (owner 2026-11-23): the public site shows no group pass card
   assert.deepEqual(P.websitePlans(all).map((p) => p.key), ['pack6']);
 });
 
+// ── integrated round 1 ────────────────────────────────────────────────────────────────────────────────────────────
+await test('S-02 desk (Q1): a person with no account is registered into an unnamed place in one /batch, nothing sold', async () => {
+  const G = need('group');
+  const w = world();
+  await w.approve();
+  let p = w.as('usr_buyer');
+  const [pass] = await G.myGroupPasses(w.cos);
+  await G.joinPass(p, { personId: w.people.buyer.id, occurrenceId: w.occ.id, code: pass.code }, 'join-lead-0010');
+  w.as('usr_desk');
+  const consents = [{ policy: 'terms', version: '2026-10-01' }, { policy: 'privacy', version: '2026-10-01' }];
+  const ops = G.registerIntoPassOps({ person: { name: ' Nina Nueva ', phone: '300 111 2222', email: 'Nina@Example.TEST' }, consents, code: pass.code, sessionId: w.occ.id, today: '2026-11-24' });
+  assert.deepEqual(ops.map((o) => `${o.op}:${o.entity}`), ['create:person', 'create:member', 'create:policy_acceptance', 'create:policy_acceptance', 'create:booking'], 'person → member → consents → booking; no payment');
+  assert.deepEqual(ops[0].data, { name: 'Nina Nueva', phone: '300 111 2222', whatsapp: '300 111 2222', email: 'nina@example.test' });
+  assert.deepEqual(ops[4].data, { occurrence: w.occ.id, person: { $ref: 0 }, entitlement: 'pass', pass_code: pass.code, source: 'desk', status: 'booked' });
+  const from = w.cos.calls.length;
+  const res = await G.deskRegisterIntoParty(w.cos, { party: pass.id, person: { name: 'Nina Nueva', phone: '3001112222' }, consents, sessionId: w.occ.id, today: '2026-11-24' }, 'desk-register-01');
+  const [b] = batches(w.cos, from);
+  assert.equal(b.key, 'desk-register-01');
+  assert.equal(b.body.ops.length, 5);
+  assert.ok(!b.body.ops.some((o) => o.entity === 'payment'), 'nothing is sold');
+  const nina = w.cos.db.person.find((x) => x.data.name === 'Nina Nueva');
+  assert.equal(res.personId, nina.id);
+  assert.equal(w.cos.db.booking.find((x) => x.id === res.bookingId).data.party, pass.id, 'the new person holds a place of the party');
+  for (const bad of [{ name: 'N', phone: '3001112222' }, { name: 'Nina', phone: '12' }]) assert.throws(() => G.registerIntoPassOps({ person: bad, consents, code: pass.code, sessionId: w.occ.id, today: '2026-11-24' }), /pass_person_required/, JSON.stringify(bad));
+  assert.throws(() => G.registerIntoPassOps({ person: { name: 'Nina', phone: '3001112222' }, consents: [], code: pass.code, sessionId: w.occ.id, today: '2026-11-24' }), /consent_required/);
+  const D = need('desk');
+  for (const k of ['desk.party.none', 'desk.party.register', 'desk.party.register.cta', 'desk.party.register.consent']) { const c = D.deskStrings[k]; assert.ok(c?.es && c?.en && c.es !== c.en, k); }
+  assert.match(D.deskStrings['desk.party.none'].es, /registr/i, 'the empty state offers to register here');
+});
+await test('C-44 view: when this booking would make the person the lead, the page says it books the class for the whole group', () => {
+  const G = need('group'), V = need('vouchers');
+  const sessions = [S('occ_a'), S('occ_b')];
+  const first = G.joinView({ code: 'ABCD2345', occurrence: null, own: { ...V0 }, named: null, sessions, now: NOW, uncertain: false });
+  assert.deepEqual([first.mode, first.lead, first.places], ['pick', true, 4]);
+  const returned = G.joinView({ code: 'ABCD2345', occurrence: 'occ_b', own: { ...V0, occurrence: null, uses: 0 }, named: null, sessions, now: NOW, uncertain: false });
+  assert.deepEqual([returned.mode, returned.lead], ['take', true], 'an old ?c= link after the pass was returned books the class again as lead');
+  const join = G.joinView({ code: 'ABCD2345', occurrence: 'occ_b', own: { ...V0, occurrence: 'occ_b', uses: 1, joined: 1 }, named: null, sessions, now: NOW, uncertain: false });
+  assert.equal(join.lead, false, 'a pass with its class booked: a place in it');
+  assert.equal(G.joinView({ code: 'ABCD2345', occurrence: 'occ_b', own: null, named: null, sessions, now: NOW, uncertain: false }).lead, false, 'a friend\'s ?c= link: a place (the server decides)');
+  for (const k of ['vouchers.group.join.leadNote', 'vouchers.group.join.leadNoteUnknown']) { const c = V.productionStrings[k]; assert.ok(c?.es && c?.en && c.es !== c.en, k); }
+});
+await test('C-43/C-44: a booked pass whose valid_until has passed keeps its share link and its join while the class is ahead', () => {
+  const G = need('group');
+  const v = { ...V0, valid_until: '2026-11-20', uses: 1, joined: 2, occurrence: 'occ_b' };
+  const c = G.passCard(v, { today: '2026-11-24', now: NOW, cls: { starts_at: new Date(NOW + 864e5).toISOString() }, loc: LOC });
+  assert.deepEqual([c.state, c.shareUrl], ['used', 'https://hoy.example.test/#/app/pass/ABCD2345?c=occ_b']);
+  const view = G.joinView({ code: 'ABCD2345', occurrence: 'occ_b', own: v, named: null, sessions: [S('occ_b')], now: NOW, uncertain: false });
+  assert.deepEqual([view.mode, view.target, view.lead], ['take', 'occ_b', false]);
+  assert.equal(G.passState({ ...V0, valid_until: '2026-11-20' }, '2026-11-24'), 'expired', 'an unused pass past its date is still expired');
+});
+
 console.log(`\ngroup pass: ${passed} passed, ${failures} failed`);
 if (failures) process.exit(1);

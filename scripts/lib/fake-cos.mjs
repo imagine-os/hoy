@@ -9,8 +9,9 @@ const stable = (v) => JSON.stringify(v, (_, x) => (x && typeof x === 'object' &&
 
 /** Fields each entity stores; anything else in a write is dropped silently, like the real runtime. */
 const FIELDS = {
-  person: ['name', 'email', 'phone', 'user'],
-  member: ['person', 'price_audience'],
+  person: ['name', 'email', 'phone', 'user', 'whatsapp'],
+  member: ['person', 'price_audience', 'source', 'status', 'joined_at'],
+  policy_acceptance: ['person', 'policy', 'version'],
   product: ['key', 'name', 'kind', 'price', 'tax_rate_percent', 'credits', 'validity_days', 'freezable', 'audience', 'active', 'places'],
   payment: ['person', 'product', 'amount', 'method', 'status', 'date', 'concept', 'reference', 'provider', 'notes', 'for_entity', 'for_id', 'price_override_reason', 'status_reason'],
   // ADR 0045 (bookings 1.11.0): `party`, `party_size`, `party_lead` are server-set; `pass_code` is read on create, never stored.
@@ -32,7 +33,7 @@ export function fakeCos({ productDates = true, approvedBy = true, voidRules = fa
   const fields = clone(FIELDS);
   if (productDates) fields.product.push('valid_from', 'valid_until');
   if (approvedBy) fields.payment.push('approved_by', 'approved_at');
-  const db = { person: [], member: [], product: [], payment: [], booking: [], invoice: [], file: [], voucher: [], occurrence: [] };
+  const db = { person: [], member: [], product: [], payment: [], booking: [], invoice: [], file: [], voucher: [], occurrence: [], policy_acceptance: [] };
   const keys = new Map();
   const settings = { review_hours: '', review_closed_dates: '', hold_minutes_transfer: 15, hold_minutes_desk: 60, reschedule_hours: 12, late_cancel_hours: 12, policy_as_of_booking: true, hold_frozen_while_payment_pending: true };
   const calls = [], uploads = new Map();
