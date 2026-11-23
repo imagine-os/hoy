@@ -110,6 +110,8 @@ export const payLaunchStrings: StringTable = {
   'payLaunch.review.openReceipt': { es: 'Ver comprobante', en: 'Open receipt' },
   'payLaunch.review.receiptAlt': { es: 'Comprobante de transferencia', en: 'Transfer receipt' },
   'payLaunch.review.receiptUnavailable': { es: 'No se puede abrir la imagen todavía (falta la ruta de archivos del servidor).', en: 'The image cannot be opened yet (the server file route is missing).' },
+  'payLaunch.review.compareStep': { es: '1. Comparar con el banco (obligatorio)', en: '1. Compare with the bank (required)' },
+  'payLaunch.review.confirmationNeedsComparison': { es: 'Para habilitar Confirmar pago, marca la casilla del paso 1 después de comparar.', en: 'To enable Confirm payment, check the step 1 box after comparing.' },
   'payLaunch.review.compare': { es: 'Compara con la notificación de Bancolombia antes de confirmar.', en: 'Compare with the Bancolombia notification before confirming.' },
   'payLaunch.review.compared': { es: 'Comparé el comprobante con la notificación del banco', en: 'I compared the receipt with the bank notification' },
   'payLaunch.review.price': { es: 'Precio del producto: {price}', en: 'Product price: {price}' },
