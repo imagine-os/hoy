@@ -447,7 +447,7 @@ await test('S-02 desk (Q1): a person with no account is registered into an unnam
   assert.throws(() => G.registerIntoPassOps({ person: { name: 'Nina', phone: '3001112222' }, consents: [], code: pass.code, sessionId: w.occ.id, today: '2026-11-24' }), /consent_required/);
   const D = need('desk');
   for (const k of ['desk.party.none', 'desk.party.register', 'desk.party.register.cta', 'desk.party.register.consent']) { const c = D.deskStrings[k]; assert.ok(c?.es && c?.en && c.es !== c.en, k); }
-  assert.match(D.deskStrings['desk.party.none'].es, /registr/i, 'the empty state offers to register here');
+  assert.match(D.deskStrings['desk.party.none'].es, /reg[ií]str/i, 'the empty state offers to register here');
 });
 await test('C-44 view: when this booking would make the person the lead, the page says it books the class for the whole group', () => {
   const G = need('group'), V = need('vouchers');

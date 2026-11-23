@@ -22,7 +22,8 @@ import { PRODUCTION_BUILD } from '../../config/launch';
 import { sessionCounter } from './desk/deskFigures';
 import { deskErrorText } from './desk/strings';
 import { errorCode } from './desk/wire';
-import type { AttendanceTo } from './desk/deskCommands';
+import { DESK_CONSENTS, type AttendanceTo } from './desk/deskCommands';
+import { Toggle } from '../../components/atom/Toggle/Toggle';
 import { maskPhone, personMatches, usePeople, type Person } from './people';
 import { S02 } from './specs';
 import { approvedPackageRows, packageState } from '../../data/packages';
@@ -36,7 +37,7 @@ import { type Lang } from '../../i18n/types';
 import { useLiveUpdates } from '../../data/companyos/hooks';
 import { PartySummary } from '../../components/molecule/PartySummary/PartySummary';
 import { cosOf } from '../transfers/launch/cos';
-import { deskAddToParty, deskSwap, parties, partyView, type PassBookingRow } from '../vouchers/production/groupPass';
+import { deskAddToParty, deskRegisterIntoParty, deskSwap, parties, partyView, type PassBookingRow } from '../vouchers/production/groupPass';
 
 interface WaitlistRow extends BaseRow { user_id: string; session_id: string; position: number; status: string }
 
@@ -93,6 +94,7 @@ export function CheckinPage() {
     .sort((a, z) => partyKey(a.b).localeCompare(partyKey(z.b))), [bookings, byId, q]);
   const groups = useMemo(() => parties(bookings as PassBookingRow[]), [bookings]);
   const [partyEdit, setPartyEdit] = useState<{ party: string; swap: string | null; q: string } | null>(null);
+  const [newcomer, setNewcomer] = useState({ name: '', phone: '', email: '', consent: false });
   const expected = roster.filter((x) => x.b.status === 'booked');
   const arrived = roster.filter((x) => x.b.status === 'checked_in');
   const missed = roster.filter((x) => x.b.status === 'no_show' || x.b.status === 'late_cancel');
@@ -225,11 +227,32 @@ export function CheckinPage() {
       keys.done(intent); setPartyEdit(null);
     } catch (e) { setError(deskErrorText(errorCode(e), t)); } finally { attendanceBusy.current = false; setBusy(null); }
   };
+  /** Q1: someone with no account takes an unnamed place: registered (verbal consent) and booked in one batch, nothing sold. */
+  const partyRegister = async () => {
+    if (!partyEdit || partyEdit.swap || !selected || !partyOpen || !newcomer.consent || attendanceBusy.current || busy) return;
+    const cos = cosOf(data);
+    if (!cos) { setError(deskErrorText('disconnected', t)); return; }
+    const edit = partyEdit, person = { name: newcomer.name, phone: newcomer.phone, email: newcomer.email };
+    const intent = ['party-register', user.id, edit.party, person, selected.session.id];
+    attendanceBusy.current = true; setBusy(`party:${edit.party}`); setError(null);
+    try {
+      await deskRegisterIntoParty(cos, { party: edit.party, person, consents: DESK_CONSENTS, sessionId: selected.session.id, today: dateKey(new Date()) }, keys.keyFor(intent));
+      keys.done(intent); setPartyEdit(null); setNewcomer({ name: '', phone: '', email: '', consent: false });
+    } catch (e) { setError(deskErrorText(errorCode(e), t)); } finally { attendanceBusy.current = false; setBusy(null); }
+  };
   const partyForm = () => partyEdit && (
     <div className="stack-sm checkin-undo" data-party-edit>
       <Input autoFocus aria-label={t('desk.party.search')} placeholder={t('desk.party.search')} value={partyEdit.q} onChange={(e) => setPartyEdit({ ...partyEdit, q: e.target.value })} onKeyDown={(e) => { if (e.key === 'Escape') setPartyEdit(null); }} />
-      {partyEdit.q.trim().length >= 2 && partyCandidates.length === 0 && <p className="xs muted">{t('desk.party.none')}</p>}
       {partyCandidates.map((c) => <button key={c.id} type="button" className="register-candidate" disabled={!!busy} onClick={() => void partyWrite(c)}><span className="small">{c.name}</span><span className="xs muted"> · {maskPhone(c.phone)}</span></button>)}
+      {!partyEdit.swap && partyEdit.q.trim().length >= 2 && partyCandidates.length === 0 && <div className="stack-sm" data-party-register>
+        <p className="xs muted">{t('desk.party.none')}</p>
+        <span className="eyebrow">{t('desk.party.register')}</span>
+        <Input aria-label={t('desk.party.register.name')} placeholder={t('desk.party.register.name')} value={newcomer.name} onChange={(e) => setNewcomer({ ...newcomer, name: e.target.value })} />
+        <Input aria-label={t('desk.party.register.phone')} placeholder={t('desk.party.register.phone')} inputMode="tel" value={newcomer.phone} onChange={(e) => setNewcomer({ ...newcomer, phone: e.target.value })} />
+        <Input aria-label={t('desk.party.register.email')} placeholder={t('desk.party.register.email')} type="email" value={newcomer.email} onChange={(e) => setNewcomer({ ...newcomer, email: e.target.value })} />
+        <Toggle size="sm" checked={newcomer.consent} onChange={(on) => setNewcomer({ ...newcomer, consent: on })} label={t('desk.party.register.consent')} />
+        <div className="row"><Button size="sm" variant="tonal" icon="user-plus" disabled={!!busy || !newcomer.consent || newcomer.name.trim().length < 2 || newcomer.phone.replace(/\D/g, '').length < 7} loading={busy === `party:${partyEdit.party}`} onClick={() => void partyRegister()}>{t('desk.party.register.cta')}</Button></div>
+      </div>}
       <div className="row"><Button size="sm" variant="ghost" onClick={() => setPartyEdit(null)}>{t('core.common.cancel')}</Button></div>
     </div>
   );

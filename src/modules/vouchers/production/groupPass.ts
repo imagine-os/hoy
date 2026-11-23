@@ -1,6 +1,6 @@
 import type { BookingRow } from '../../../data/schema';
 import type { DataProvider } from '../../../data/types';
-import { CosError, myPerson, queryAll, type CosPort } from '../../transfers/launch/cos';
+import { batch, CosError, myPerson, queryAll, type BatchOp, type CosPort } from '../../transfers/launch/cos';
 import { CODE_RE, normalizeCode } from './model';
 import { refusalMessage } from '../../customer/booking/refusals';
 
@@ -129,7 +129,10 @@ type JoinSession = { session: { id: string; status: string; starts_at: string; c
 export function joinView<S extends JoinSession>(i: { code: string; occurrence: string | null; own: GroupVoucher | null; named: string | null; sessions: readonly S[]; now: number; uncertain: boolean }) {
   const target = safeOccurrence(i.occurrence) ?? i.own?.occurrence ?? i.named;
   const mode: 'bad' | 'take' | 'pick' = !CODE_RE.test(i.code) ? 'bad' : target ? 'take' : 'pick';
-  return { mode, target, offered: mode === 'pick' ? passClasses(i.sessions.filter((x) => !!x.modality), i.own?.places ?? null, i.now) : [], locked: i.uncertain };
+  // This booking makes the person the group's lead (it books the class for every place) when the pass has no class yet:
+  // a first use, or an old ?c= link after the pass was returned (known to the buyer, whose pass shows no class).
+  const lead = mode === 'pick' || (mode === 'take' && !!i.own && !i.own.occurrence && !i.named);
+  return { mode, target, lead, places: i.own?.places ?? null, offered: mode === 'pick' ? passClasses(i.sessions.filter((x) => !!x.modality), i.own?.places ?? null, i.now) : [], locked: i.uncertain };
 }
 export interface JoinFailure { code: string | null; details: { needed?: number; free?: number; occurrence?: string } | null; named: string | null }
 /** A refused join: its details, and the pass's own class when the server names it (`pass_occurrence_mismatch`). */
@@ -189,6 +192,30 @@ export async function partyCode(cos: CosPort, party: string): Promise<string> {
 export async function deskAddToParty(data: DataProvider, cos: CosPort, i: { party: string; personId: string; sessionId: string }, key: string): Promise<PassBookingRow> {
   const code = await partyCode(cos, i.party);
   return placeBooking(data, passBooking({ personId: i.personId, occurrenceId: i.sessionId, code, source: 'desk' }), key);
+}
+
+/**
+ * S-02 (Q1): the desk registers someone with no account into an unnamed place, selling nothing: the person, their
+ * member facet and the consents they gave out loud (as the desk sale does), then their pass booking, in one `/batch`.
+ */
+export interface NewAttendee { name: string; phone: string; email?: string }
+export function registerIntoPassOps(i: { person: NewAttendee; consents: readonly { policy: string; version: string }[]; code: string; sessionId: string; today: string }): BatchOp[] {
+  const name = i.person.name.trim(), phone = i.person.phone.trim(), email = i.person.email?.trim().toLowerCase();
+  if (name.length < 2 || phone.replace(/\D/g, '').length < 7) throw new CosError('pass_person_required');
+  if (!i.consents.length) throw new CosError('consent_required');
+  const person = { $ref: 0 };
+  return [
+    { op: 'create', entity: 'person', data: { name, phone, whatsapp: phone, ...(email ? { email } : {}) } },
+    { op: 'create', entity: 'member', data: { person, source: 'desk', status: 'active', joined_at: i.today } },
+    ...i.consents.map((c): BatchOp => ({ op: 'create', entity: 'policy_acceptance', data: { person, policy: c.policy, version: c.version } })),
+    { op: 'create', entity: 'booking', data: { occurrence: i.sessionId, person, entitlement: 'pass', pass_code: normalizeCode(i.code), source: 'desk', status: 'booked' } },
+  ];
+}
+export async function deskRegisterIntoParty(cos: CosPort, i: { party: string; person: NewAttendee; consents: readonly { policy: string; version: string }[]; sessionId: string; today: string }, key: string): Promise<{ personId: string; bookingId: string }> {
+  const code = await partyCode(cos, i.party);
+  const ids = await batch(cos, registerIntoPassOps({ ...i, code }), key);
+  cos.refreshTables?.();
+  return { personId: ids[0], bookingId: ids[ids.length - 1] };
 }
 
 /** The desk swaps a named person (`person` on the booking; desk only, audited by Company OS). */
