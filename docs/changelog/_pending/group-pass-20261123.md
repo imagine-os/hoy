@@ -27,6 +27,10 @@ started shows no share link; the join page stays locked while an answer is unkno
 finds the pass's class from the server's details; the lead is warned that cancelling cancels the group's places and
 loses the code; Products hides Classes for a group product and sends no credits; no group pass card on the public
 website (owner, 2026-11-23), members buy it in the app's Plans.
+Integrated round 1 fixes: the desk registers someone with no account into an unnamed place without selling anything
+(person, member facet, verbal consents and the pass booking in one /batch, Q1); the join page says when a booking holds
+the class for the whole group (a first use, or an old link after the pass was returned); a booked pass past its
+valid_until keeps its link and its join while the class is ahead (Company OS decides until check-in closes).
 Alternative rejected: one booking with X seats (Q8: X linked bookings keep capacity, check-in and the person rules).
 
 Files: `src/modules/products/launch/{productMaster.ts,ProductMasterPage.tsx}`, `src/modules/products/strings.ts`;
