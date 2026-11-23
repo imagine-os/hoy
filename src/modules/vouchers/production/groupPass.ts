@@ -1,7 +1,8 @@
 import type { BookingRow } from '../../../data/schema';
 import type { DataProvider } from '../../../data/types';
 import { CosError, myPerson, queryAll, type CosPort } from '../../transfers/launch/cos';
-import { normalizeCode } from './model';
+import { CODE_RE, normalizeCode } from './model';
+import { refusalMessage } from '../../customer/booking/refusals';
 
 /**
  * C-43 / C-44 / S-02 · the group pass on Company OS (ADR 0045: payments 2.10.0, bookings 1.11.0, credits 1.5.0).
@@ -37,13 +38,33 @@ export function groupVoucher(rec: unknown): GroupVoucher | null {
   };
 }
 
-/** Display only (the server refuses on its own). */
-export type PassState = 'unused' | 'used' | 'expired' | 'voided';
-export function passState(v: GroupVoucher, today: string): PassState {
+/**
+ * Display only (the server refuses on its own). `used`: its class is booked and still to come. `spent`: used, but no
+ * place of the group is active any more (the lead cancelled late or missed it: the code is lost). `closed`: its class
+ * has started or ended.
+ */
+export type PassState = 'unused' | 'used' | 'spent' | 'closed' | 'expired' | 'voided';
+export function passState(v: GroupVoucher, today: string, cls: { starts_at?: string | null } | null = null, now = Date.now()): PassState {
   if (v.voided_at) return 'voided';
-  if (v.uses > 0 || v.occurrence) return 'used';
+  if (v.uses > 0 || v.occurrence) {
+    if (v.uses > 0 && v.joined === 0) return 'spent';
+    const start = cls?.starts_at ? Date.parse(cls.starts_at) : NaN;
+    return Number.isFinite(start) && start <= now ? 'closed' : 'used';
+  }
   if (v.valid_until && v.valid_until < today) return 'expired';
   return 'unused';
+}
+
+/** C-43: one pass card. A link to share and the way in only while the pass can still be used. */
+export interface PassCard { state: PassState; code: string; places: number; named: { n: number; total: number } | null; shareUrl: string | null; cta: { path: string; key: string } | null }
+export function passCard(v: GroupVoucher, o: { today: string; now: number; cls: { starts_at?: string | null } | null; loc?: Pick<Location, 'origin' | 'pathname'> }): PassCard {
+  const state = passState(v, o.today, o.cls, o.now);
+  const live = state === 'unused' || state === 'used';
+  return {
+    state, code: v.code, places: v.places, named: v.occurrence ? { n: v.joined, total: v.places } : null,
+    shareUrl: live ? passLink(v.code, v.occurrence, o.loc) : null,
+    cta: live ? { path: passPath(v.code, v.occurrence), key: state === 'unused' ? 'vouchers.group.use' : 'vouchers.group.open' } : null,
+  };
 }
 
 /**
@@ -64,7 +85,7 @@ export async function myGroupPasses(cos: CosPort): Promise<GroupVoucher[]> {
 /** The join page: `/app/pass/<CODE>`, and once the class is booked `?c=<occurrence>` so friends land on that class. */
 export const passPath = (code: string, occurrenceId?: string | null) => `/app/pass/${encodeURIComponent(normalizeCode(code))}${occurrenceId ? `?c=${encodeURIComponent(occurrenceId)}` : ''}`;
 /** The full share link (hash router), on this site's own address. */
-export function passLink(code: string, occurrenceId?: string | null, loc: Pick<Location, 'origin' | 'pathname'> = window.location): string {
+export function passLink(code: string, occurrenceId?: string | null, loc: Pick<Location, 'origin' | 'pathname'> = globalThis.location): string {
   return `${loc.origin}${loc.pathname}#${passPath(code, occurrenceId)}`;
 }
 
@@ -96,6 +117,43 @@ export function passClasses<T extends { session: { id: string; status: string; s
   return list.filter(({ session: s }) => s.status === 'scheduled' && Date.parse(s.starts_at) > now && (Number(s.capacity) || 0) - (Number(s.booked_count) || 0) >= Math.max(1, places ?? 1));
 }
 
+// ── C-44 · the join page's decisions ─────────────────────────────────────────────────────────────────────────────
+const OCC_ID = /^[A-Za-z0-9_-]{1,80}$/;
+export const safeOccurrence = (v: unknown): string | null => (typeof v === 'string' && OCC_ID.test(v) ? v : null);
+type JoinSession = { session: { id: string; status: string; starts_at: string; capacity: number; booked_count: number }; modality?: unknown };
+/**
+ * What the page shows: `bad` (no valid code), `take` (a class is known: from `?c=`, the buyer's used pass, or the
+ * server naming the pass's class), or `pick` (a first use: classes with a class type and room for the group). While an
+ * answer was lost (`uncertain`), everything stays `locked` but the same retry.
+ */
+export function joinView<S extends JoinSession>(i: { code: string; occurrence: string | null; own: GroupVoucher | null; named: string | null; sessions: readonly S[]; now: number; uncertain: boolean }) {
+  const target = safeOccurrence(i.occurrence) ?? i.own?.occurrence ?? i.named;
+  const mode: 'bad' | 'take' | 'pick' = !CODE_RE.test(i.code) ? 'bad' : target ? 'take' : 'pick';
+  return { mode, target, offered: mode === 'pick' ? passClasses(i.sessions.filter((x) => !!x.modality), i.own?.places ?? null, i.now) : [], locked: i.uncertain };
+}
+export interface JoinFailure { code: string | null; details: { needed?: number; free?: number; occurrence?: string } | null; named: string | null }
+/** A refused join: its details, and the pass's own class when the server names it (`pass_occurrence_mismatch`). */
+export function joinFailure(e: unknown): JoinFailure {
+  const err = e as { code?: unknown; details?: unknown } | null;
+  const code = typeof err?.code === 'string' ? err.code : null;
+  const details = err?.details && typeof err.details === 'object' ? (err.details as JoinFailure['details']) : null;
+  return { code, details, named: code === 'pass_occurrence_mismatch' ? safeOccurrence(details?.occurrence) : null };
+}
+/** The line for a refused join: the class the pass is for, the numbers for a group that does not fit, else the code's copy. */
+export function joinMessage(code: string | null, details: JoinFailure['details'], named: string | null): { key: string; vars: Record<string, string | number> } | null {
+  if (!code) return null;
+  if (code === 'pass_occurrence_mismatch' && named) return { key: 'vouchers.group.join.thatClass', vars: {} };
+  if (code === 'group_does_not_fit' && typeof details?.needed === 'number') return { key: 'vouchers.group.join.noRoom', vars: { n: details.needed, free: typeof details.free === 'number' ? details.free : 0 } };
+  return refusalMessage({ code });
+}
+
+/** C-08: cancelling the lead's place cancels every place of the group, and a customer's cancel loses the code. */
+export const passCancelWarning = (b: { paid_with?: unknown; party_lead?: unknown }): string | null =>
+  b.paid_with === 'pass' && b.party_lead === true ? 'customer.change.cancel.passLead' : null;
+
+/** S-04: the desk sale's notice after a group product: the code once the desk can read it, and where the buyer finds it. */
+export const groupSaleNotice = (code: string | null) => ({ title: code ? { key: 'desk.sale.groupCode', vars: { code } } : null, body: 'desk.sale.groupCodeLater' });
+
 // ── S-02 · the desk ─────────────────────────────────────────────────────────────────────────────────────────────
 const ACTIVE = ['booked', 'held', 'checked_in'];
 export interface Party { party: string; size: number; named: number; lead: PassBookingRow | null; members: PassBookingRow[] }
@@ -108,6 +166,15 @@ export function parties(rows: readonly PassBookingRow[]): Party[] {
     const size = Math.max(...members.map((m) => Number(m.party_size) || 0), members.length);
     return { party, size, named: members.length, lead: members.find((m) => m.party_lead) ?? null, members };
   });
+}
+
+/** S-02: one party's block: its label, whether a person can be added, which places can be swapped (until check-in closes). */
+export function partyView(g: Party, o: { open: boolean; nameOf: (personId: string) => string }) {
+  const lead = g.lead ?? g.members[0] ?? null;
+  return {
+    name: lead ? o.nameOf(lead.user_id) : '', named: g.named, total: g.size, full: g.named >= g.size,
+    canAdd: o.open && g.named < g.size, swappable: o.open ? g.members.filter((m) => m.status === 'booked').map((m) => m.id) : [],
+  };
 }
 
 /** The code of a party: the desk reads vouchers; the voucher's id is the bookings' `party`. */

@@ -14,17 +14,15 @@ import { Notice } from '../../../components/molecule/Notice/Notice';
 import { ShareLink } from '../../../components/molecule/ShareLink/ShareLink';
 import { PageHead } from '../../customer/ui';
 import { useNow } from '../../customer/hooks';
-import { refusalMessage } from '../../customer/booking/refusals';
 import { useSessionsJoined } from '../../website/hooks';
 import { queryAll, type CosPort } from '../../transfers/launch/cos';
 import { useAction, useLoad } from '../../transfers/launch/useCos';
-import { CODE_RE, normalizeCode } from './model';
-import { joinPass, myGroupPasses, passClasses, passLink, passPath, passState, type GroupVoucher, type PassBookingRow } from './groupPass';
+import { normalizeCode } from './model';
+import { joinFailure, joinMessage, joinPass, joinView, myGroupPasses, passCard, passLink, safeOccurrence, type GroupVoucher, type JoinFailure, type PassBookingRow } from './groupPass';
 
 type T = (k: string, v?: Record<string, string | number>) => string;
 const longDay = (value: string, lang: 'es' | 'en') => formatDate(/^\d{4}-\d{2}-\d{2}$/.test(value) ? fromDateKey(value) : value, lang, { day: 'numeric', month: 'long', year: 'numeric' });
 const shareLabels = (t: T) => ({ link: t('vouchers.group.link'), copy: t('vouchers.group.copy'), copied: t('vouchers.group.copied'), failed: t('vouchers.group.copyFailed') });
-const OCC_ID = /^[A-Za-z0-9_-]{1,80}$/;
 interface ClassInfo { id: string; title: string; starts_at: string | null }
 
 /** The classes the member's used passes booked (the timetable is public; a member reads classes of kind `class`). */
@@ -48,19 +46,21 @@ export function GroupPassesPage() {
       {state.status === 'ready' && (state.value.passes.length === 0
         ? <EmptyState title={t('vouchers.group.empty')} body={t('vouchers.group.empty.body')} action={<Link to="/app/plans"><Button variant="secondary">{t('vouchers.group.empty.cta')}</Button></Link>} />
         : <div className="stack" data-testid="group-passes">{state.value.passes.map((p) => {
-          const s = passState(p, today), cls = p.occurrence ? state.value.classes.get(p.occurrence) ?? null : null;
+          const cls = p.occurrence ? state.value.classes.get(p.occurrence) ?? null : null;
+          const card = passCard(p, { today, now: Date.now(), cls }), s = card.state;
           return (
             <Card key={p.id} data-group-pass={p.code}>
               <div className="stack-sm">
                 <div className="row-between wrap"><code className="mono">{p.code}</code><Badge tone={s === 'unused' ? 'success' : s === 'used' ? 'primary' : 'neutral'}>{t(`vouchers.group.state.${s}`)}</Badge></div>
-                <span className="small">{t('vouchers.group.places', { n: p.places })}{p.occurrence ? ` · ${t('vouchers.group.named', { n: p.joined, total: p.places })}` : ''}</span>
+                <span className="small">{t('vouchers.group.places', { n: card.places })}{card.named ? ` · ${t('vouchers.group.named', card.named)}` : ''}</span>
                 {p.occurrence && <span className="small">{t('vouchers.group.class', { cls: cls?.title || t('vouchers.group.classUnknown'), when: cls?.starts_at ? `${formatDate(cls.starts_at, lang)} ${formatTime(cls.starts_at, lang)}` : '' })}</span>}
                 {s === 'unused' && <span className="xs muted">{p.valid_until ? t('vouchers.group.until', { date: longDay(p.valid_until, lang) }) : t('vouchers.group.noEnd')}</span>}
-                {(s === 'unused' || s === 'used') && <>
+                {(s === 'spent' || s === 'closed') && <p className="xs muted">{t(`vouchers.group.state.${s}.body`)}</p>}
+                {card.shareUrl && <>
                   <p className="xs muted">{t(s === 'unused' ? 'vouchers.group.share.first' : 'vouchers.group.share.friends')}</p>
-                  <ShareLink url={passLink(p.code, p.occurrence)} labels={shareLabels(t)} />
-                  <div className="row wrap"><Link to={passPath(p.code, p.occurrence)}><Button size="sm" variant={s === 'unused' ? 'primary' : 'secondary'}>{t(s === 'unused' ? 'vouchers.group.use' : 'vouchers.group.open')}</Button></Link></div>
+                  <ShareLink url={card.shareUrl} labels={shareLabels(t)} />
                 </>}
+                {card.cta && <div className="row wrap"><Link to={card.cta.path}><Button size="sm" variant={s === 'unused' ? 'primary' : 'secondary'}>{t(card.cta.key)}</Button></Link></div>}
               </div>
             </Card>
           );
@@ -76,7 +76,7 @@ export function PassJoinPage() {
   const [params] = useSearchParams();
   const c = params.get('c');
   const code = normalizeCode(raw);
-  const occurrence = c && OCC_ID.test(c) ? c : null;
+  const occurrence = safeOccurrence(c);
   // A new link is a new join: nothing carries over from the previous code or class.
   return <JoinScreen key={`${code}/${occurrence ?? ''}`} code={code} occurrence={occurrence} />;
 }
@@ -89,32 +89,26 @@ function JoinScreen({ code, occurrence }: { code: string; occurrence: string | n
   const action = useAction();
   const [picked, setPicked] = useState<string | null>(occurrence);
   const [done, setDone] = useState<PassBookingRow | null>(null);
-  const [details, setDetails] = useState<{ needed?: number; free?: number; occurrence?: string } | null>(null);
+  const [failure, setFailure] = useState<JoinFailure | null>(null);
   const [named, setNamed] = useState<string | null>(null);
   const sessions = useSessionsJoined(useMemo(() => (s: ClassSessionRow) => s.status === 'scheduled', []));
   // The buyer reads their own pass (its size, whether it is used); a friend's link reads nothing and the server decides.
   const mine = useLoad((cos) => myGroupPasses(cos).then((all) => all.find((p) => p.code === code) ?? null), [code]);
   const own = mine.state.status === 'ready' ? mine.state.value : null;
   // A link shared before the first use, opened after it: the server names the pass's class (pass_occurrence_mismatch).
-  const target = occurrence ?? own?.occurrence ?? named;
-  const offered = useMemo(() => passClasses(sessions.filter((x) => !!x.modality), own?.places ?? null, now), [sessions, own, now]);
+  const view = useMemo(() => joinView({ code, occurrence, own, named, sessions, now, uncertain: action.uncertain }), [code, occurrence, own, named, sessions, now, action.uncertain]);
+  const { target, offered, locked } = view;
   const chosen = (target ? sessions.find((x) => x.session.id === target) : sessions.find((x) => x.session.id === picked)) ?? null;
-  const valid = CODE_RE.test(code);
 
   const book = (occurrenceId: string) => action.run(async (key) => {
-    setDetails(null);
+    setFailure(null);
     try { setDone(await joinPass(data, { personId: user.id, occurrenceId, code }, key)); }
-    catch (e) {
-      const d = ((e as { details?: unknown }).details as { needed?: number; free?: number; occurrence?: string } | null) ?? null;
-      setDetails(d);
-      if ((e as { code?: unknown }).code === 'pass_occurrence_mismatch' && typeof d?.occurrence === 'string' && OCC_ID.test(d.occurrence)) setNamed(d.occurrence);
-      throw e;
-    }
+    catch (e) { const f = joinFailure(e); setFailure(f); if (f.named) setNamed(f.named); throw e; }
   });
-  const error = action.error ? refusalMessage({ code: action.error }) : null;
-  const errorText = named && action.error === 'pass_occurrence_mismatch' ? t('vouchers.group.join.thatClass') : error ? (action.error === 'group_does_not_fit' && details?.needed != null ? t('vouchers.group.join.noRoom', { n: details.needed, free: details.free ?? 0 }) : t(error.key, error.vars)) : null;
+  const message = joinMessage(action.error, failure?.details ?? null, named);
+  const errorText = message ? t(message.key, message.vars) : null;
 
-  if (!valid) return <Shell><Notice tone="warn">{t('vouchers.group.join.badCode')}</Notice></Shell>;
+  if (view.mode === 'bad') return <Shell><Notice tone="warn">{t('vouchers.group.join.badCode')}</Notice></Shell>;
   if (done) {
     const cls = sessions.find((x) => x.session.id === done.session_id)?.session;
     return <Shell>
@@ -127,7 +121,7 @@ function JoinScreen({ code, occurrence }: { code: string; occurrence: string | n
   return <Shell>
     <p className="small muted">{t('vouchers.group.join.intro', { code })}</p>
     {own && <p className="small">{t('vouchers.group.places', { n: own.places })}</p>}
-    {target ? <Card>
+    {view.mode === 'take' && target ? <Card>
       <div className="stack-sm">
         <span className="eyebrow">{t('vouchers.group.join.yourClass')}</span>
         {chosen ? <ClassRow title={chosen.session.title} teacher={chosen.teacher?.display_name ?? ''} startsAt={chosen.session.starts_at} durationMin={chosen.modality?.duration_min ?? 60} tone={chosen.modality?.tone ?? 'river'} booked={chosen.session.booked_count} capacity={chosen.session.capacity} />
@@ -140,7 +134,7 @@ function JoinScreen({ code, occurrence }: { code: string; occurrence: string | n
         <p className="xs muted">{t('vouchers.group.join.pickHint')}</p>
         {offered.length === 0 ? <p className="small muted">{t('vouchers.group.join.noClasses')}</p>
           : <div className="stack-sm">{offered.slice(0, 40).map((x) => <div key={x.session.id} data-picked={picked === x.session.id || undefined}>
-            <ClassRow title={x.session.title} teacher={x.teacher?.display_name ?? ''} startsAt={x.session.starts_at} durationMin={x.modality?.duration_min ?? 60} tone={x.modality?.tone ?? 'river'} booked={x.session.booked_count} capacity={x.session.capacity} booked_by_me={picked === x.session.id} onClick={() => { setPicked(x.session.id); action.renew(); }} />
+            <ClassRow title={x.session.title} teacher={x.teacher?.display_name ?? ''} startsAt={x.session.starts_at} durationMin={x.modality?.duration_min ?? 60} tone={x.modality?.tone ?? 'river'} booked={x.session.booked_count} capacity={x.session.capacity} booked_by_me={picked === x.session.id} disabled={locked || action.busy} onClick={() => { if (locked) return; setPicked(x.session.id); action.renew(); }} />
           </div>)}</div>}
         {picked && <p className="xs" role="status">{t('vouchers.group.join.picked', { cls: offered.find((x) => x.session.id === picked)?.session.title ?? '' })}</p>}
         <Button loading={action.busy} disabled={action.busy || !picked} onClick={() => picked && void book(picked)}>{t('vouchers.group.join.book')}</Button>

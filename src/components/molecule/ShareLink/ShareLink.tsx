@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Button } from '../../atom/Button/Button';
 import { Input } from '../../atom/Input/Input';
+import { copyLink } from './copyLink';
 
 export interface ShareLinkLabels { link: string; copy: string; copied: string; failed: string }
 
@@ -10,13 +11,7 @@ export interface ShareLinkLabels { link: string; copy: string; copied: string; f
  */
 export function ShareLink({ url, labels, disabled = false }: { url: string; labels: ShareLinkLabels; disabled?: boolean }) {
   const [state, setState] = useState<'idle' | 'copied' | 'failed'>('idle');
-  const copy = () => {
-    try {
-      const p = navigator.clipboard?.writeText(url);
-      if (!p) { setState('failed'); return; }
-      p.then(() => setState('copied'), () => setState('failed'));
-    } catch { setState('failed'); }
-  };
+  const copy = () => { void copyLink(url).then(setState); };
   return (
     <div className="stack-sm" data-share-link>
       <div className="row wrap">
