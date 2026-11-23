@@ -155,11 +155,14 @@ export function fakeCos({ productDates = true, approvedBy = true, voidRules = fa
       if (!occ) throw err('occurrence_not_open');
       if (occ.data.kind !== 'class') throw err('pass_class_only');
       const v = db.voucher.find((x) => x.data.code === String(passCodeIn).trim().toUpperCase());
-      if (!v || v.data.voided_at) throw err('voucher_invalid');
+      if (!v) throw err('voucher_invalid');
       if (v.data.kind !== 'group') throw err('voucher_wrong_kind');
-      const pay = db.payment.find((p) => p.id === v.data.payment);
-      if (!pay || pay.data.status !== 'approved') throw err('voucher_payment_not_approved');
-      if (v.data.valid_until && v.data.valid_until < new Date(now()).toISOString().slice(0, 10)) throw err('voucher_expired');
+      // As built: void, payment and expiry are the lead's checks; a join of a booked pass skips them (until check-in closes).
+      if (!v.data.booking) {
+        const pay = db.payment.find((p) => p.id === v.data.payment);
+        if (v.data.voided_at || !pay || pay.data.status !== 'approved') throw err('voucher_payment_not_approved');
+        if (v.data.valid_until && v.data.valid_until < new Date(now()).toISOString().slice(0, 10)) throw err('voucher_expired');
+      }
       const desk = role !== 'member';
       if (occ.data.status !== 'scheduled' || Date.parse(desk ? occ.data.ends_at : occ.data.starts_at) <= now()) throw err('occurrence_not_open');
       if (db.booking.some((b) => b.data.occurrence === occ.id && b.data.person === r.data.person && ACTIVE.includes(b.data.status))) throw err('already_booked');
@@ -197,12 +200,16 @@ export function fakeCos({ productDates = true, approvedBy = true, voidRules = fa
     if (patch.status === 'checked_in' && r.data.status === 'held') throw err('invalid_transition');
     const wasActive = ACTIVE.includes(r.data.status);
     r.data = { ...r.data, ...patch };
-    // §7: the lead's cancel cancels the party's other places; a studio-side `cancelled` returns the code.
+    // §7 as built: the lead's cancel cancels the party's booked (or held) places, never a checked-in one. A studio-side
+    // `cancelled` returns the code only before the class starts and while nobody of the party has checked in.
     if (r.data.party && wasActive && !ACTIVE.includes(r.data.status)) {
       const v = db.voucher.find((x) => x.id === r.data.party);
       if (r.data.party_lead) {
-        for (const b of db.booking) if (b.id !== r.id && b.data.party === r.data.party && ACTIVE.includes(b.data.status)) Object.assign(b.data, { status: 'cancelled', cancel_reason: 'party_lead_cancelled' });
-        if (v && r.data.status === 'cancelled' && role !== 'member') Object.assign(v.data, { booking: null, occurrence: null, uses: 0, redeemed_by: null, redeemed_at: null });
+        const occ = db.occurrence.find((o) => o.id === r.data.occurrence);
+        const started = !occ || Date.parse(occ.data.starts_at) <= now();
+        const anyoneIn = db.booking.some((b) => b.data.party === r.data.party && (b.data.status === 'checked_in' || b.data.checked_in_at));
+        for (const b of db.booking) if (b.id !== r.id && b.data.party === r.data.party && ['booked', 'held'].includes(b.data.status)) Object.assign(b.data, { status: 'cancelled', cancel_reason: 'party_lead_cancelled' });
+        if (v && r.data.status === 'cancelled' && role !== 'member' && !started && !anyoneIn) Object.assign(v.data, { booking: null, occurrence: null, uses: 0, redeemed_by: null, redeemed_at: null });
       }
       if (v) v.data.joined = partyActive(v.id);
     }
@@ -240,7 +247,8 @@ export function fakeCos({ productDates = true, approvedBy = true, voidRules = fa
       const { approving, product } = paymentRules(r.data, next, me);
       r.data = next; afterPayment(r, approving, product);
     } else if (op.entity === 'booking') updateBooking(r, data, role);
-    else if (op.entity === 'voucher' && 'kind' in (data ?? {}) && data.kind !== r.data.kind) throw err('voucher_kind_fixed');
+    // As built: only a change to or from kind group is refused.
+    else if (op.entity === 'voucher' && 'kind' in (data ?? {}) && data.kind !== r.data.kind && (data.kind === 'group' || r.data.kind === 'group')) throw err('voucher_kind_fixed');
     else r.data = next;
     r.updatedAt = new Date(now()).toISOString();
     return r.id;
