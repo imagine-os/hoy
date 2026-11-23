@@ -913,6 +913,8 @@ try {
     'file_too_large', 'file_type_not_allowed', 'file_upload_expired', 'file_upload_missing', 'storage_unavailable',
     'already_signed_up', 'person_email_mismatch', 'consent_required',
     'idempotency_conflict', 'idempotency_key_invalid', 'forbidden',
+    // ADR 0045, the group pass (bookings 1.11.0, credits 1.5.0, payments 2.10.0).
+    'pass_unresolved', 'pass_class_only', 'group_does_not_fit', 'party_full', 'voucher_wrong_kind', 'pass_occurrence_mismatch', 'pass_person_required', 'void_pass_used', 'voucher_kind_fixed',
   ];
   await test(`refusals: all ${CONTRACT_CODES.length} contract codes have their own Spanish and English line`, () => {
     const generic = (lang, code) => refusalCopy(`zz_${code}`, lang).replace(`zz_${code}`, code);
