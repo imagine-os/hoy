@@ -206,7 +206,8 @@
         "src/config/launchRoutes.ts",
         "src/modules/customer/auth/customerReturn.ts",
         "src/i18n/core.ts",
-        "src/modules/customer/strings.ts"
+        "src/modules/customer/strings.ts",
+        "src/components/molecule/ShareLink/copyLink.ts"
       ]
     }
   }

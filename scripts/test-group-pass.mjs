@@ -35,6 +35,7 @@ const ENTRIES = {
   pricing: "export { genericPlans } from './src/data/livePricing';",
   routes: "export { LAUNCH_ROUTES } from './src/config/launchRoutes'; export { customerReturn } from './src/modules/customer/auth/customerReturn';",
   core: "export { coreStrings } from './src/i18n/core'; export { strings as customerStrings } from './src/modules/customer/strings';",
+  share: "export { copyLink } from './src/components/molecule/ShareLink/copyLink';",
 };
 async function load(contents) {
   try {
@@ -317,6 +318,98 @@ await test('sign-in return: a signed-out visitor comes back to the pass link, cl
 });
 await test('company-os.json requires Company OS 1.23.0 (bookings 1.11.0, credits 1.5.0, payments 2.10.0)', async () => {
   assert.deepEqual(JSON.parse(await readFile('company-os.json', 'utf8')), { requires: '>=1.23.0' });
+});
+
+// ── review round 1: the screens' decision logic (C-43, C-44, S-02, S-04, C-08, PR-01) ─────────────────────────────────
+const V0 = { id: 'vch_1', code: 'ABCD2345', places: 4, joined: 0, uses: 0, occurrence: null, valid_until: '2026-12-31', buyer: 'per_1', product: 'prd_g', voided_at: null, created_at: '' };
+const LOC = { origin: 'https://hoy.example.test', pathname: '/' };
+const NOW = Date.parse('2026-11-24T14:00:00Z');
+await test('C-43 card: an unused pass shows its code, places, the link without a class and "book the class"', () => {
+  const G = need('group');
+  const c = G.passCard(V0, { today: '2026-11-24', now: NOW, cls: null, loc: LOC });
+  assert.deepEqual([c.state, c.code, c.places, c.named, c.shareUrl, c.cta?.path], ['unused', 'ABCD2345', 4, null, 'https://hoy.example.test/#/app/pass/ABCD2345', '/app/pass/ABCD2345']);
+});
+await test('C-43 card: a used pass shows "N of X named" and the link with its class, until the class starts', () => {
+  const G = need('group');
+  const v = { ...V0, uses: 1, joined: 2, occurrence: 'occ_1' };
+  const c = G.passCard(v, { today: '2026-11-24', now: NOW, cls: { starts_at: '2026-11-25T14:00:00Z' }, loc: LOC });
+  assert.deepEqual([c.state, c.named, c.shareUrl], ['used', { n: 2, total: 4 }, 'https://hoy.example.test/#/app/pass/ABCD2345?c=occ_1']);
+  const started = G.passCard(v, { today: '2026-11-24', now: NOW, cls: { starts_at: '2026-11-24T13:00:00Z' }, loc: LOC });
+  assert.deepEqual([started.state, started.shareUrl, started.cta], ['closed', null, null], 'class started or over: no link to share');
+});
+await test('C-43 card: a spent pass (lead no longer active), an expired or a voided one has no share link', () => {
+  const G = need('group');
+  const spent = G.passCard({ ...V0, uses: 1, joined: 0, occurrence: 'occ_1' }, { today: '2026-11-24', now: NOW, cls: { starts_at: '2026-11-25T14:00:00Z' }, loc: LOC });
+  assert.deepEqual([spent.state, spent.shareUrl, spent.cta], ['spent', null, null]);
+  assert.equal(G.passCard({ ...V0, valid_until: '2026-11-01' }, { today: '2026-11-24', now: NOW, cls: null, loc: LOC }).shareUrl, null);
+  assert.equal(G.passCard({ ...V0, voided_at: '2026-11-20T00:00:00Z' }, { today: '2026-11-24', now: NOW, cls: null, loc: LOC }).state, 'voided');
+});
+const S = (id, over = {}) => ({ session: { id, status: 'scheduled', starts_at: new Date(NOW + 864e5).toISOString(), capacity: 10, booked_count: 0, ...over }, modality: { id: 'mod_pulso' } });
+await test('C-44 view: no ?c → the picker with classes that have room; ?c → take a place in that class; a bad code → bad', () => {
+  const G = need('group');
+  const sessions = [S('occ_a'), S('occ_b', { booked_count: 8 }), { ...S('occ_c'), modality: undefined }];
+  const pick = G.joinView({ code: 'ABCD2345', occurrence: null, own: { ...V0 }, named: null, sessions, now: NOW, uncertain: false });
+  assert.deepEqual([pick.mode, pick.target, pick.offered.map((x) => x.session.id)], ['pick', null, ['occ_a']], 'room for 4, a class type, not started');
+  const take = G.joinView({ code: 'ABCD2345', occurrence: 'occ_b', own: null, named: null, sessions, now: NOW, uncertain: false });
+  assert.deepEqual([take.mode, take.target], ['take', 'occ_b']);
+  assert.equal(G.joinView({ code: 'abc', occurrence: null, own: null, named: null, sessions, now: NOW, uncertain: false }).mode, 'bad');
+  const ownUsed = G.joinView({ code: 'ABCD2345', occurrence: null, own: { ...V0, occurrence: 'occ_b' }, named: null, sessions, now: NOW, uncertain: false });
+  assert.deepEqual([ownUsed.mode, ownUsed.target], ['take', 'occ_b'], 'the buyer\'s used pass opens its class');
+  const locked = G.joinView({ code: 'ABCD2345', occurrence: null, own: null, named: null, sessions, now: NOW, uncertain: true });
+  assert.equal(locked.locked, true, 'outcome unknown: rows and the book button stay locked, only the retry is offered');
+});
+await test('C-44 failure: pass_occurrence_mismatch with details.occurrence switches the page to that class; group_does_not_fit says the numbers', () => {
+  const G = need('group');
+  const mismatch = G.joinFailure(Object.assign(new Error('pass_occurrence_mismatch'), { code: 'pass_occurrence_mismatch', details: { occurrence: 'occ_b' } }));
+  assert.equal(mismatch.named, 'occ_b');
+  const view = G.joinView({ code: 'ABCD2345', occurrence: null, own: null, named: mismatch.named, sessions: [S('occ_a'), S('occ_b')], now: NOW, uncertain: false });
+  assert.deepEqual([view.mode, view.target], ['take', 'occ_b']);
+  assert.deepEqual(G.joinMessage('pass_occurrence_mismatch', mismatch.details, mismatch.named), { key: 'vouchers.group.join.thatClass', vars: {} });
+  assert.equal(G.joinFailure(Object.assign(new Error('x'), { code: 'pass_occurrence_mismatch', details: { occurrence: '../x y' } })).named, null, 'a hostile id is not followed');
+  const fit = G.joinFailure(Object.assign(new Error('group_does_not_fit'), { code: 'group_does_not_fit', details: { needed: 4, free: 2 } }));
+  assert.deepEqual(G.joinMessage('group_does_not_fit', fit.details, null), { key: 'vouchers.group.join.noRoom', vars: { n: 4, free: 2 } });
+  assert.deepEqual(G.joinMessage('party_full', null, null), { key: 'customer.refusal.party_full', vars: { code: 'party_full' } });
+  assert.equal(G.joinMessage(null, null, null), null);
+});
+await test('S-02 party block: "N of X places named"; add while places are left and check-in is open; swap on booked places only', () => {
+  const G = need('group');
+  const g = { party: 'vch_1', size: 4, named: 2, lead: { id: 'b1', user_id: 'per_1', status: 'booked', party_lead: true }, members: [{ id: 'b1', user_id: 'per_1', status: 'booked', party_lead: true }, { id: 'b2', user_id: 'per_2', status: 'checked_in' }] };
+  const nameOf = (id) => ({ per_1: 'Bea', per_2: 'Fer' })[id] ?? id;
+  const open = G.partyView(g, { open: true, nameOf });
+  assert.deepEqual([open.name, open.named, open.total, open.full, open.canAdd, open.swappable], ['Bea', 2, 4, false, true, ['b1']]);
+  const closed = G.partyView(g, { open: false, nameOf });
+  assert.deepEqual([closed.canAdd, closed.swappable], [false, []], 'check-in closed: no add, no swap');
+  assert.equal(G.partyView({ ...g, named: 4 }, { open: true, nameOf }).canAdd, false, 'every place named: no add');
+});
+await test('ShareLink: the clipboard write gives copied; a refusal, a throw or no clipboard gives failed', async () => {
+  const { copyLink } = need('share');
+  assert.equal(await copyLink('u', { writeText: async () => {} }), 'copied');
+  assert.equal(await copyLink('u', { writeText: async () => { throw new Error('denied'); } }), 'failed');
+  assert.equal(await copyLink('u', { writeText: () => { throw new Error('sync'); } }), 'failed');
+  assert.equal(await copyLink('u', undefined), 'failed');
+});
+await test('S-04 desk sale: after selling a group product the notice names the code the approval issued (read by payment)', async () => {
+  const G = need('group');
+  const w = world();
+  await w.approve();
+  w.cos.as('usr_desk');
+  const v = await G.voucherForPayment(w.cos, w.pay.id);
+  assert.match(v?.code ?? '', /^[A-HJ-NP-Z2-9]{8}$/);
+  assert.deepEqual(G.groupSaleNotice(v.code), { title: { key: 'desk.sale.groupCode', vars: { code: v.code } }, body: 'desk.sale.groupCodeLater' });
+  assert.deepEqual(G.groupSaleNotice(null), { title: null, body: 'desk.sale.groupCodeLater' });
+});
+await test('C-08 cancel: the lead of a group pass is warned that cancelling cancels the group\'s places and loses the code', () => {
+  const G = need('group'), C = need('core');
+  assert.equal(G.passCancelWarning({ paid_with: 'pass', party_lead: true }), 'customer.change.cancel.passLead');
+  assert.equal(G.passCancelWarning({ paid_with: 'pass', party_lead: false }), null);
+  assert.equal(G.passCancelWarning({ paid_with: 'package' }), null);
+  const s = C.customerStrings['customer.change.cancel.passLead']; assert.ok(s?.es && s?.en && s.es !== s.en);
+});
+await test('PR-01 group: the master hides Classes for a group product and sends credits null', () => {
+  const P = need('products');
+  assert.equal(P.showsClasses('group'), false); assert.equal(P.showsClasses('pack'), true);
+  const [op] = P.createOps({ key: 'grupo4', name: 'Clase para 4', kind: 'group', price: 180000, credits: 3, places: 4, active: true });
+  assert.equal(op.data.credits, null, 'a group product gives no credits');
 });
 
 console.log(`\ngroup pass: ${passed} passed, ${failures} failed`);
