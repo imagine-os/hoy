@@ -72,8 +72,10 @@ export function byKey(rows: ProductRow[]): { key: string; rows: ProductRow[] }[]
   return keys.map((key) => ({ key, rows: history(rows, key) }));
 }
 
+/** A group pass gives one class for its places, never credits: the master hides Classes for it and sends none. */
+export const showsClasses = (kind: string) => kind !== 'group';
 const clean = (d: ProductData): Record<string, unknown> => ({
-  key: d.key, name: d.name.trim(), kind: d.kind, price: d.price, credits: d.credits ?? null, validity_days: d.validity_days ?? null,
+  key: d.key, name: d.name.trim(), kind: d.kind, price: d.price, credits: showsClasses(d.kind) ? d.credits ?? null : null, validity_days: d.validity_days ?? null,
   freezable: !!d.freezable, audience: d.audience ? d.audience : null, active: d.active !== false,
   places: d.kind === 'group' ? d.places ?? null : null,
   valid_from: norm(d.valid_from), valid_until: norm(d.valid_until),

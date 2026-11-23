@@ -12,7 +12,7 @@ import { Field } from '../../../components/molecule/Field/Field';
 import { Notice } from '../../../components/molecule/Notice/Notice';
 import { batch, CosError, queryAll, refusalKey, type CosPort } from '../../transfers/launch/cos';
 import { useAction, useCos, useLoad } from '../../transfers/launch/useCos';
-import { byKey, createOps, datesSupported, opsDatesStored, editOps, undated, inForce, isAffiliateOnly, newPriceOps, PRODUCT_KINDS, validateProduct, type ProductData, type ProductRow } from './productMaster';
+import { byKey, createOps, showsClasses, datesSupported, opsDatesStored, editOps, undated, inForce, isAffiliateOnly, newPriceOps, PRODUCT_KINDS, validateProduct, type ProductData, type ProductRow } from './productMaster';
 
 const readProducts = (cos: CosPort) => queryAll<ProductData>(cos, { entity: 'product' });
 const readMaster = async (cos: CosPort) => { const [rows, dates] = await Promise.all([readProducts(cos), datesSupported(cos)]); return { rows, dates }; };
@@ -92,7 +92,7 @@ export function ProductMasterPage() {
               <Field label={t('products.launch.name')} required>{(id) => <Input id={id} name="name" maxLength={100} value={editing.draft.name} onChange={(e) => draftField({ name: e.target.value })} />}</Field>
               <Field label={t('products.type')} required>{(id) => <Select id={id} name="kind" value={editing.draft.kind} disabled={editing.mode === 'edit'} onChange={(e) => draftField({ kind: e.target.value as ProductData['kind'] })}>{PRODUCT_KINDS.map((k) => <option key={k} value={k}>{t(`products.launch.kind.${k}`)}</option>)}</Select>}</Field>
               <Field label={t('products.amount')} required>{(id) => <Input id={id} name="price" type="number" min={0} step={1} value={editing.draft.price} disabled={editing.mode === 'edit'} onChange={(e) => draftField({ price: Number(e.target.value) })} />}</Field>
-              <Field label={t('products.classes')}>{(id) => <Input id={id} name="credits" type="number" min={0} step={1} value={editing.draft.credits ?? ''} onChange={(e) => draftField({ credits: e.target.value === '' ? null : Number(e.target.value) })} />}</Field>
+              {showsClasses(editing.draft.kind) && <Field label={t('products.classes')}>{(id) => <Input id={id} name="credits" type="number" min={0} step={1} value={editing.draft.credits ?? ''} onChange={(e) => draftField({ credits: e.target.value === '' ? null : Number(e.target.value) })} />}</Field>}
               {editing.draft.kind === 'group' && <Field label={t('products.places')} required>{(id) => <Input id={id} name="places" type="number" min={2} max={100} step={1} value={editing.draft.places ?? ''} onChange={(e) => draftField({ places: e.target.value === '' ? null : Number(e.target.value) })} />}</Field>}
               <Field label={t('products.validity')}>{(id) => <Input id={id} name="validity" type="number" min={0} step={1} value={editing.draft.validity_days ?? ''} onChange={(e) => draftField({ validity_days: e.target.value === '' ? null : Number(e.target.value) })} />}</Field>
               {dates && <Field label={t('products.starts')}>{(id) => <Input id={id} name="valid_from" type="date" value={editing.draft.valid_from ?? ''} onChange={(e) => draftField({ valid_from: e.target.value || null })} />}</Field>}
