@@ -436,7 +436,7 @@ export const strings: StringTable = {
   'customer.paidWith.guest': { es: 'invitado', en: 'guest' },
   'customer.paidWith.comp': { es: 'cortesía', en: 'comp' },
   'customer.paidWith.pass': { es: 'pase grupal', en: 'group pass' },
-  'customer.change.cancel.passLead': { es: 'Tú reservaste este pase grupal: si cancelas, se cancelan los lugares de todo el grupo y el código se pierde.', en: 'You booked this group pass: if you cancel, every place in the group is cancelled and the code is lost.' },
+  'customer.change.cancel.passLead': { es: 'Tú reservaste este pase grupal: si cancelas, se cancelan los lugares del grupo que aún no registraron su llegada, y el código se pierde.', en: 'You booked this group pass: if you cancel, the group’s places not yet checked in are cancelled, and the code is lost.' },
   'customer.change.move.pass': { es: 'Un lugar de un pase grupal no se mueve de clase. Puedes cancelar tu lugar.', en: 'A group pass place cannot move to another class. You can cancel your place.' },
 
   // C-08b change sheet
