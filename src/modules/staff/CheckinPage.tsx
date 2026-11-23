@@ -34,6 +34,9 @@ import { SERVER_RULES } from '../customer/booking/bookingPolicy';
 import './staff.css';
 import { type Lang } from '../../i18n/types';
 import { useLiveUpdates } from '../../data/companyos/hooks';
+import { PartySummary } from '../../components/molecule/PartySummary/PartySummary';
+import { cosOf } from '../transfers/launch/cos';
+import { deskAddToParty, deskSwap, parties, type PassBookingRow } from '../vouchers/production/groupPass';
 
 interface WaitlistRow extends BaseRow { user_id: string; session_id: string; position: number; status: string }
 
@@ -84,7 +87,12 @@ export function CheckinPage() {
   const { rows: waitlist } = useTable<WaitlistRow>('waitlist', { where: { session_id: selectedId ?? '__none__', status: 'waiting' } });
   const { people, byId } = usePeople();
 
-  const roster = useMemo(() => bookings.filter((b) => b.status !== 'cancelled').map((b) => ({ b, p: byId.get(b.user_id) })).filter((x) => !x.p || personMatches(x.p, q)), [bookings, byId, q]);
+  // A group pass's places sit together (ADR 0045): the roster keeps each party's people next to each other, lead first.
+  const partyKey = (b: BookingRow) => { const r = b as PassBookingRow; return r.party ? `0:${r.party}:${r.party_lead ? 0 : 1}` : '1'; };
+  const roster = useMemo(() => bookings.filter((b) => b.status !== 'cancelled').map((b) => ({ b, p: byId.get(b.user_id) })).filter((x) => !x.p || personMatches(x.p, q))
+    .sort((a, z) => partyKey(a.b).localeCompare(partyKey(z.b))), [bookings, byId, q]);
+  const groups = useMemo(() => parties(bookings as PassBookingRow[]), [bookings]);
+  const [partyEdit, setPartyEdit] = useState<{ party: string; swap: string | null; q: string } | null>(null);
   const expected = roster.filter((x) => x.b.status === 'booked');
   const arrived = roster.filter((x) => x.b.status === 'checked_in');
   const missed = roster.filter((x) => x.b.status === 'no_show' || x.b.status === 'late_cancel');
@@ -202,6 +210,30 @@ export function CheckinPage() {
     else if (walkIns.length === 1) walkIn(walkIns[0]);
   };
 
+  /** S-02 group pass: the desk adds a person into an unnamed place, or swaps a named one, until check-in closes. */
+  const partyOpen = server && !!selected && checkInOpen(selected.session, now) && canBookAny;
+  const partyCandidates = partyEdit && partyEdit.q.trim().length >= 2 ? people.filter((p) => p.role === 'customer' && !onRoster.has(p.id) && personMatches(p, partyEdit.q)).slice(0, 6) : [];
+  const partyWrite = async (p: Person) => {
+    if (!partyEdit || !selected || !partyOpen || attendanceBusy.current || busy) return;
+    const cos = cosOf(data);
+    if (!cos) { setError(deskErrorText('disconnected', t)); return; }
+    const edit = partyEdit, intent = ['party', user.id, edit.party, edit.swap, p.id, selected.session.id];
+    attendanceBusy.current = true; setBusy(`party:${edit.party}`); setError(null);
+    try {
+      if (edit.swap) await deskSwap(data, { bookingId: edit.swap, personId: p.id }, keys.keyFor(intent));
+      else await deskAddToParty(data, cos, { party: edit.party, personId: p.id, sessionId: selected.session.id }, keys.keyFor(intent));
+      keys.done(intent); setPartyEdit(null);
+    } catch (e) { setError(deskErrorText(errorCode(e), t)); } finally { attendanceBusy.current = false; setBusy(null); }
+  };
+  const partyForm = () => partyEdit && (
+    <div className="stack-sm checkin-undo" data-party-edit>
+      <Input autoFocus aria-label={t('desk.party.search')} placeholder={t('desk.party.search')} value={partyEdit.q} onChange={(e) => setPartyEdit({ ...partyEdit, q: e.target.value })} onKeyDown={(e) => { if (e.key === 'Escape') setPartyEdit(null); }} />
+      {partyEdit.q.trim().length >= 2 && partyCandidates.length === 0 && <p className="xs muted">{t('desk.party.none')}</p>}
+      {partyCandidates.map((c) => <button key={c.id} type="button" className="register-candidate" disabled={!!busy} onClick={() => void partyWrite(c)}><span className="small">{c.name}</span><span className="xs muted"> · {maskPhone(c.phone)}</span></button>)}
+      <div className="row"><Button size="sm" variant="ghost" onClick={() => setPartyEdit(null)}>{t('core.common.cancel')}</Button></div>
+    </div>
+  );
+
   const full = !!selected && selected.session.booked_count >= selected.session.capacity;
   const phase = (s: ClassSessionRow) => (new Date(s.ends_at).getTime() < now ? 'past' : new Date(s.starts_at).getTime() - 30 * MS.min <= now ? 'now' : 'next');
 
@@ -262,6 +294,22 @@ export function CheckinPage() {
         {loading && bookings.length === 0 && <EmptyState compact tone="loading" title={t('core.common.loading')} />}
         {!loading && roster.length === 0 && waitlist.length === 0 && <EmptyState compact title={q ? t('staff.checkin.noMatch') : t('staff.checkin.emptyRoster')} body={q ? t('staff.checkin.noMatch.body') : undefined} />}
         {canWrite && !checkInOffered && <p className="xs muted" role="status">{t('staff.checkin.ended')}</p>}
+        {server && groups.length > 0 && <Group title={t('desk.party.section')} n={groups.length}>
+          {groups.map((g) => {
+            const name = (id?: string) => (id ? byId.get(id)?.name ?? id : '');
+            return <div key={g.party} className="checkin-teacher">
+              <PartySummary title={t('desk.party.title', { name: name(g.lead?.user_id) || name(g.members[0]?.user_id) })} namedLabel={t('desk.party.named', { n: g.named, total: g.size })} full={g.named >= g.size}
+                actions={partyOpen && g.named < g.size && partyEdit?.party !== g.party ? <div className="row"><Button size="sm" variant="outline" icon="user-plus" disabled={!!busy} onClick={() => setPartyEdit({ party: g.party, swap: null, q: '' })}>{t('desk.party.add')}</Button></div> : undefined}>
+                <ul className="stack-sm">{g.members.map((b) => <li key={b.id} className="row-between wrap">
+                  <span className="small">{name(b.user_id)}{b.party_lead ? <span className="xs muted"> · {t('desk.party.lead')}</span> : null}</span>
+                  {partyOpen && b.status === 'booked' && <Button size="sm" variant="ghost" disabled={!!busy} onClick={() => setPartyEdit({ party: g.party, swap: b.id, q: '' })}>{t('desk.party.swap')}</Button>}
+                </li>)}</ul>
+              </PartySummary>
+              {partyEdit?.party === g.party && partyForm()}
+              {!partyOpen && canBookAny && selected && !checkInOpen(selected.session, now) && <p className="xs muted">{t('desk.party.closed')}</p>}
+            </div>;
+          })}
+        </Group>}
         <Group title={t('staff.checkin.expected')} n={expected.length}>
           {expected.map(({ b, p }) => <RosterRow key={b.id} name={p?.name ?? b.user_id} initials={p?.initials} phone={maskPhone(p?.phone)} plan={planLabel(p, b, lang, t)} status="booked" showStatus={false} flag={p?.notes ?? undefined}
             actions={canWrite && <>{checkInOffered && <Button size="sm" variant="tonal" disabled={!!busy} loading={busy === b.id} onClick={() => setStatus(b, 'checked_in')} icon="check">{t('staff.checkin.checkin')}</Button>}<Button size="sm" variant="outline" disabled={!!busy} onClick={() => setStatus(b, 'no_show')} icon="user-x">{t('staff.checkin.noShow')}</Button></>} />)}
