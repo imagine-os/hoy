@@ -114,6 +114,8 @@ export const KNOWN_CODES = [
   'product_period_overlap', 'invalid_date',
   // A voided payment is frozen (payments 2.9.0).
   'payment_voided',
+  // ADR 0045: a group payment's void once its pass was used.
+  'void_pass_used',
 ] as const;
 /**
  * `ifMatch mismatch` (409): someone changed the row since this screen read it, e.g. two desks reviewing one payment.

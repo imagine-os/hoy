@@ -78,6 +78,7 @@ export function MorePage() {
           {!PRODUCTION_BUILD && <ListRow icon="invite" title={t('customer.invite.title')} to="/app/invite" />}
           <ListRow icon="gift" title={t('customer.gift.title')} to={GIFT_PURCHASE_PATH} />
           <ListRow icon="ticket" title={t('vouchers.title')} to="/app/vouchers" />
+          {PRODUCTION_BUILD && <ListRow icon="users" title={t('vouchers.group.title')} subtitle={t('vouchers.group.more')} to="/app/group-passes" />}
           {!PRODUCTION_BUILD && <ListRow icon="sparkle" title={t('customer.events.title')} to="/app/events" />}
           <ListRow icon="users" title={t('customer.teachers.title')} to="/app/teachers" />
           <ListRow icon="help" title={t('customer.faq.title')} to="/app/faq" />

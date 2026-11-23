@@ -104,14 +104,16 @@
     },
     "customer": {
       "paths": [
-        "scripts/test-golive-h3-ui.mjs"
+        "scripts/test-golive-h3-ui.mjs",
+        "scripts/test-group-pass.mjs"
       ],
       "scripts": [
         "scripts/test-jas-1nov-customer-ui.mjs",
         "scripts/test-golive-h3-ui.mjs",
         "scripts/test-void-payment-ui.mjs",
         "scripts/test-route-connectivity.mjs",
-        "scripts/test-launch-roles-ui.mjs"
+        "scripts/test-launch-roles-ui.mjs",
+        "scripts/test-group-pass.mjs"
       ]
     },
     "website": {
@@ -152,7 +154,8 @@
         "scripts/test-golive-images-ui.mjs",
         "scripts/test-jas-1nov-admin-ui.mjs",
         "scripts/test-route-connectivity.mjs",
-        "scripts/test-launch-roles-ui.mjs"
+        "scripts/test-launch-roles-ui.mjs",
+        "scripts/test-group-pass.mjs"
       ]
     }
   },
@@ -188,7 +191,24 @@
       "scripts/ci/affected-areas.mjs": [],
       "scripts/ci/area-imports.mjs": [],
       "vite.config.ts": [],
-      "scripts/test-route-connectivity.mjs": []
+      "scripts/test-route-connectivity.mjs": [],
+      "scripts/test-group-pass.mjs": [
+        "src/modules/products/launch/productMaster.ts",
+        "src/modules/products/strings.ts",
+        "src/data/companyos/mapping.ts",
+        "src/data/companyos/CompanyOSProvider.ts",
+        "src/modules/vouchers/production/{groupPass,model,strings}.ts",
+        "src/data/companyos/refusals.ts",
+        "src/modules/staff/desk/{strings,deskCommands}.ts",
+        "src/modules/customer/booking/{refusals,strings}.ts",
+        "src/modules/transfers/launch/{cos,strings}.ts",
+        "src/data/livePricing.ts",
+        "src/config/launchRoutes.ts",
+        "src/modules/customer/auth/customerReturn.ts",
+        "src/i18n/core.ts",
+        "src/modules/customer/strings.ts",
+        "src/components/molecule/ShareLink/copyLink.ts"
+      ]
     }
   }
 }

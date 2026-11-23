@@ -14,7 +14,7 @@ export function GenericPlanCard({ plan, onSelect, disabled = false }: { plan: Ge
         {description && <p className="small muted">{description}</p>}
         <strong>{formatCOP(plan.price, lang)}</strong>
         <ul className="small">
-          <li>{plan.classes === 1 ? t('core.plan.oneClass') : t('core.plan.classes', { n: plan.classes })}</li>
+          <li>{plan.kind === 'group' && plan.places ? t('core.plan.places', { n: plan.places }) : plan.classes === 1 ? t('core.plan.oneClass') : t('core.plan.classes', { n: plan.classes })}</li>
           {plan.validityDays != null && <li>{t('core.plan.validity', { days: plan.validityDays })}</li>}
           {plan.freezable && <li>{t('core.plan.freezable')}</li>}
         </ul>

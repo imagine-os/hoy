@@ -37,6 +37,8 @@ export interface DeskCommands {
 export interface SaleInput {
   person: { id: string } | { new: NewPerson; consents: readonly DeskConsent[] };
   productId: string;
+  /** The product's kind (`group`: a group pass, ADR 0045, sold without a class: its code books the class later). */
+  productKind?: string;
   /** The product's price (the quote). */
   price: number;
   /** What the desk received; a difference needs `reason` (server: `price_override_reason`, else `amount_mismatch`). */
@@ -76,7 +78,8 @@ export function saleOps(input: SaleInput): BatchOp[] {
   } else person = input.person.id;
   const differs = input.amountReceived !== input.price;
   ops.push({ op: 'create', entity: 'payment', data: { person, product: input.productId, date: today, amount: input.amountReceived, concept: input.concept.trim(), method: input.method, provider: 'manual', status: 'approved', ...(input.reference?.trim() ? { reference: input.reference.trim() } : {}), ...(differs ? { price_override_reason: input.reason!.trim() } : {}) } });
-  if (input.sessionId) ops.push({ op: 'create', entity: 'booking', data: { occurrence: input.sessionId, person, entitlement: 'credit', source: 'desk' } });
+  // A group pass gives no credit to spend: Company OS issues its code on approval and the code books the class (ADR 0045).
+  if (input.sessionId && input.productKind !== 'group') ops.push({ op: 'create', entity: 'booking', data: { occurrence: input.sessionId, person, entitlement: 'credit', source: 'desk' } });
   return ops;
 }
 
@@ -118,7 +121,7 @@ export function serverDesk(data: DataProvider, request: CosRequest): DeskCommand
       const ids = await batch(request, ops, input.key);
       const personId = 'new' in input.person ? ids[0] : input.person.id;
       const paymentId = ids['new' in input.person ? 2 + input.person.consents.length : 0];
-      const bookingId = input.sessionId ? ids[ids.length - 1] : null;
+      const bookingId = input.sessionId && input.productKind !== 'group' ? ids[ids.length - 1] : null;
       // Through the provider, so the roster and the home figures refetch.
       const arrival = bookingId && input.checkIn ? await arrive(bookingId) : null;
       return { personId, paymentId, bookingId, checkedIn: !!arrival && !arrival.checkInError, ...(arrival?.checkInError ? { checkInError: arrival.checkInError } : {}) };

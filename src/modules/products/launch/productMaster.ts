@@ -7,11 +7,14 @@ import type { BatchOp, CosPort, CosRecord } from '../../transfers/launch/cos';
  * past sale keeps its price and the history is the list of rows. The server checks the price of every sale; these
  * helpers only shape and pre-check what the admin types.
  */
-export const PRODUCT_KINDS = ['single', 'trial', 'pack', 'private', 'gift'] as const;
+/** `group` (payments 2.10.0, ADR 0045): one class for `places` people; its approved payment issues one group code. */
+export const PRODUCT_KINDS = ['single', 'trial', 'pack', 'private', 'gift', 'group'] as const;
 export type ProductKind = typeof PRODUCT_KINDS[number];
 export interface ProductData {
   key: string; name: string; kind: ProductKind; price: number;
   credits?: number | null; validity_days?: number | null; freezable?: boolean | null;
+  /** Kind `group` only: how many people the one class is for (a whole number, at least 2). */
+  places?: number | null;
   audience?: string | null; active?: boolean | null;
   valid_from?: string | null; valid_until?: string | null;
 }
@@ -38,6 +41,8 @@ export function validateProduct(d: ProductData, others: ProductRow[], selfId: st
   if (d.credits != null && !whole(d.credits, 0, 1000)) return 'credits';
   if (d.validity_days != null && !whole(d.validity_days, 0, 3650)) return 'validity';
   if ((d.kind === 'pack' || d.kind === 'trial') && !whole(d.credits, 1, 1000)) return 'credits';
+  // Display check only: Company OS refuses any other value with `invalid_amount`.
+  if (d.kind === 'group' && !whole(d.places, 2, 100)) return 'places';
   if (d.audience != null && d.audience !== '' && !/^[a-z0-9_]+(,[a-z0-9_]+)*$/.test(d.audience)) return 'audience';
   if (!validDay(d.valid_from) || !validDay(d.valid_until)) return 'dates';
   if (norm(d.valid_from) && norm(d.valid_until) && d.valid_from! > d.valid_until!) return 'dates';
@@ -67,9 +72,12 @@ export function byKey(rows: ProductRow[]): { key: string; rows: ProductRow[] }[]
   return keys.map((key) => ({ key, rows: history(rows, key) }));
 }
 
+/** A group pass gives one class for its places, never credits: the master hides Classes for it and sends none. */
+export const showsClasses = (kind: string) => kind !== 'group';
 const clean = (d: ProductData): Record<string, unknown> => ({
-  key: d.key, name: d.name.trim(), kind: d.kind, price: d.price, credits: d.credits ?? null, validity_days: d.validity_days ?? null,
+  key: d.key, name: d.name.trim(), kind: d.kind, price: d.price, credits: showsClasses(d.kind) ? d.credits ?? null : null, validity_days: d.validity_days ?? null,
   freezable: !!d.freezable, audience: d.audience ? d.audience : null, active: d.active !== false,
+  places: d.kind === 'group' ? d.places ?? null : null,
   valid_from: norm(d.valid_from), valid_until: norm(d.valid_until),
 });
 
