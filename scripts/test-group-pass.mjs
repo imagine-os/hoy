@@ -471,5 +471,99 @@ await test('C-43/C-44: a booked pass whose valid_until has passed keeps its shar
   assert.equal(G.passState({ ...V0, valid_until: '2026-11-20' }, '2026-11-24'), 'expired', 'an unused pass past its date is still expired');
 });
 
+// ── integrated round 2: the fake follows the server (ADR 0045 as built) ───────────────────────────────────────────────
+const deskCancel = (w, id, key) => w.cos.request('POST', '/batch', { ops: [{ op: 'update', entity: 'booking', id, data: { status: 'cancelled' } }] }, { idempotencyKey: key });
+async function party3(w) {
+  await w.approve();
+  const G = need('group');
+  let p = w.as('usr_buyer');
+  const [pass] = await G.myGroupPasses(w.cos);
+  const lead = await G.joinPass(p, { personId: w.people.buyer.id, occurrenceId: w.occ.id, code: pass.code }, 'p3-lead-00001');
+  p = w.as('usr_f1');
+  const f1 = await G.joinPass(p, { personId: w.people.f1.id, occurrenceId: w.occ.id, code: pass.code }, 'p3-f1-000001');
+  p = w.as('usr_f2');
+  const f2 = await G.joinPass(p, { personId: w.people.f2.id, occurrenceId: w.occ.id, code: pass.code }, 'p3-f2-000001');
+  return { pass, lead, f1, f2 };
+}
+const bk = (w, id) => w.cos.db.booking.find((b) => b.id === id).data;
+const vch = (w, id) => w.cos.db.voucher.find((v) => v.id === id).data;
+await test('fake: the lead\'s cancel cancels only booked friends; a friend already checked in keeps their place', async () => {
+  const w = world();
+  const { lead, f1, f2 } = await party3(w);
+  w.cos.as('usr_desk');
+  await w.cos.request('POST', '/batch', { ops: [{ op: 'update', entity: 'booking', id: f1.id, data: { status: 'checked_in' } }] }, { idempotencyKey: 'p3-checkin-01' });
+  w.cos.as('usr_buyer');
+  await w.cos.request('POST', '/batch', { ops: [{ op: 'update', entity: 'booking', id: lead.id, data: { status: 'cancelled' } }] }, { idempotencyKey: 'p3-cancel-001' });
+  assert.equal(bk(w, f1.id).status, 'checked_in');
+  assert.deepEqual([bk(w, f2.id).status, bk(w, f2.id).cancel_reason], ['cancelled', 'party_lead_cancelled']);
+});
+await test('fake: a voided pass answers voucher_payment_not_approved at the lead\'s booking; an unknown code voucher_invalid', async () => {
+  const G = need('group');
+  const w = world();
+  await w.approve();
+  let p = w.as('usr_buyer');
+  const [pass] = await G.myGroupPasses(w.cos);
+  w.cos.as('usr_admin');
+  await w.cos.request('POST', '/batch', { ops: [{ op: 'update', entity: 'payment', id: w.pay.id, data: { status: 'voided', status_reason: 'error' } }] }, { idempotencyKey: 'void-unused-01' });
+  p = w.as('usr_buyer');
+  assert.equal(await codeOf(G.joinPass(p, { personId: w.people.buyer.id, occurrenceId: w.occ.id, code: pass.code }, 'voided-lead-01')), 'voucher_payment_not_approved');
+  assert.equal(await codeOf(G.joinPass(p, { personId: w.people.buyer.id, occurrenceId: w.occ.id, code: 'ZZZZ2222' }, 'voided-lead-02')), 'voucher_invalid');
+});
+await test('fake: only a change to or from kind group is refused (voucher_kind_fixed)', async () => {
+  const w = world();
+  w.cos.as('usr_admin');
+  const gift = w.cos.seed('voucher', { kind: 'gift', code: 'GIFT2345', classes: 1 });
+  const grp = w.cos.seed('voucher', { kind: 'group', code: 'GRUP2345', classes: 1, places: 2 });
+  const upd = (id, kind, k) => codeOf(w.cos.request('POST', '/batch', { ops: [{ op: 'update', entity: 'voucher', id, data: { kind } }] }, { idempotencyKey: k }));
+  assert.equal(await upd(gift.id, 'courtesy', 'kind-fix-0001'), 'ok', 'gift → courtesy is not a group change');
+  assert.equal(await upd(grp.id, 'gift', 'kind-fix-0002'), 'voucher_kind_fixed');
+  assert.equal(await upd(gift.id, 'group', 'kind-fix-0003'), 'voucher_kind_fixed');
+});
+await test('fake: expiry, void and payment checks apply to the lead only: a friend joins a booked pass after its valid_until', async () => {
+  const G = need('group');
+  const w = world();
+  await w.approve();
+  let p = w.as('usr_buyer');
+  const [pass] = await G.myGroupPasses(w.cos);
+  await G.joinPass(p, { personId: w.people.buyer.id, occurrenceId: w.occ.id, code: pass.code }, 'late-lead-0001');
+  vch(w, pass.id).valid_until = '2026-11-01';
+  p = w.as('usr_f1');
+  assert.equal(await codeOf(G.joinPass(p, { personId: w.people.f1.id, occurrenceId: w.occ.id, code: pass.code }, 'late-f1-00001')), 'ok');
+  const w2 = world();
+  await w2.approve();
+  const p2 = w2.as('usr_buyer');
+  const [pass2] = await G.myGroupPasses(w2.cos);
+  w2.cos.db.voucher.find((v) => v.id === pass2.id).data.valid_until = '2026-11-01';
+  assert.equal(await codeOf(G.joinPass(p2, { personId: w2.people.buyer.id, occurrenceId: w2.occ.id, code: pass2.code }, 'late-lead-0002')), 'voucher_expired', 'the lead still meets the expiry');
+});
+await test('fake: a studio-side cancel returns the code only before the class starts and while nobody checked in', async () => {
+  const w = world();
+  const a = await party3(w);
+  w.cos.as('usr_desk');
+  await deskCancel(w, a.lead.id, 'ret-cancel-001');
+  assert.equal(vch(w, a.pass.id).uses, 0, 'returned: not started, nobody in');
+  const w2 = world();
+  const b = await party3(w2);
+  w2.cos.as('usr_desk');
+  await w2.cos.request('POST', '/batch', { ops: [{ op: 'update', entity: 'booking', id: b.f1.id, data: { status: 'checked_in' } }] }, { idempotencyKey: 'ret-checkin-01' });
+  await deskCancel(w2, b.lead.id, 'ret-cancel-002');
+  assert.equal(w2.cos.db.voucher.find((v) => v.id === b.pass.id).data.uses, 1, 'someone checked in: the code is spent');
+  const w3 = world();
+  const c = await party3(w3);
+  w3.cos.db.occurrence.find((o) => o.id === w3.occ.id).data.starts_at = new Date(T0 - 600e3).toISOString();
+  w3.cos.as('usr_desk');
+  await deskCancel(w3, c.lead.id, 'ret-cancel-003');
+  assert.equal(w3.cos.db.voucher.find((v) => v.id === c.pass.id).data.uses, 1, 'the class started: the code is spent');
+});
+await test('copy: the lead\'s cancel warning and the join rules say checked-in friends keep their place and the pass is not given back once the class started or anyone checked in', () => {
+  const C = need('core'), V = need('vouchers');
+  const warn = C.customerStrings['customer.change.cancel.passLead'], rules = V.productionStrings['vouchers.group.join.rules'];
+  for (const c of [warn, rules]) {
+    assert.match(c.es, /registr\S* (su )?llegada/i, c.es); assert.match(c.en, /checked in/i, c.en);
+    assert.doesNotMatch(c.es, /todos los lugares|lugares de todo el grupo/i, c.es); assert.doesNotMatch(c.en, /every place/i, c.en);
+  }
+  assert.match(rules.es, /empez/i); assert.match(rules.en, /start/i);
+});
+
 console.log(`\ngroup pass: ${passed} passed, ${failures} failed`);
 if (failures) process.exit(1);
