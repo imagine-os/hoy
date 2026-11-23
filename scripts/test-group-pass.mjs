@@ -32,7 +32,7 @@ const ENTRIES = {
   desk: "export { DESK_CODES, deskStrings, deskErrorText } from './src/modules/staff/desk/strings'; export { saleOps } from './src/modules/staff/desk/deskCommands';",
   booking: "export { BOOKING_REFUSALS, refusalMessage } from './src/modules/customer/booking/refusals'; export { bookingStrings } from './src/modules/customer/booking/strings';",
   launchCos: "export { KNOWN_CODES } from './src/modules/transfers/launch/cos'; export { payLaunchStrings } from './src/modules/transfers/launch/strings';",
-  pricing: "export { genericPlans } from './src/data/livePricing';",
+  pricing: "export { genericPlans, websitePlans } from './src/data/livePricing';",
   routes: "export { LAUNCH_ROUTES } from './src/config/launchRoutes'; export { customerReturn } from './src/modules/customer/auth/customerReturn';",
   core: "export { coreStrings } from './src/i18n/core'; export { strings as customerStrings } from './src/modules/customer/strings';",
   share: "export { copyLink } from './src/components/molecule/ShareLink/copyLink';",
@@ -410,6 +410,14 @@ await test('PR-01 group: the master hides Classes for a group product and sends 
   assert.equal(P.showsClasses('group'), false); assert.equal(P.showsClasses('pack'), true);
   const [op] = P.createOps({ key: 'grupo4', name: 'Clase para 4', kind: 'group', price: 180000, credits: 3, places: 4, active: true });
   assert.equal(op.data.credits, null, 'a group product gives no credits');
+});
+
+await test('website (owner 2026-11-23): the public site shows no group pass card; the app\'s Plans does', () => {
+  const P = need('pricing'), M = need('mapping');
+  const row = (id, data) => M.fromRecord(M.adapterFor('plans'), { id, data });
+  const all = P.genericPlans([row('prd_g', { key: 'grupo4', kind: 'group', name: 'Clase para 4', price: 180000, places: 4, active: true }), row('prd_p', { key: 'pack6', kind: 'pack', name: 'Paquete 6', price: 300000, credits: 6, active: true })], '2026-11-24');
+  assert.deepEqual(all.map((p) => p.key).sort(), ['grupo4', 'pack6']);
+  assert.deepEqual(P.websitePlans(all).map((p) => p.key), ['pack6']);
 });
 
 console.log(`\ngroup pass: ${passed} passed, ${failures} failed`);

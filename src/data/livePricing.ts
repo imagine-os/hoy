@@ -93,6 +93,9 @@ export function genericPlans(rows: CatalogPlan[], purchaseDate: string): Generic
   return plans.sort((a, b) => GENERIC_KINDS.indexOf(a.kind) - GENERIC_KINDS.indexOf(b.kind) || a.price - b.price || a.key.localeCompare(b.key));
 }
 
+/** The public website's generic cards: no group pass (owner, 2026-11-23); members buy it in the app's Plans. */
+export const websitePlans = (plans: GenericPlan[]): GenericPlan[] => plans.filter((p) => p.kind !== 'group');
+
 export interface LivePricing {
   items: PriceItem[];
   /** Production only: the master's other public products. The review build keeps its fixed list. */
