@@ -180,6 +180,8 @@ export const productionStrings: StringTable = {
   'vouchers.group.join.yourClass': { es: 'La clase del grupo', en: 'The group’s class' },
   'vouchers.group.join.classHidden': { es: 'La clase ya no aparece en el horario; recepción puede ayudarte.', en: 'The class no longer shows in the timetable; reception can help you.' },
   'vouchers.group.join.take': { es: 'Tomar mi lugar', en: 'Take my place' },
+  'vouchers.group.join.picked': { es: 'Elegiste: {cls}', en: 'You chose: {cls}' },
+  'vouchers.group.join.thatClass': { es: 'Este pase ya tiene su clase: es la de arriba. Toma tu lugar en ella.', en: 'This pass already has its class: the one above. Take your place in it.' },
   'vouchers.group.join.done': { es: 'Tienes tu lugar en la clase', en: 'You have your place in the class' },
   'vouchers.group.join.view': { es: 'Ver mi reserva', en: 'See my booking' },
   'vouchers.group.join.noRoom': { es: 'Esta clase no tiene lugar para el grupo: hacen falta {n} lugares y quedan {free}. Elige otra clase.', en: 'This class has no room for the group: {n} places are needed and {free} are left. Choose another class.' },

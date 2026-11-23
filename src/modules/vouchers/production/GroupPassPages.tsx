@@ -89,12 +89,14 @@ function JoinScreen({ code, occurrence }: { code: string; occurrence: string | n
   const action = useAction();
   const [picked, setPicked] = useState<string | null>(occurrence);
   const [done, setDone] = useState<PassBookingRow | null>(null);
-  const [details, setDetails] = useState<{ needed?: number; free?: number } | null>(null);
+  const [details, setDetails] = useState<{ needed?: number; free?: number; occurrence?: string } | null>(null);
+  const [named, setNamed] = useState<string | null>(null);
   const sessions = useSessionsJoined(useMemo(() => (s: ClassSessionRow) => s.status === 'scheduled', []));
   // The buyer reads their own pass (its size, whether it is used); a friend's link reads nothing and the server decides.
   const mine = useLoad((cos) => myGroupPasses(cos).then((all) => all.find((p) => p.code === code) ?? null), [code]);
   const own = mine.state.status === 'ready' ? mine.state.value : null;
-  const target = occurrence ?? own?.occurrence ?? null;
+  // A link shared before the first use, opened after it: the server names the pass's class (pass_occurrence_mismatch).
+  const target = occurrence ?? own?.occurrence ?? named;
   const offered = useMemo(() => passClasses(sessions.filter((x) => !!x.modality), own?.places ?? null, now), [sessions, own, now]);
   const chosen = (target ? sessions.find((x) => x.session.id === target) : sessions.find((x) => x.session.id === picked)) ?? null;
   const valid = CODE_RE.test(code);
@@ -102,10 +104,15 @@ function JoinScreen({ code, occurrence }: { code: string; occurrence: string | n
   const book = (occurrenceId: string) => action.run(async (key) => {
     setDetails(null);
     try { setDone(await joinPass(data, { personId: user.id, occurrenceId, code }, key)); }
-    catch (e) { setDetails(((e as { details?: unknown }).details as { needed?: number; free?: number } | null) ?? null); throw e; }
+    catch (e) {
+      const d = ((e as { details?: unknown }).details as { needed?: number; free?: number; occurrence?: string } | null) ?? null;
+      setDetails(d);
+      if ((e as { code?: unknown }).code === 'pass_occurrence_mismatch' && typeof d?.occurrence === 'string' && OCC_ID.test(d.occurrence)) setNamed(d.occurrence);
+      throw e;
+    }
   });
   const error = action.error ? refusalMessage({ code: action.error }) : null;
-  const errorText = error ? (action.error === 'group_does_not_fit' && details?.needed != null ? t('vouchers.group.join.noRoom', { n: details.needed, free: details.free ?? 0 }) : t(error.key, error.vars)) : null;
+  const errorText = named && action.error === 'pass_occurrence_mismatch' ? t('vouchers.group.join.thatClass') : error ? (action.error === 'group_does_not_fit' && details?.needed != null ? t('vouchers.group.join.noRoom', { n: details.needed, free: details.free ?? 0 }) : t(error.key, error.vars)) : null;
 
   if (!valid) return <Shell><Notice tone="warn">{t('vouchers.group.join.badCode')}</Notice></Shell>;
   if (done) {
@@ -132,9 +139,10 @@ function JoinScreen({ code, occurrence }: { code: string; occurrence: string | n
         <span className="eyebrow">{t('vouchers.group.join.pick')}</span>
         <p className="xs muted">{t('vouchers.group.join.pickHint')}</p>
         {offered.length === 0 ? <p className="small muted">{t('vouchers.group.join.noClasses')}</p>
-          : <div role="radiogroup" aria-label={t('vouchers.group.join.pick')}>{offered.slice(0, 40).map((x) => <div key={x.session.id} role="radio" aria-checked={picked === x.session.id} data-picked={picked === x.session.id || undefined}>
+          : <div className="stack-sm">{offered.slice(0, 40).map((x) => <div key={x.session.id} data-picked={picked === x.session.id || undefined}>
             <ClassRow title={x.session.title} teacher={x.teacher?.display_name ?? ''} startsAt={x.session.starts_at} durationMin={x.modality?.duration_min ?? 60} tone={x.modality?.tone ?? 'river'} booked={x.session.booked_count} capacity={x.session.capacity} booked_by_me={picked === x.session.id} onClick={() => { setPicked(x.session.id); action.renew(); }} />
           </div>)}</div>}
+        {picked && <p className="xs" role="status">{t('vouchers.group.join.picked', { cls: offered.find((x) => x.session.id === picked)?.session.title ?? '' })}</p>}
         <Button loading={action.busy} disabled={action.busy || !picked} onClick={() => picked && void book(picked)}>{t('vouchers.group.join.book')}</Button>
       </div>
     </Card>}
