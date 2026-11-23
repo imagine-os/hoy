@@ -93,6 +93,7 @@ export function ProductMasterPage() {
               <Field label={t('products.type')} required>{(id) => <Select id={id} name="kind" value={editing.draft.kind} disabled={editing.mode === 'edit'} onChange={(e) => draftField({ kind: e.target.value as ProductData['kind'] })}>{PRODUCT_KINDS.map((k) => <option key={k} value={k}>{t(`products.launch.kind.${k}`)}</option>)}</Select>}</Field>
               <Field label={t('products.amount')} required>{(id) => <Input id={id} name="price" type="number" min={0} step={1} value={editing.draft.price} disabled={editing.mode === 'edit'} onChange={(e) => draftField({ price: Number(e.target.value) })} />}</Field>
               <Field label={t('products.classes')}>{(id) => <Input id={id} name="credits" type="number" min={0} step={1} value={editing.draft.credits ?? ''} onChange={(e) => draftField({ credits: e.target.value === '' ? null : Number(e.target.value) })} />}</Field>
+              {editing.draft.kind === 'group' && <Field label={t('products.places')} required>{(id) => <Input id={id} name="places" type="number" min={2} max={100} step={1} value={editing.draft.places ?? ''} onChange={(e) => draftField({ places: e.target.value === '' ? null : Number(e.target.value) })} />}</Field>}
               <Field label={t('products.validity')}>{(id) => <Input id={id} name="validity" type="number" min={0} step={1} value={editing.draft.validity_days ?? ''} onChange={(e) => draftField({ validity_days: e.target.value === '' ? null : Number(e.target.value) })} />}</Field>
               {dates && <Field label={t('products.starts')}>{(id) => <Input id={id} name="valid_from" type="date" value={editing.draft.valid_from ?? ''} onChange={(e) => draftField({ valid_from: e.target.value || null })} />}</Field>}
               {dates && <Field label={t('products.ends')}>{(id) => <Input id={id} name="valid_until" type="date" value={editing.draft.valid_until ?? ''} onChange={(e) => draftField({ valid_until: e.target.value || null })} />}</Field>}
@@ -100,6 +101,7 @@ export function ProductMasterPage() {
             <Toggle label={t('products.launch.affiliateOnly')} checked={isAffiliateOnly({ data: editing.draft })} onChange={(on) => draftField({ audience: on ? 'affiliate' : null })} />
             <Toggle label={t('products.launch.freezable')} checked={!!editing.draft.freezable} onChange={(on) => draftField({ freezable: on })} />
             <Toggle label={t('products.launch.active')} checked={editing.draft.active !== false} onChange={(on) => draftField({ active: on })} />
+            {editing.draft.kind === 'group' && <p className="small muted" data-group-note>{t('products.launch.groupNote')}</p>}
             {editing.mode === 'edit' && <p className="small muted">{t('products.launch.priceLocked')}</p>}
           </>}
           {problem && <p role="alert" aria-live="assertive">{t(`products.launch.error.${problem}`)}</p>}
@@ -111,7 +113,7 @@ export function ProductMasterPage() {
     {groups.length === 0 ? <EmptyState title={t('products.empty')} /> : <div className="grid grid-2" data-testid="product-list">
       {groups.map((g) => { const current = g.rows.find((r) => live.has(r.id)) ?? null, head = current ?? g.rows[0]; return <Card key={g.key} title={head.data.name} data-testid={`product-${g.key}`}>
         <div className="stack-sm">
-          <span className="small">{g.key} · {t(`products.launch.kind.${head.data.kind}`)}{head.data.credits ? ` · ${head.data.credits} ${t('products.classes')}` : ''}{head.data.validity_days ? ` · ${head.data.validity_days} ${t('products.validity')}` : ''}</span>
+          <span className="small">{g.key} · {t(`products.launch.kind.${head.data.kind}`)}{head.data.credits ? ` · ${head.data.credits} ${t('products.classes')}` : ''}{head.data.kind === 'group' && head.data.places ? ` · ${t('products.launch.placesCount', { n: head.data.places })}` : ''}{head.data.validity_days ? ` · ${head.data.validity_days} ${t('products.validity')}` : ''}</span>
           {isAffiliateOnly(head) && <Badge tone="highlight">{t('products.launch.affiliateOnly')}</Badge>}
           {head.data.kind === 'private' && <Badge>{t('products.launch.noPublicPrice')}</Badge>}
           <strong>{current ? formatCOP(current.data.price, lang) : t('products.launch.notOnSale')}</strong>

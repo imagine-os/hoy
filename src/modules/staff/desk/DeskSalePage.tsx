@@ -73,17 +73,21 @@ export function DeskSalePage() {
   const [sessionId, setSessionId] = useState(params.get('session') ?? '');
   const [checkIn, setCheckIn] = useState(true);
   // The check-in class only while it is still offered (`chosenSession`): payload, toggle and intent all use this.
-  const chosen = chosenSession(today, sessionId);
+  const chosenSlot = chosenSession(today, sessionId);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState<(SaleResult & { name: string; sessionId: string }) | null>(null);
+  const [done, setDone] = useState<(SaleResult & { name: string; sessionId: string; group: boolean }) | null>(null);
+  const [groupCode, setGroupCode] = useState<string | null>(null);
 
   // Today's price row only (payments 2.8.0 dated prices), as the website's price list reads it (livePricing.ts).
   const products = useMemo(() => plans.filter(p => p.family !== 'regalos' && (!p.valid_from || p.valid_from <= priceDay) && (!p.valid_until || priceDay <= p.valid_until)).sort((a, b) => a.sort - b.sort), [plans, priceDay]);
   const product = products.find(p => p.id === productId);
+  // ADR 0045: a group pass is sold without a class; its code (issued on approval) books the class later.
+  const groupSale = product?.kind === 'group';
   const price = product?.price ?? 0;
   const amount = paidRaw === null || paidRaw.trim() === '' ? price : parseDigits(paidRaw);
   const differs = !!product && amount !== price;
+  const chosen = groupSale ? '' : chosenSlot;
   const freshChoice=emailChoice?.provider===data&&emailChoice.context===emailChoiceContext&&emailChoice.person.id===personId?emailChoice.person:null;
   const person = personId ? freshChoice??people.find(p => p.id === personId) : undefined;
   // PRO-04 (desk part): the chosen person's trial, read from their own lots and payments (assessLiveTrial). Display
@@ -126,7 +130,7 @@ export function DeskSalePage() {
     try {
       const submitNormal = () => sell({
         person: mode === 'existing' ? { id: freshChoice?.personId ?? person!.id } : { new: { name: form.name, phone: form.phone, email: form.email }, consents: DESK_CONSENTS },
-        productId: product.id, price, amountReceived: amount, concept: bi({ es: product.name_es, en: product.name_en }), reference: needsReference ? reference : undefined, today: saleDay, reason: differs ? reason.trim() : undefined, method,
+        productId: product.id, productKind: product.kind, price, amountReceived: amount, concept: bi({ es: product.name_es, en: product.name_en }), reference: needsReference ? reference : undefined, today: saleDay, reason: differs ? reason.trim() : undefined, method,
         sessionId: chosen || undefined, checkIn: !!chosen && checkIn, key: writeKey,
       });
       let result:SaleResult;
@@ -138,15 +142,18 @@ export function DeskSalePage() {
         result=outcome.value;
       }else result=await submitNormal();
       keys.done(action); saleDays.current.delete(intentKey);
-      setDone({ ...result, name: mode === 'existing' ? person!.name : form.name.trim(), sessionId: chosen });
+      setDone({ ...result, name: mode === 'existing' ? person!.name : form.name.trim(), sessionId: chosen, group: groupSale });
+      // The desk reads vouchers: show the code the approval just issued (the buyer also gets it by email).
+      if (groupSale) { const request = cosRequest(data); setGroupCode(null); if (request) void request<{ data: { data: { code?: string } }[] }>('POST', '/query', { entity: 'voucher', filter: { and: [{ field: 'kind', op: 'eq', value: 'group' }, { field: 'payment', op: 'eq', value: result.paymentId }] }, limit: 1 }).then((r) => setGroupCode(r.data[0]?.data.code ?? null), () => setGroupCode(null)); }
     } catch (e) { setError(deskErrorText(errorCode(e), t)); } finally { busyRef.current = false; setBusy(false); }
   };
-  const reset = () => { setEmailAck(null);setEmailReview(null);setEmailChoice(null); setDone(null); setReference(''); setForm({ name: '', phone: '', email: '', consent: false }); setPersonId(null); setQ(''); setMode('new'); setProductId(''); setPaidRaw(null); setReason(''); setSessionId(''); setCheckIn(true); setError(null); };
+  const reset = () => { setGroupCode(null); setEmailAck(null);setEmailReview(null);setEmailChoice(null); setDone(null); setReference(''); setForm({ name: '', phone: '', email: '', consent: false }); setPersonId(null); setQ(''); setMode('new'); setProductId(''); setPaidRaw(null); setReason(''); setSessionId(''); setCheckIn(true); setError(null); };
 
   if (done) return (
     <div className="stack">
       <div className="page-head"><div><h1>{t('staff.register.done')}</h1><p className="muted small">{t('staff.register.done.existing', { name: done.name })}{done.checkedIn ? ` · ${t('staff.register.done.checkedIn', { cls: todayAll.find(x => x.session.id === done.sessionId)?.session.title ?? '' })}` : ''}</p></div></div>
       {done.checkInError && <EmptyState compact tone="error" title={t('desk.sale.checkInFailed')} body={deskErrorText(done.checkInError, t)} />}
+      {done.group && <Notice tone="success" title={groupCode ? t('desk.sale.groupCode', { code: groupCode }) : undefined}>{t('desk.sale.groupCodeLater')}</Notice>}
       <div className="row wrap">
         <Button onClick={reset} icon="sell">{t('staff.register.newSale')}</Button>
         <Link to={`/staff/checkin${done.sessionId ? `?session=${done.sessionId}` : ''}`}><Button variant="secondary" icon="checkin">{t('staff.home.openCheckin')}</Button></Link>
@@ -201,9 +208,10 @@ export function DeskSalePage() {
               <Field label={t('staff.register.paid')}>{id => <Input disabled={busy||replayPending} id={id} inputMode="numeric" value={paidRaw ?? String(price)} onChange={e => setPaidRaw(e.target.value)} />}</Field>
               {quoted && amount <= 0 && <p className="xs muted" role="note">{t('desk.sale.quoted')}</p>}
               {differs && <Field label={t('staff.register.note')} required>{id => <Input disabled={busy||replayPending} id={id} value={reason} onChange={e => setReason(e.target.value)} placeholder={t('staff.register.note.ph')} invalid={!reason.trim()} />}</Field>}
-              <Field label={t('staff.register.checkinTo')}>{id => <Select disabled={busy||replayPending} id={id} value={chosen} onChange={e => setSessionId(e.target.value)}><option value="">{t('staff.register.checkinTo.none')}</option>{today.map(({ session: s, teacher: te }) => <option key={s.id} value={s.id}>{formatTime(s.starts_at, lang)} · {s.title}{te ? ` · ${te.display_name}` : ''} ({s.booked_count}/{s.capacity})</option>)}</Select>}</Field>
+              {groupSale && <p className="xs muted" role="note" data-desk-group-sale>{t('desk.sale.group')}</p>}
+              {!groupSale && <Field label={t('staff.register.checkinTo')}>{id => <Select disabled={busy||replayPending} id={id} value={chosen} onChange={e => setSessionId(e.target.value)}><option value="">{t('staff.register.checkinTo.none')}</option>{today.map(({ session: s, teacher: te }) => <option key={s.id} value={s.id}>{formatTime(s.starts_at, lang)} · {s.title}{te ? ` · ${te.display_name}` : ''} ({s.booked_count}/{s.capacity})</option>)}</Select>}</Field>}
               {chosen && <Toggle disabled={busy||replayPending} size="sm" checked={checkIn} onChange={setCheckIn} label={t('staff.checkin.checkin')} />}
-              {startedChoice(todayAll, today, sessionId) && <p className="xs muted" role="note" data-desk-session-started>{t('desk.sale.sessionStarted')}</p>}
+              {!groupSale && startedChoice(todayAll, today, sessionId) && <p className="xs muted" role="note" data-desk-session-started>{t('desk.sale.sessionStarted')}</p>}
               {error && <EmptyState compact tone="error" title={t('core.common.error')} body={error} />}
               <Button block size="lg" disabled={!valid||(replayPending&&!replayCurrent)} loading={busy} onClick={complete} icon="payment">{t('staff.register.cta')}</Button>
               <p className="xs muted">{t('staff.register.audit', { staff: user.name })}</p>

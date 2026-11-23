@@ -115,7 +115,7 @@ function PayBody({ what, id }: { what: string; id: string }) {
   if (!v.booking && !productSoldAlone(product)) return <Notice action={<Link to="/app/schedule"><Button size="sm" variant="secondary">{t('payLaunch.pay.singleAtBooking.cta')}</Button></Link>}>{t('payLaunch.pay.singleAtBooking')}</Notice>;
   // The purchase still waits for reception: the link only goes back to the class, it does not promise the booking.
   const backToClass = next && !v.booking ? <Link to={next}><Button size="sm" variant="secondary">{t('payLaunch.pay.backToClass')}</Button></Link> : undefined;
-  if (done) return <Notice tone="success" action={backToClass}>{t(v.booking ? 'payLaunch.pay.sent' : 'payLaunch.pay.sentProduct')}</Notice>;
+  if (done) return <Notice tone="success" action={backToClass}>{t(v.booking ? 'payLaunch.pay.sent' : product.data.kind === 'group' ? 'payLaunch.pay.sentGroup' : 'payLaunch.pay.sentProduct')}</Notice>;
   if (v.pending && v.pendingHasReceipt) return <Notice tone="success" action={backToClass}>{t('payLaunch.pay.alreadyPending')}</Notice>;
   if (consentHoldsPay({ held: consentHeld, what, pending: !!v.pending })) return <ConsentHoldNotice />;
   const resumeId = paymentId ?? v.pending?.id ?? null;
@@ -142,6 +142,7 @@ function PayBody({ what, id }: { what: string; id: string }) {
       <div className="stack-sm">
         <span>{product.data.name}</span>
         <strong data-testid="amount-due">{t('payLaunch.pay.amount')}: {formatCOP(product.data.price, lang)}</strong>
+        {product.data.kind === 'group' && product.data.places ? <span className="small">{t('payLaunch.pay.group', { n: product.data.places })}</span> : null}
         <span className="small">{t('payLaunch.pay.typeAmount')}</span>
       </div>
     </Card>
