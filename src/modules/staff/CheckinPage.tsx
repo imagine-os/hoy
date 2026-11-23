@@ -36,7 +36,7 @@ import { type Lang } from '../../i18n/types';
 import { useLiveUpdates } from '../../data/companyos/hooks';
 import { PartySummary } from '../../components/molecule/PartySummary/PartySummary';
 import { cosOf } from '../transfers/launch/cos';
-import { deskAddToParty, deskSwap, parties, type PassBookingRow } from '../vouchers/production/groupPass';
+import { deskAddToParty, deskSwap, parties, partyView, type PassBookingRow } from '../vouchers/production/groupPass';
 
 interface WaitlistRow extends BaseRow { user_id: string; session_id: string; position: number; status: string }
 
@@ -297,12 +297,13 @@ export function CheckinPage() {
         {server && groups.length > 0 && <Group title={t('desk.party.section')} n={groups.length}>
           {groups.map((g) => {
             const name = (id?: string) => (id ? byId.get(id)?.name ?? id : '');
+            const v = partyView(g, { open: partyOpen, nameOf: name });
             return <div key={g.party} className="checkin-teacher">
-              <PartySummary title={t('desk.party.title', { name: name(g.lead?.user_id) || name(g.members[0]?.user_id) })} namedLabel={t('desk.party.named', { n: g.named, total: g.size })} full={g.named >= g.size}
-                actions={partyOpen && g.named < g.size && partyEdit?.party !== g.party ? <div className="row"><Button size="sm" variant="outline" icon="user-plus" disabled={!!busy} onClick={() => setPartyEdit({ party: g.party, swap: null, q: '' })}>{t('desk.party.add')}</Button></div> : undefined}>
+              <PartySummary title={t('desk.party.title', { name: v.name })} namedLabel={t('desk.party.named', { n: v.named, total: v.total })} full={v.full}
+                actions={v.canAdd && partyEdit?.party !== g.party ? <div className="row"><Button size="sm" variant="outline" icon="user-plus" disabled={!!busy} onClick={() => setPartyEdit({ party: g.party, swap: null, q: '' })}>{t('desk.party.add')}</Button></div> : undefined}>
                 <ul className="stack-sm">{g.members.map((b) => <li key={b.id} className="row-between wrap">
                   <span className="small">{name(b.user_id)}{b.party_lead ? <span className="xs muted"> · {t('desk.party.lead')}</span> : null}</span>
-                  {partyOpen && b.status === 'booked' && <Button size="sm" variant="ghost" disabled={!!busy} onClick={() => setPartyEdit({ party: g.party, swap: b.id, q: '' })}>{t('desk.party.swap')}</Button>}
+                  {v.swappable.includes(b.id) && <Button size="sm" variant="ghost" disabled={!!busy} onClick={() => setPartyEdit({ party: g.party, swap: b.id, q: '' })}>{t('desk.party.swap')}</Button>}
                 </li>)}</ul>
               </PartySummary>
               {partyEdit?.party === g.party && partyForm()}

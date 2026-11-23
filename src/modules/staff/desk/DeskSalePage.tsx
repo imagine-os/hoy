@@ -24,6 +24,8 @@ import { deskErrorText } from './strings';
 import { useActionKeys, useDeskCommands } from './useDesk';
 import { cosRequest, errorCode } from './wire';
 import { chosenSession, deskTrialBlock, walkInSessions, startedChoice } from './deskSale';
+import { cosOf } from '../../transfers/launch/cos';
+import { groupSaleNotice, voucherForPayment } from '../../vouchers/production/groupPass';
 import '../staff.css';
 
 const METHODS: { id: DeskMethod; label: string }[] = [{ id: 'cash', label: 'staff.register.method.cash' }, { id: 'card_terminal', label: 'staff.register.method.datafono' }, { id: 'transfer', label: 'staff.register.method.transfer' }];
@@ -144,7 +146,7 @@ export function DeskSalePage() {
       keys.done(action); saleDays.current.delete(intentKey);
       setDone({ ...result, name: mode === 'existing' ? person!.name : form.name.trim(), sessionId: chosen, group: groupSale });
       // The desk reads vouchers: show the code the approval just issued (the buyer also gets it by email).
-      if (groupSale) { const request = cosRequest(data); setGroupCode(null); if (request) void request<{ data: { data: { code?: string } }[] }>('POST', '/query', { entity: 'voucher', filter: { and: [{ field: 'kind', op: 'eq', value: 'group' }, { field: 'payment', op: 'eq', value: result.paymentId }] }, limit: 1 }).then((r) => setGroupCode(r.data[0]?.data.code ?? null), () => setGroupCode(null)); }
+      if (groupSale) { const cos = cosOf(data); setGroupCode(null); if (cos) voucherForPayment(cos, result.paymentId).then((v) => setGroupCode(v?.code ?? null), () => setGroupCode(null)); }
     } catch (e) { setError(deskErrorText(errorCode(e), t)); } finally { busyRef.current = false; setBusy(false); }
   };
   const reset = () => { setGroupCode(null); setEmailAck(null);setEmailReview(null);setEmailChoice(null); setDone(null); setReference(''); setForm({ name: '', phone: '', email: '', consent: false }); setPersonId(null); setQ(''); setMode('new'); setProductId(''); setPaidRaw(null); setReason(''); setSessionId(''); setCheckIn(true); setError(null); };
@@ -153,7 +155,7 @@ export function DeskSalePage() {
     <div className="stack">
       <div className="page-head"><div><h1>{t('staff.register.done')}</h1><p className="muted small">{t('staff.register.done.existing', { name: done.name })}{done.checkedIn ? ` · ${t('staff.register.done.checkedIn', { cls: todayAll.find(x => x.session.id === done.sessionId)?.session.title ?? '' })}` : ''}</p></div></div>
       {done.checkInError && <EmptyState compact tone="error" title={t('desk.sale.checkInFailed')} body={deskErrorText(done.checkInError, t)} />}
-      {done.group && <Notice tone="success" title={groupCode ? t('desk.sale.groupCode', { code: groupCode }) : undefined}>{t('desk.sale.groupCodeLater')}</Notice>}
+      {done.group && (() => { const n = groupSaleNotice(groupCode); return <Notice tone="success" title={n.title ? t(n.title.key, n.title.vars) : undefined}>{t(n.body)}</Notice>; })()}
       <div className="row wrap">
         <Button onClick={reset} icon="sell">{t('staff.register.newSale')}</Button>
         <Link to={`/staff/checkin${done.sessionId ? `?session=${done.sessionId}` : ''}`}><Button variant="secondary" icon="checkin">{t('staff.home.openCheckin')}</Button></Link>
