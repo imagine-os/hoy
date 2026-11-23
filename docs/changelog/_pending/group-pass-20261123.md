@@ -21,6 +21,12 @@ Decision: the site never counts places or checks the code; Company OS does (ADR 
   needed and left), `party_full`, `voucher_wrong_kind`, `pass_occurrence_mismatch`, `pass_person_required`,
   `void_pass_used`, `voucher_kind_fixed` on every screen that can meet them.
 - Group codes stay out of the gift and courtesy lists (M-13, S-08) and the redeem page (C-28 says what the code is for).
+Review round 1 fixes: the screens' decisions are tested functions (passCard, joinView, joinFailure, joinMessage,
+partyView, copyLink, groupSaleNotice, passCancelWarning); a spent pass (no active place left) or one whose class has
+started shows no share link; the join page stays locked while an answer is unknown; a link shared before the first use
+finds the pass's class from the server's details; the lead is warned that cancelling cancels the group's places and
+loses the code; Products hides Classes for a group product and sends no credits; no group pass card on the public
+website (owner, 2026-11-23), members buy it in the app's Plans.
 Alternative rejected: one booking with X seats (Q8: X linked bookings keep capacity, check-in and the person rules).
 
 Files: `src/modules/products/launch/{productMaster.ts,ProductMasterPage.tsx}`, `src/modules/products/strings.ts`;
