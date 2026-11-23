@@ -31,6 +31,11 @@ Integrated round 1 fixes: the desk registers someone with no account into an unn
 (person, member facet, verbal consents and the pass booking in one /batch, Q1); the join page says when a booking holds
 the class for the whole group (a first use, or an old link after the pass was returned); a booked pass past its
 valid_until keeps its link and its join while the class is ahead (Company OS decides until check-in closes).
+Integrated round 2 fixes: the lead's cancel warning and the join page's rules say places already checked in stay, and
+that the pass is not given back once the class has started or anyone has checked in, even if the studio cancels (owner,
+2026-11-23); the test fake (`scripts/lib/fake-cos.mjs`) now matches Company OS as built (the lead's cancel cancels only
+booked places, a voided pass answers `voucher_payment_not_approved`, only changes to or from kind group are refused,
+void and expiry are the lead's checks, no return once the class started or anyone checked in).
 Alternative rejected: one booking with X seats (Q8: X linked bookings keep capacity, check-in and the person rules).
 
 Files: `src/modules/products/launch/{productMaster.ts,ProductMasterPage.tsx}`, `src/modules/products/strings.ts`;

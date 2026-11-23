@@ -1,4 +1,4 @@
-Group pass (Company OS ADR 0045, lane L2): group products in Products, buying by transfer and at the desk, My group passes (C-43), the join page (C-44), the desk's add and swap on Check-in (S-02), refusal copy. Built test first (scripts/test-group-pass.mjs); waiting for its review round, Company OS 1.23.0 and the Hoy recipe apply. See changelog/_pending/group-pass-20261123.md.
+Group pass (Company OS ADR 0045, lane L2): group products in Products, buying by transfer and at the desk, My group passes (C-43), the join page (C-44), the desk's add and swap on Check-in (S-02), refusal copy. Built test first (scripts/test-group-pass.mjs); reviews done, waiting for release (after Company OS 1.23.0 and the Hoy recipe apply). See changelog/_pending/group-pass-20261123.md.
 
 Staff walk-in boundary alignment (1.6.3): match live Company OS 1.19.0's exclusive +15-minute/class-end cutoff; fail closed for invalid class times. Targeted tests and build required, then two independent reviews and verified frontend-only release. No backend or customer-record changes. See changelog/_pending/staff-walkin-boundary-alignment.md.
 
