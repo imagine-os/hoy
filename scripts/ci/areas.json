@@ -191,7 +191,23 @@
       "scripts/ci/affected-areas.mjs": [],
       "scripts/ci/area-imports.mjs": [],
       "vite.config.ts": [],
-      "scripts/test-route-connectivity.mjs": []
+      "scripts/test-route-connectivity.mjs": [],
+      "scripts/test-group-pass.mjs": [
+        "src/modules/products/launch/productMaster.ts",
+        "src/modules/products/strings.ts",
+        "src/data/companyos/mapping.ts",
+        "src/data/companyos/CompanyOSProvider.ts",
+        "src/modules/vouchers/production/{groupPass,model,strings}.ts",
+        "src/data/companyos/refusals.ts",
+        "src/modules/staff/desk/{strings,deskCommands}.ts",
+        "src/modules/customer/booking/{refusals,strings}.ts",
+        "src/modules/transfers/launch/{cos,strings}.ts",
+        "src/data/livePricing.ts",
+        "src/config/launchRoutes.ts",
+        "src/modules/customer/auth/customerReturn.ts",
+        "src/i18n/core.ts",
+        "src/modules/customer/strings.ts"
+      ]
     }
   }
 }
