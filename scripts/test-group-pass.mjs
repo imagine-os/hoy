@@ -16,7 +16,7 @@ import { fakeCredits } from './lib/fake-credits.mjs';
 let failures = 0, passed = 0;
 async function test(name, fn) {
   try { await fn(); passed++; console.log(`ok   ${name}`); }
-  catch (e) { failures++; console.log(`FAIL ${name}\n     ${String(e?.stack ?? e).split('\n').slice(0, 3).join('\n     ')}`); }
+  catch (e) { failures++; console.log(`FAIL ${name}\n     ${String(e?.stack ?? e).split('\n').slice(0, 12).join('\n     ')}`); }
 }
 const values = new Map();
 globalThis.localStorage = { getItem: (k) => values.get(k) ?? null, setItem: (k, v) => values.set(k, String(v)), removeItem: (k) => values.delete(k) };
@@ -116,9 +116,11 @@ function world() {
   const other = cos.seed('occurrence', { title: 'Fuego', kind: 'class', starts_at: new Date(T0 + 2 * 864e5).toISOString(), ends_at: new Date(T0 + 2 * 864e5 + 3600e3).toISOString(), capacity: 10, status: 'scheduled', booked_count: 0 });
   const small = cos.seed('occurrence', { title: 'Centro', kind: 'class', starts_at: new Date(T0 + 3 * 864e5).toISOString(), ends_at: new Date(T0 + 3 * 864e5 + 3600e3).toISOString(), capacity: 2, status: 'scheduled', booked_count: 0 });
   const pay = cos.seed('payment', { person: people.buyer.id, product: product.id, amount: 150000, method: 'transfer', status: 'pending', date: '2026-11-24', concept: 'Clase para 3', reference: 'ref1', provider: 'manual' });
-  const provider = new (need('provider').CompanyOSProvider)({ fetch: cos.fetch, config: { tenant: 'hoy', apiBase: '/api/cos' }, getToken: async () => 'tok', retryDelayMs: 1, sleep: async () => {} });
+  // One provider per signed-in person, as in the app (it keeps its own `/me`).
+  const providers = new Map();
+  const as = (user) => { cos.as(user); if (!providers.has(user)) providers.set(user, new (need('provider').CompanyOSProvider)({ fetch: cos.fetch, config: { tenant: 'hoy', apiBase: '/api/cos' }, getToken: async () => `tok-${user}`, retryDelayMs: 1, sleep: async () => {} })); return providers.get(user); };
   const approve = async () => { cos.as('usr_desk'); await cos.request('POST', '/batch', { ops: [{ op: 'update', entity: 'payment', id: pay.id, data: { status: 'approved', amount: 150000 } }] }, { idempotencyKey: `approve-${pay.id}` }); };
-  return { cos, people, product, occ, other, small, pay, provider, approve };
+  return { cos, people, product, occ, other, small, pay, as, approve };
 }
 const batches = (cos, from = 0) => cos.calls.slice(from).filter((c) => c.method === 'POST' && c.path === '/batch');
 
@@ -144,21 +146,21 @@ await test('C-44 join: the buyer books one class with the code (entitlement pass
   const G = need('group');
   const w = world();
   await w.approve();
-  w.cos.as('usr_buyer');
+  let p = w.as('usr_buyer');
   const [pass] = await G.myGroupPasses(w.cos);
   const from = w.cos.calls.length;
-  const lead = await G.joinPass(w.provider, { personId: w.people.buyer.id, occurrenceId: w.occ.id, code: pass.code.toLowerCase() }, 'join-lead-0001');
+  const lead = await G.joinPass(p, { personId: w.people.buyer.id, occurrenceId: w.occ.id, code: pass.code.toLowerCase() }, 'join-lead-0001');
   const [b] = batches(w.cos, from);
   assert.equal(b.key, 'join-lead-0001', 'the action\'s Idempotency-Key');
   assert.deepEqual(b.body.ops, [{ op: 'create', entity: 'booking', data: { person: w.people.buyer.id, occurrence: w.occ.id, entitlement: 'pass', pass_code: pass.code, source: 'member', status: 'booked' } }]);
   assert.equal(lead.party, pass.id, 'the server stamps the party');
   const [after] = await G.myGroupPasses(w.cos);
   assert.deepEqual([after.occurrence, after.joined, G.passState(after, '2026-11-24')], [w.occ.id, 1, 'used']);
-  w.cos.as('usr_f1');
-  await G.joinPass(w.provider, { personId: w.people.f1.id, occurrenceId: w.occ.id, code: pass.code }, 'join-f1-00001');
-  assert.equal(await codeOf(G.joinPass(w.provider, { personId: w.people.f1.id, occurrenceId: w.other.id, code: pass.code }, 'join-f1-00002')), 'pass_occurrence_mismatch', 'the code books only the lead\'s class');
-  assert.equal(await codeOf(G.joinPass(w.provider, { personId: w.people.f1.id, occurrenceId: w.occ.id, code: 'ZZZZ2222' }, 'join-f1-00003')), 'voucher_invalid');
-  assert.equal(await codeOf(G.joinPass(w.provider, { personId: w.people.f2.id, occurrenceId: w.occ.id, code: pass.code }, 'join-f2-00001')), 'forbidden', 'a member books only for themselves');
+  p = w.as('usr_f1');
+  await G.joinPass(p, { personId: w.people.f1.id, occurrenceId: w.occ.id, code: pass.code }, 'join-f1-00001');
+  assert.equal(await codeOf(G.joinPass(p, { personId: w.people.f1.id, occurrenceId: w.other.id, code: pass.code }, 'join-f1-00002')), 'pass_occurrence_mismatch', 'the code books only the lead\'s class');
+  assert.equal(await codeOf(G.joinPass(p, { personId: w.people.f1.id, occurrenceId: w.occ.id, code: 'ZZZZ2222' }, 'join-f1-00003')), 'voucher_invalid');
+  assert.equal(await codeOf(G.joinPass(p, { personId: w.people.f2.id, occurrenceId: w.occ.id, code: pass.code }, 'join-f2-00001')), 'forbidden', 'a member books only for themselves');
   assert.equal(w.cos.db.occurrence.find((o) => o.id === w.occ.id).data.booked_count, 3, 'the class holds all 3 places');
 });
 
@@ -166,10 +168,10 @@ await test('C-44 join: a group that does not fit is refused with its details; th
   const G = need('group');
   const w = world();
   await w.approve();
-  w.cos.as('usr_buyer');
+  let p = w.as('usr_buyer');
   const [pass] = await G.myGroupPasses(w.cos);
   let err = null;
-  try { await G.joinPass(w.provider, { personId: w.people.buyer.id, occurrenceId: w.small.id, code: pass.code }, 'join-small-01'); } catch (e) { err = e; }
+  try { await G.joinPass(p, { personId: w.people.buyer.id, occurrenceId: w.small.id, code: pass.code }, 'join-small-01'); } catch (e) { err = e; }
   assert.equal(err?.code, 'group_does_not_fit');
   assert.deepEqual(err?.details, { needed: 3, free: 2 });
   const joined = (s) => ({ session: { id: s.id, status: s.data.status, starts_at: s.data.starts_at, capacity: s.data.capacity, booked_count: s.data.booked_count } });
@@ -182,50 +184,50 @@ await test('S-02 desk: the roster groups a party with "N of X places named"; the
   const G = need('group');
   const w = world();
   await w.approve();
-  w.cos.as('usr_buyer');
+  let p = w.as('usr_buyer');
   const [pass] = await G.myGroupPasses(w.cos);
-  await G.joinPass(w.provider, { personId: w.people.buyer.id, occurrenceId: w.occ.id, code: pass.code }, 'join-lead-0002');
-  w.cos.as('usr_desk');
-  const rows = await w.provider.list('bookings', { where: { session_id: w.occ.id } });
+  await G.joinPass(p, { personId: w.people.buyer.id, occurrenceId: w.occ.id, code: pass.code }, 'join-lead-0002');
+  p = w.as('usr_desk');
+  const rows = await p.list('bookings', { where: { session_id: w.occ.id } });
   const [party] = G.parties(rows);
   assert.deepEqual([party.party, party.size, party.named, party.lead?.user_id], [pass.id, 3, 1, w.people.buyer.id]);
   assert.equal(await G.partyCode(w.cos, party.party), pass.code, 'the desk reads the code from the voucher (id = party)');
   const from = w.cos.calls.length;
-  await G.deskAddToParty(w.provider, w.cos, { party: party.party, personId: w.people.walkin.id, sessionId: w.occ.id }, 'desk-add-00001');
+  await G.deskAddToParty(p, w.cos, { party: party.party, personId: w.people.walkin.id, sessionId: w.occ.id }, 'desk-add-00001');
   const [b] = batches(w.cos, from);
   assert.deepEqual(b.body.ops[0].data, { person: w.people.walkin.id, occurrence: w.occ.id, entitlement: 'pass', pass_code: pass.code, source: 'desk', status: 'booked' });
-  await G.deskAddToParty(w.provider, w.cos, { party: party.party, personId: w.people.f2.id, sessionId: w.occ.id }, 'desk-add-00002');
-  assert.equal(G.parties(await w.provider.list('bookings', { where: { session_id: w.occ.id } }))[0].named, 3);
-  assert.equal(await codeOf(G.deskAddToParty(w.provider, w.cos, { party: party.party, personId: w.people.walkin2.id, sessionId: w.occ.id }, 'desk-add-00003')), 'party_full');
+  await G.deskAddToParty(p, w.cos, { party: party.party, personId: w.people.f2.id, sessionId: w.occ.id }, 'desk-add-00002');
+  assert.equal(G.parties(await p.list('bookings', { where: { session_id: w.occ.id } }))[0].named, 3);
+  assert.equal(await codeOf(G.deskAddToParty(p, w.cos, { party: party.party, personId: w.people.walkin2.id, sessionId: w.occ.id }, 'desk-add-00003')), 'party_full');
 });
 
 await test('S-02 desk: a swap changes the named person (PATCH person, one keyed write); a member cannot swap', async () => {
   const G = need('group');
   const w = world();
   await w.approve();
-  w.cos.as('usr_buyer');
+  let p = w.as('usr_buyer');
   const [pass] = await G.myGroupPasses(w.cos);
-  await G.joinPass(w.provider, { personId: w.people.buyer.id, occurrenceId: w.occ.id, code: pass.code }, 'join-lead-0003');
-  w.cos.as('usr_f1');
-  const friend = await G.joinPass(w.provider, { personId: w.people.f1.id, occurrenceId: w.occ.id, code: pass.code }, 'join-f1-00009');
-  assert.equal(await codeOf(G.deskSwap(w.provider, { bookingId: friend.id, personId: w.people.walkin.id }, 'swap-member-1')), 'forbidden', 'a member may not swap (write_forbidden reads as forbidden)');
-  w.cos.as('usr_desk');
+  await G.joinPass(p, { personId: w.people.buyer.id, occurrenceId: w.occ.id, code: pass.code }, 'join-lead-0003');
+  p = w.as('usr_f1');
+  const friend = await G.joinPass(p, { personId: w.people.f1.id, occurrenceId: w.occ.id, code: pass.code }, 'join-f1-00009');
+  assert.equal(await codeOf(G.deskSwap(p, { bookingId: friend.id, personId: w.people.walkin.id }, 'swap-member-1')), 'forbidden', 'a member may not swap (write_forbidden reads as forbidden)');
+  p = w.as('usr_desk');
   const from = w.cos.calls.length;
-  await G.deskSwap(w.provider, { bookingId: friend.id, personId: w.people.walkin.id }, 'swap-desk-001');
+  await G.deskSwap(p, { bookingId: friend.id, personId: w.people.walkin.id }, 'swap-desk-001');
   const [b] = batches(w.cos, from);
   assert.deepEqual(b.body.ops, [{ op: 'update', entity: 'booking', id: friend.id, data: { person: w.people.walkin.id } }]);
   assert.equal(b.key, 'swap-desk-001');
   assert.equal(w.cos.db.booking.find((x) => x.id === friend.id).data.person, w.people.walkin.id);
-  assert.equal(await codeOf(G.deskSwap(w.provider, { bookingId: friend.id, personId: w.people.buyer.id }, 'swap-desk-002')), 'already_booked', 'the new person passes already_booked');
+  assert.equal(await codeOf(G.deskSwap(p, { bookingId: friend.id, personId: w.people.buyer.id }, 'swap-desk-002')), 'already_booked', 'the new person passes already_booked');
 });
 
 await test('void: a used pass refuses the payment void (void_pass_used)', async () => {
   const G = need('group');
   const w = world();
   await w.approve();
-  w.cos.as('usr_buyer');
+  let p = w.as('usr_buyer');
   const [pass] = await G.myGroupPasses(w.cos);
-  await G.joinPass(w.provider, { personId: w.people.buyer.id, occurrenceId: w.occ.id, code: pass.code }, 'join-lead-0004');
+  await G.joinPass(p, { personId: w.people.buyer.id, occurrenceId: w.occ.id, code: pass.code }, 'join-lead-0004');
   w.cos.as('usr_admin');
   assert.equal(await codeOf(w.cos.request('POST', '/batch', { ops: [{ op: 'update', entity: 'payment', id: w.pay.id, data: { status: 'voided', status_reason: 'error' } }] }, { idempotencyKey: 'void-0000001' })), 'void_pass_used');
 });
@@ -239,11 +241,12 @@ await test('S-04 desk sale: a group product is sold like a pack, without a class
   assert.deepEqual(pack.map((o) => o.entity), ['payment', 'booking'], 'a pack still books the class (unchanged)');
 });
 await test('C-06 plans: a group product on sale is a generic card with its places (classes not required)', () => {
-  const P = need('pricing');
-  const plans = P.genericPlans([{ id: 'prd_g', tenant_id: 'hoy', slug: 'grupo4', kind: 'group', name_es: 'Clase para 4', name_en: '', price: 180000, classes: null, places: 4, validity_days: 60, active: true, audience: null }], '2026-11-24');
+  const P = need('pricing'), M = need('mapping');
+  const row = (id, data) => M.fromRecord(M.adapterFor('plans'), { id, data });
+  const plans = P.genericPlans([row('prd_g', { key: 'grupo4', kind: 'group', name: 'Clase para 4', price: 180000, credits: null, places: 4, validity_days: 60, active: true })], '2026-11-24');
   assert.equal(plans.length, 1);
   assert.deepEqual([plans[0].kind, plans[0].places], ['group', 4]);
-  assert.equal(P.genericPlans([{ id: 'prd_g1', tenant_id: 'hoy', slug: 'grupo1', kind: 'group', name_es: 'Mal', price: 180000, places: 1, active: true }], '2026-11-24').length, 0, 'a group of one is not offered');
+  assert.equal(P.genericPlans([row('prd_g1', { key: 'grupo1', kind: 'group', name: 'Mal', price: 180000, places: 1, active: true })], '2026-11-24').length, 0, 'a group of one is not offered');
 });
 
 // ── copy for every new code ────────────────────────────────────────────────────────────────────────────────────────

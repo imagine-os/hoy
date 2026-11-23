@@ -91,8 +91,7 @@ export function fakeCos({ productDates = true, approvedBy = true, voidRules = fa
       if (!String(after.status_reason ?? '').trim()) throw err('reason_required');
       if (voidRefusal) throw err(voidRefusal);
     }
-    // ADR 0045 §8: a group payment's void is refused once its pass was used, whatever void_takes_back says.
-    if (before && to === 'voided' && from !== to && product?.data.kind === 'group' && db.voucher.some((v) => v.data.payment === before.id && v.data.uses > 0)) throw err('void_pass_used');
+
     const approving = to === 'approved' && from !== 'approved';
     if (approving && product && after.amount !== product.data.price) {
       if (!after.price_override_reason) throw err('amount_mismatch');
@@ -235,6 +234,8 @@ export function fakeCos({ productDates = true, approvedBy = true, voidRules = fa
     if (op.entity === 'payment') {
       // Hoy's member write policy on payment: own row AND status pending, checked on the stored row and on the result (ADR 0033).
       if (role === 'member' && (r.data.status !== 'pending' || next.status !== 'pending' || next.person !== myPersonId())) throw err('write_forbidden', 403);
+      // ADR 0045 §8: a group payment's void is refused once its pass was used, whatever void_takes_back says.
+      if (next.status === 'voided' && r.data.status !== 'voided' && db.voucher.some((v) => v.data.payment === r.id && v.data.kind === 'group' && v.data.uses > 0)) throw err('void_pass_used');
       const { approving, product } = paymentRules(r.data, next, me);
       r.data = next; afterPayment(r, approving, product);
     } else if (op.entity === 'booking') updateBooking(r, data, role);
