@@ -21,13 +21,16 @@ export const VOUCHER_READ_MAX = 10_000;
 export const PRODUCT_TABLE = 'plans';
 export const PAYMENT_TABLE = 'payments';
 
-export type VoucherKind = 'gift' | 'courtesy';
+/** `group` (credits 1.5.0, ADR 0045): a group pass's code; issued by Company OS on payment approval, never from these screens. */
+export type VoucherKind = 'gift' | 'courtesy' | 'group';
 export interface CosVoucher extends BaseRow {
   kind: VoucherKind; product?: string | null; classes: number; valid_until?: string | null; max_uses?: number | null;
   recipient_email?: string | null; recipient_name?: string | null; buyer?: string | null; note?: string | null;
   code?: string | null; uses?: number | null; redeemed_by?: string | null; redeemed_at?: string | null;
   /** Company OS (lane CO, 12 Nov): a teacher's code names its teacher (`coach`) and is for people new to Hoy only. */
   coach?: string | null; first_time_only?: boolean | null;
+  /** A group pass (kind `group`): its places, places named so far and the class it booked. */
+  places?: number | null; joined?: number | null; occurrence?: string | null; voided_at?: string | null;
 }
 export interface Recipient { name: string; email: string }
 export interface GiftProduct { id: string; key: string; name: { es: string; en: string }; classes: number; price: number; validityDays: number | null }
@@ -45,8 +48,10 @@ export const isEmail = (raw: string) => EMAIL_RE.test(raw.trim()) && raw.trim().
 
 export const isCosVoucher = (row: unknown): row is CosVoucher => {
   const r = row as Partial<CosVoucher> | null;
-  return !!r && (r.kind === 'gift' || r.kind === 'courtesy') && Number.isSafeInteger(r.classes);
+  return !!r && (r.kind === 'gift' || r.kind === 'courtesy' || r.kind === 'group') && Number.isSafeInteger(r.classes);
 };
+/** Group passes have their own pages (C-43, C-44, S-02): the gift and courtesy lists and the redeem flow leave them out. */
+export const isGiftOrCourtesy = (v: Pick<CosVoucher, 'kind'>) => v.kind === 'gift' || v.kind === 'courtesy';
 
 /** Display only (the server refuses on its own): used up when `uses` reached `max_uses` (default 1), expired after `valid_until`. */
 export type VoucherState = 'active' | 'used_up' | 'expired';
@@ -57,7 +62,9 @@ export function voucherState(v: CosVoucher, today: string): VoucherState {
 }
 
 // ── refusal codes → copy ───────────────────────────────────────────────────────────────────────────────────────
-export const VOUCHER_REFUSALS = ['voucher_invalid', 'voucher_expired', 'voucher_redeemed', 'voucher_used_up', 'invalid_quantity', 'lot_expired', 'forbidden', 'write_forbidden', 'idempotency_conflict', 'voucher_payment_not_approved', 'voucher_first_time_only'] as const;
+export const VOUCHER_REFUSALS = ['voucher_invalid', 'voucher_expired', 'voucher_redeemed', 'voucher_used_up', 'invalid_quantity', 'lot_expired', 'forbidden', 'write_forbidden', 'idempotency_conflict', 'voucher_payment_not_approved', 'voucher_first_time_only',
+  // ADR 0045: a group pass's code typed here (it books a class, it adds no classes), and a voucher's kind is fixed.
+  'voucher_wrong_kind', 'voucher_kind_fixed'] as const;
 /** The refusal code of a failed write, whatever the provider throws (`{ code }`, `{ error: { code } }` or an Error named by its code). */
 export function refusalCode(error: unknown): string | null {
   const e = error as { code?: unknown; error?: { code?: unknown }; message?: unknown } | null;
@@ -198,7 +205,7 @@ export async function listVouchers(data: DataProvider): Promise<CosVoucher[]> {
   if (recs.length >= VOUCHER_READ_MAX) throw new CosError('too_many_vouchers');
   // A voucher created while paging can shift a row onto the next page too.
   const byId = new Map(recs.map((r) => [String(r.id), r]));
-  return [...byId.values()].flatMap((r) => cosVoucher(r) ?? []).sort((a, b) => (b.created_at ?? '').localeCompare(a.created_at ?? '') || b.id.localeCompare(a.id));
+  return [...byId.values()].flatMap((r) => { const v = cosVoucher(r); return v && isGiftOrCourtesy(v) ? [v] : []; }).sort((a, b) => (b.created_at ?? '').localeCompare(a.created_at ?? '') || b.id.localeCompare(a.id));
 }
 
 /** One create with an `Idempotency-Key` (one key per submit, reused on retry); answers the created row. */

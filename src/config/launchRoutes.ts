@@ -30,6 +30,8 @@ export const LAUNCH_ROUTES: readonly string[] = [
   '/app', '/app/schedule', '/app/schedule/week', '/app/class/:id', '/app/checkout/:id', '/app/plans', '/app/passes', '/app/classes',
   '/app/booking/:id', '/app/booking/:id/change', '/app/history', '/app/rules', '/app/faq', '/app/faq/2', '/app/teachers', '/app/teachers/:id',
   '/app/profile', '/app/notifications', '/app/more', '/app/account', '/app/access', '/app/legal/:kind', '/app/vouchers', '/app/vouchers/:code',
+  // The group pass (ADR 0045): the member's passes and the join page the code's link opens.
+  '/app/group-passes', '/app/pass/:code',
   // Payment by transfer, the "Nota de compra" and a gift voucher (PG, BO-01)
   '/app/pay/:what/:id', '/app/receipts', '/app/receipts/:paymentId', '/app/gift-voucher',
   // Front desk (Role Matrix: home, check-in, pending payments, register and charge, inbox; S-11 expense entry).

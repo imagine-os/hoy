@@ -435,6 +435,8 @@ export const strings: StringTable = {
   'customer.paidWith.trial': { es: 'clase de prueba', en: 'trial class' },
   'customer.paidWith.guest': { es: 'invitado', en: 'guest' },
   'customer.paidWith.comp': { es: 'cortesía', en: 'comp' },
+  'customer.paidWith.pass': { es: 'pase grupal', en: 'group pass' },
+  'customer.change.move.pass': { es: 'Un lugar de un pase grupal no se mueve de clase. Puedes cancelar tu lugar.', en: 'A group pass place cannot move to another class. You can cancel your place.' },
 
   // C-08b change sheet
   'customer.change.title': { es: 'Reprogramar o cancelar', en: 'Reschedule or cancel' },

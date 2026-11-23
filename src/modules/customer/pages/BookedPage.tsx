@@ -223,7 +223,9 @@ function ChangeSheet({ open, onClose, booking, joined, inside, deadline, onResul
   const occupied=busy||cancellation.busy;
   const s = joined.session;
   const now = useNow(1_000);
-  const moveAllowed = canReschedule(s.starts_at, now);
+  // A group pass place never moves (bookings 1.11.0 refuses `booking_system_managed`); it can be cancelled.
+  const passPlace = booking.paid_with === 'pass';
+  const moveAllowed = !passPlace && canReschedule(s.starts_at, now);
   const validity = useMemo(() => {
     try { return { purchase: rescheduleEntitlement(approvedPackageRows(ledger, payments), payments, booking), unresolved: false }; }
     catch { return { purchase: null, unresolved: true }; }
@@ -260,7 +262,7 @@ function ChangeSheet({ open, onClose, booking, joined, inside, deadline, onResul
 
         {mode === 'menu' && (
           <ListGroup>
-            <ListRow icon="move" title={t('customer.change.move')} subtitle={moveAllowed ? t('customer.change.move.sub') : t('customer.change.move.closed', { h: RESCHEDULE_CUTOFF_HOURS })} disabled={!moveAllowed || occupied} onClick={() => setMode('move')} />
+            <ListRow icon="move" title={t('customer.change.move')} subtitle={passPlace ? t('customer.change.move.pass') : moveAllowed ? t('customer.change.move.sub') : t('customer.change.move.closed', { h: RESCHEDULE_CUTOFF_HOURS })} disabled={!moveAllowed || occupied} onClick={() => setMode('move')} />
             <ListRow icon="cancel" tone="danger" title={t('customer.change.drop')} subtitle={t('customer.cancel.atomic.menu')} disabled={occupied} onClick={() => setMode('cancel')} />
           </ListGroup>
         )}

@@ -14,12 +14,15 @@ const reviewRoutes = (): RouteDef[] => { const page = lazyPages(() => import('./
  { path: '/app/vouchers', element: page('VoucherClaimPage'), spec: claimSpec, roles: claimSpec.roles, surface: 'customer', layout: 'mobile' },
  { path: '/app/vouchers/:id', element: page('VoucherClaimPage'), spec: claimSpec, roles: claimSpec.roles, surface: 'customer', layout: 'mobile' },
 ]; };
-const productionRoutes = (): RouteDef[] => { const prod = lazyPages(() => import('./production/pages')); return [
+const productionRoutes = (): RouteDef[] => { const prod = lazyPages(() => import('./production/pages')), group = lazyPages(() => import('./production/GroupPassPages')); return [
  { path: '/staff/vouchers', element: prod('VoucherDeskPage'), spec: cos.deskSpec, roles: cos.deskSpec.roles, surface: 'staff', layout: 'desktop', nav: { labelKey: 'vouchers.cos.desk.page', icon: 'gift', order: 4.5, group: 'core.nav.group.staff' } },
  { path: '/admin/vouchers', element: prod('VoucherStudioPage'), spec: cos.studioSpec, roles: cos.studioSpec.roles, surface: 'admin', layout: 'desktop', nav: { labelKey: 'vouchers.title', icon: 'gift', order: 15.7, group: 'core.nav.group.community' } },
  { path: '/admin/vouchers/teachers', element: prod('TeacherCodesPage'), spec: cos.teacherCodesSpec, roles: cos.teacherCodesSpec.roles, surface: 'admin', layout: 'desktop', nav: { labelKey: 'vouchers.teachers.title', icon: 'gift', order: 15.8, group: 'core.nav.group.community' } },
  { path: '/app/vouchers', element: prod('VoucherRedeemPage'), spec: cos.redeemSpec, roles: cos.redeemSpec.roles, surface: 'customer', layout: 'mobile' },
  { path: '/app/vouchers/:code', element: prod('VoucherRedeemPage'), spec: cos.redeemSpec, roles: cos.redeemSpec.roles, surface: 'customer', layout: 'mobile' },
  { path: '/app/gift-voucher', element: prod('GiftVoucherPage'), spec: cos.giftSpec, roles: cos.giftSpec.roles, surface: 'customer', layout: 'mobile' },
+ // ADR 0045: the group pass. Not `/app/passes` (plans) nor `/app/vouchers/:code` (gift redeem).
+ { path: '/app/group-passes', element: group('GroupPassesPage'), spec: cos.groupPassesSpec, roles: cos.groupPassesSpec.roles, surface: 'customer', layout: 'mobile' },
+ { path: '/app/pass/:code', element: group('PassJoinPage'), spec: cos.passJoinSpec, roles: cos.passJoinSpec.roles, surface: 'customer', layout: 'mobile' },
 ]; };
 export const routes: RouteDef[] = PRODUCTION_BUILD ? productionRoutes() : reviewRoutes();
