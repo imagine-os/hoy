@@ -1,5 +1,5 @@
 import { Suspense, useCallback, useEffect, useState, type ReactNode } from 'react';
-import { HashRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { ThemeProvider } from '../design/ThemeProvider';
 import { I18nProvider } from '../i18n/I18nProvider';
 import { SessionProvider } from '../auth/SessionProvider';
@@ -17,6 +17,7 @@ import { Toasts } from '../components/molecule/Toast/Toast';
 import { PRODUCTION_BUILD } from '../config/launch';
 import { WireframeGate } from './WireframeGate';
 import { PrivateDocsWatch } from '../modules/docs/PrivateDocsWatch';
+import { Measurement, MeasurementRoute, type MeasurementSink } from '../measurement/Measurement';
 import { SiteHandoff, SiteRouter } from './SiteRouter';
 import { bootRoute, cleanPathOf } from '../modules/website/paths';
 
@@ -35,7 +36,12 @@ function AppRouter({ mode, onLeave, children }: { mode: 'path' | 'hash'; onLeave
   return mode === 'path' ? <SiteRouter onLeave={onLeave}>{children}</SiteRouter> : <HashRouter>{children}</HashRouter>;
 }
 
-export function App() {
+function MeasureCommittedRoute({ siteOnPaths }: { siteOnPaths: boolean }) {
+  const { pathname } = useLocation();
+  return <MeasurementRoute handoff={siteOnPaths && cleanPathOf(pathname) !== null} />;
+}
+
+export function App({ measurementSink }: { measurementSink?: MeasurementSink } = {}) {
   const allRoutes = getRoutes();
   const allStrings = getStrings();
   publishManifest(allRoutes);
@@ -58,25 +64,28 @@ export function App() {
             {/* Lane Y3: the wireframe skin is the super admin's only, reset on sign-out. */}
             {PRODUCTION_BUILD && <WireframeGate />}
             {PRODUCTION_BUILD && <PrivateDocsWatch />}
-            <AppRouter mode={mode} onLeave={leave}>
-              <ScrollToTop />
-              {/* Hub-map sample routes (/app/class/sample) open today's real record (0029). */}
-              <SampleRoute />
-              <RouteTitle routes={allRoutes} />
-              {/* The one boundary every lazily-loaded module resolves under (src/app/lazyPage.ts). */}
-              <Suspense fallback={<div className="lazy-fallback" aria-busy="true" />}>
-                <Routes>
-                  {allRoutes.map((r) => (
-                    <Route key={r.path} path={r.path} element={siteOnPaths && cleanPathOf(r.path) !== null ? <SiteHandoff onPath={handoff} /> : <RequireRole roles={r.roles}>{withShell(r, r.element)}</RequireRole>} />
-                  ))}
-                  {getRedirects().map((r) => <Route key={`redirect:${r.from}`} path={r.from} element={<Navigate to={r.to} replace />} />)}
-                  <Route path="*" element={<Navigate to="/" replace />} />
-                </Routes>
-              </Suspense>
-              <DevTools />
-              {/* The one toast stack; anything calls toast() from src/app/toast.ts. */}
-              <Toasts />
-            </AppRouter>
+            <Measurement sink={measurementSink}>
+              <AppRouter mode={mode} onLeave={leave}>
+                <MeasureCommittedRoute siteOnPaths={siteOnPaths} />
+                <ScrollToTop />
+                {/* Hub-map sample routes (/app/class/sample) open today's real record (0029). */}
+                <SampleRoute />
+                <RouteTitle routes={allRoutes} />
+                {/* The one boundary every lazily-loaded module resolves under (src/app/lazyPage.ts). */}
+                <Suspense fallback={<div className="lazy-fallback" aria-busy="true" />}>
+                  <Routes>
+                    {allRoutes.map((r) => (
+                      <Route key={r.path} path={r.path} element={siteOnPaths && cleanPathOf(r.path) !== null ? <SiteHandoff onPath={handoff} /> : <RequireRole roles={r.roles}>{withShell(r, r.element)}</RequireRole>} />
+                    ))}
+                    {getRedirects().map((r) => <Route key={`redirect:${r.from}`} path={r.from} element={<Navigate to={r.to} replace />} />)}
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                  </Routes>
+                </Suspense>
+                <DevTools />
+                {/* The one toast stack; anything calls toast() from src/app/toast.ts. */}
+                <Toasts />
+              </AppRouter>
+            </Measurement>
           </SessionProvider>
         </DataProviderRoot>
       </I18nProvider>

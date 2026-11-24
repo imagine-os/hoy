@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { AuthenticateWithRedirectCallback, useClerk, useUser } from '@clerk/react';
+import { useMeasurement } from '../../measurement/Measurement';
+import { registrationCreated } from '../../measurement/pixelPolicy';
 import { useI18n } from '../../i18n/I18nProvider';
 import { useSession } from '../../auth/SessionProvider';
 import { heldRoles } from '../../auth/sessionContext';
@@ -151,6 +153,7 @@ const EMPTY_FORM: SignupForm = { name: '', whatsapp: '+57 ', ecName: '', ecPhone
  * A studio login never fills this in: it is enrolled automatically (`src/auth/CustomerEnrolment.tsx`, owner 2026-11-01).
  */
 export function RegisterForm({ initialName = '', cta }: { initialName?: string; cta?: string } = {}) {
+  const measure = useMeasurement();
   const { t, lang } = useI18n();
   const { refresh } = useSession();
   const { user } = useUser();
@@ -195,7 +198,11 @@ export function RegisterForm({ initialName = '', cta }: { initialName?: string; 
       if (!alive.current) return;
       // The test site's gate, not the session: the form stays, with what was typed.
       if (isTestGate(status, body)) { setNotice({ tone: 'warn', text: refusalCopy('test_gate', lang) }); return; }
-      if (result.kind === 'done') { refresh(); return; }
+      if (result.kind === 'done') {
+        const event = registrationCreated(status);
+        if (event) measure(event);
+        refresh(); return;
+      }
       if (result.kind === 'consent-changed') { set('accepted', false); setNotice({ tone: 'warn', text: t('identity.register.changed') }); await load(); return; }
       if (result.kind === 'disabled') { setConfig({ ...config, enabled: false }); return; }
       if (result.kind === 'unverified' || result.kind === 'unauthorized') { refresh(); return; }

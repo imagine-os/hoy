@@ -19,6 +19,8 @@ import { classPhase, holdsPlace, purchaseReturnLink, type ServerBookingRow } fro
 import { audienceVisible, trialOffered } from '../offers';
 import { useAffiliate } from '../useAffiliate';
 import { ConsentHoldNotice, useConsentHeld } from '../../identity/ConsentHold';
+import { useMeasurementEntry } from '../../../measurement/Measurement';
+import { checkoutEvent } from '../../../measurement/pixelPolicy';
 import { VoucherCodeEntry } from '../../vouchers/production/VoucherCodeEntry';
 
 /** What the customer pays the class with. A trial or a package is bought first and the class is kept in the link (RS-03). */
@@ -79,6 +81,11 @@ export function ServerCheckoutPage() {
     return (c === 'trial' && !trialOffered(ent)) || (!!item && !audienceVisible(item, { live: true, affiliate }));
   };
   const kind: Choice | null = (hidden(choice) ? null : choice) ?? (ent.classBalance > 0 ? 'package' : null);
+  const deskMeasurement = method === 'desk' && kind === 'single' && !consentHeld && joined?.session.id === id
+    && classPhase(joined.session, now) === 'open'
+    && !(mine as unknown as ServerBookingRow[]).some(b => b.session_id === id && holdsPlace(b, now))
+    ? checkoutEvent(price('single'), 'Single class') : null;
+  useMeasurementEntry(deskMeasurement, id);
   const submitKey = useSubmitKey(`${user.id}:${id}:${kind ?? ''}:${method}`);
 
   if (!joined) {
