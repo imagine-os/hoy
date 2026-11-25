@@ -1,15 +1,28 @@
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright-core';
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
 
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined });
 try {
   const p = await browser.newPage({ serviceWorkers: "block" });
   let sdk = 0;
   let events = [];
-  const base = 'http://localhost:5179';
+  const staticDir = process.env.HOY_QA_STATIC_DIST;
+  const base = staticDir ? 'https://hoy-meta.qa.invalid' : 'http://localhost:5179';
+  const vettedPixel = staticDir ? '123456789012345' : '963759066544104';
   await p.route('**/*', async route => {
     const u = new URL(route.request().url());
-    if (u.origin === base) return route.continue();
+    if (u.origin === base) {
+      if (!staticDir) return route.continue();
+      // A reserved synthetic origin, with both HTML pages and JS fulfilled from the static build.
+      if (!/^\/(?:meta-(?:qa|measurement-frame)\.html|assets\/[A-Za-z0-9_-]+\.js)$/.test(u.pathname)) return route.abort();
+      return route.fulfill({
+        contentType: u.pathname.endsWith('.html') ? 'text/html; charset=utf-8' : 'text/javascript; charset=utf-8',
+        headers: { 'Referrer-Policy': 'no-referrer' },
+        body: await readFile(join(staticDir, u.pathname.slice(1))),
+      });
+    }
     if (u.href === 'https://connect.facebook.net/en_US/fbevents.js') {
       sdk++;
       assert.equal(route.request().headers().referer, undefined);
@@ -67,7 +80,7 @@ try {
     assert.equal(row.ref,'');
     assert.equal(row.topHref,'blocked');
     assert.equal(row.originStorage,'blocked');
-    assert.equal(row.pixel,'963759066544104');
+    assert.equal(row.pixel,vettedPixel);
     assert(!JSON.stringify(row).includes('SECRET'));
   }
   assert.deepEqual(events.at(-1).params,{currency:'COP',value:35000,content_name:'Trial class'});

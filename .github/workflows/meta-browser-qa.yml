@@ -6,6 +6,7 @@ on:
       - 'scripts/meta-browser-fixture.tsx'
       - 'scripts/test-meta-bridge.mjs'
       - 'scripts/test-meta-browser-local.mjs'
+      - 'scripts/test-meta-static-build.mjs'
       - 'scripts/fixtures/meta-measurement/**'
       - 'meta-qa*'
       - '.github/workflows/meta-browser-qa.yml'
@@ -38,5 +39,14 @@ jobs:
           done
           curl -fsS http://localhost:5179/meta-qa.html >/dev/null
           node scripts/test-meta-browser-local.mjs
+        env:
+          CHROMIUM_PATH: /usr/bin/google-chrome
+      - name: Check standalone synthetic staging build
+        run: |
+          set -eu
+          node scripts/test-meta-static-build.mjs
+          HOY_QA_TEST_PIXEL_ID=123456789012345 HOY_QA_TEST_ORIGIN=https://hoy-meta.qa.invalid \
+            ./node_modules/.bin/vite build --config meta-qa.static.vite.config.ts --outDir /tmp/hoy-meta-static
+          HOY_QA_STATIC_DIST=/tmp/hoy-meta-static node scripts/test-meta-browser-local.mjs
         env:
           CHROMIUM_PATH: /usr/bin/google-chrome

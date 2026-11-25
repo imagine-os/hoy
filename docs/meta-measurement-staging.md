@@ -1,6 +1,6 @@
 # HOY advertising measurement: local-only wiring candidate
 
-**Status:** Not connected to Meta, not deployed. Pixel destination proposed for review: `963759066544104`. Do not enable the sink in production from this branch. No remote SDK, image/no-script beacon, company data endpoint, tracking credential or production configuration is included.
+**Status:** Not connected to Meta, not deployed. Pixel destination proposed for review: `963759066544104`. Do not enable the sink in production from this branch. The normal app has no running collector, image/no-script beacon, reporting endpoint, tracking credential, or production configuration.
 
 ## What the fixture exercises
 
@@ -32,3 +32,13 @@ Playbook inbox: none (local proof; no release filed).
 The prototype is a synthetic QA fixture only. The frame lives under `scripts/fixtures`, not in `public`; the normal build has no transport caller and does not serve the frame. The dedicated local Vite config serves it with an opaque sandbox and no referrer. The Playwright harness intercepts the vendor script and event endpoint, aborting other external requests. It uses only invented routes, prices and registration behavior. This proves local browser isolation if green, not delivery to Meta, production authorization, vendor policy compliance or real attribution.
 
 Local tests: `node scripts/test-meta-measurement-policy.mjs` and `node scripts/test-meta-bridge.mjs`. Browser test: start `npm run dev -- --config meta-qa.vite.config.ts --host localhost --port 5179 --strictPort`, then `CHROMIUM_PATH=/path/to/chrome node scripts/test-meta-browser-local.mjs`. Only after independent review, verify the real SDK against a separate test destination and investigate whether the opaque sandbox affects event acceptance or ad attribution. Never loosen privacy isolation just to get a green event.
+
+## Standalone synthetic QA artifact (not the HOY deploy)
+
+Build locally with `./node_modules/.bin/vite build --config meta-qa.static.vite.config.ts`. It emits only a synthetic journey, its JavaScript, and an inert frame in `dist-meta-qa/`. The default frame cannot load a vendor script or send an event. Neither the normal Vite build nor the Railway test workflow includes this artifact.
+
+Only after review and verification of ownership, use both `HOY_QA_TEST_PIXEL_ID` and `HOY_QA_TEST_ORIGIN` at build time for a dedicated access-controlled HTTPS origin. The bridge permits its exact build origin. The HOY production ID, HOY public/test domain and its subdomains, incomplete configuration and non-HTTPS origins fail the build. These checks do not establish ownership of any other supplied ID or host. Serve only the dedicated static output, with `Referrer-Policy: no-referrer` and `Content-Security-Policy: frame-ancestors 'self'; sandbox allow-scripts` as response headers for the frame, and verify the headers before access. The browser fixture never uses Company OS, real appointments, or user accounts.
+
+Before a real test run, inspect the browser Network metadata with a clean profile; first test with all vendor traffic intercepted. The real synthetic run, if separately authorized, uses four events after opt-in and no Purchase; watch the separate test destination, check private-route silence and withdrawal, and inspect actual request metadata before expanding scope. Receipt and ad attribution are different checks. Remove the test artifact and revoke temporary access after QA.
+
+Automated dry run: `node scripts/test-meta-static-build.mjs` (build, contents, invalid configs, origin lock and CSP digest). The existing Chrome workflow also tests the static build under a reserved HTTPS origin with all requests intercepted. Neither check sends anything to Meta.
