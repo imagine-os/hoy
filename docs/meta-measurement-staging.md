@@ -26,3 +26,9 @@ If the business elects to measure approved manual sales, Company OS v1.23.0's ap
 Evidence: [HOY production checkout](https://github.com/imagine-os/hoy/blob/v1.7.0/src/modules/customer/pages/ServerCheckoutPage.tsx) · [HOY transfer](https://github.com/imagine-os/hoy/blob/v1.7.0/src/modules/transfers/launch/TransferPayPage.tsx) · [Company OS payment hooks](https://github.com/Playset-LLC/Company-OS/blob/v1.23.0/packages/core/src/modules/payments/index.ts) · [Wompi signed events](https://docs.wompi.co/en/docs/colombia/eventos/).
 
 Playbook inbox: none (local proof; no release filed).
+
+## Browser-isolation prototype (not deployed)
+
+The prototype is a synthetic QA fixture only. The frame lives under `scripts/fixtures`, not in `public`; the normal build has no transport caller and does not serve the frame. The dedicated local Vite config serves it with an opaque sandbox and no referrer. The Playwright harness intercepts the vendor script and event endpoint, aborting other external requests. It uses only invented routes, prices and registration behavior. This proves local browser isolation if green, not delivery to Meta, production authorization, vendor policy compliance or real attribution.
+
+Local tests: `node scripts/test-meta-measurement-policy.mjs` and `node scripts/test-meta-bridge.mjs`. Browser test: start `npm run dev -- --config meta-qa.vite.config.ts --host localhost --port 5179 --strictPort`, then `CHROMIUM_PATH=/path/to/chrome node scripts/test-meta-browser-local.mjs`. Only after independent review, verify the real SDK against a separate test destination and investigate whether the opaque sandbox affects event acceptance or ad attribution. Never loosen privacy isolation just to get a green event.

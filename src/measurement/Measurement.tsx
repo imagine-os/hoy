@@ -15,7 +15,7 @@ function stored(): Preference {
   } catch { return null; }
 }
 
-export function Measurement({ sink, children }: { sink?: MeasurementSink; children: ReactNode }) {
+export function Measurement({ sink, onStop, children }: { sink?: MeasurementSink; onStop?: () => void; children: ReactNode }) {
   const enabled = Boolean(sink);
   const [choice, setChoice] = useState<Preference>(() => enabled ? stored() : null);
   const current = useRef(choice);
@@ -23,6 +23,7 @@ export function Measurement({ sink, children }: { sink?: MeasurementSink; childr
   const [show, setShow] = useState(false);
   function choose(next: Preference, persist: boolean) {
     current.current = next;
+    if (next !== 'yes') onStop?.();
     last.current.path = null;
     setChoice(next);
     if (persist) { try { localStorage.setItem(KEY, next ?? 'no'); } catch { /* preference remains for this page only */ } }

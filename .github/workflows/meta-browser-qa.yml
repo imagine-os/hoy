@@ -1,0 +1,42 @@
+name: HOY Meta browser isolation QA
+on:
+  pull_request:
+    paths:
+      - 'src/measurement/**'
+      - 'scripts/meta-browser-fixture.tsx'
+      - 'scripts/test-meta-bridge.mjs'
+      - 'scripts/test-meta-browser-local.mjs'
+      - 'scripts/fixtures/meta-measurement/**'
+      - 'meta-qa*'
+      - '.github/workflows/meta-browser-qa.yml'
+permissions:
+  contents: read
+jobs:
+  synthetic-browser-privacy:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Check allowlists, CSP and synthetic browser isolation
+        run: |
+          set -eu
+          node scripts/test-meta-measurement-policy.mjs
+          node scripts/test-meta-bridge.mjs
+          npm run dev -- --config meta-qa.vite.config.ts --host localhost --port 5179 --strictPort > /tmp/hoy-meta-qa.log 2>&1 &
+          server=$!
+          trap 'kill "$server" 2>/dev/null || true; cat /tmp/hoy-meta-qa.log' EXIT
+          for i in {1..40}; do
+            if curl -fsS http://localhost:5179/meta-qa.html >/dev/null 2>&1; then break; fi
+            sleep .25
+          done
+          curl -fsS http://localhost:5179/meta-qa.html >/dev/null
+          node scripts/test-meta-browser-local.mjs
+        env:
+          CHROMIUM_PATH: /usr/bin/google-chrome
