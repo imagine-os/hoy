@@ -14,6 +14,8 @@ import { isAffiliateOnly, rowOnDay, type ProductData, type ProductRow } from '..
 import { batch, CosError, myPerson, queryAll, refusalKey, type CosPort } from './cos';
 import { checkReceipt, giftNotes, productSoldAlone, RECEIPT_TYPES, transferOps, uploadReceipt, type BookingRec, type FileRec, type PaymentRec } from './payments';
 import { useAction, useCos, useLoad } from './useCos';
+import { MeasurementEntry } from '../../../measurement/Measurement';
+import { checkoutEvent, classifyProduct } from '../../../measurement/pixelPolicy';
 import { holdView, safeCheckoutReturn, type HoldView, type ServerBookingRow } from '../../customer/booking/serverBooking';
 import { useBookingPolicy, type BookingPolicy } from '../../customer/booking/bookingPolicy';
 import { PageHead } from '../../customer/ui';
@@ -137,7 +139,10 @@ function PayBody({ what, id }: { what: string; id: string }) {
     setDone(true);
   });
 
+  const analytics = !resumeId && hold?.phase !== 'expired' && !product.data.audience
+    ? checkoutEvent(product.data.price, classifyProduct(product.data.kind)) : null;
   return <>
+    {analytics && <MeasurementEntry event={analytics} localKey={product.id} />}
     <Card>
       <div className="stack-sm">
         <span>{product.data.name}</span>

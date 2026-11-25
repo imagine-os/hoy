@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; base-uri 'none'; form-action 'none'; script-src 'sha256-MD+QuctOGLtlVnHgNvSaqokDQIwY8RtIt6CNouv4haY=' https://connect.facebook.net; img-src https://www.facebook.com; connect-src https://www.facebook.com https://connect.facebook.net">
+<title>Advertising measurement</title>
+<script>(() => {
+  const parentOrigin = location.origin;
+  if (parent === window || document.referrer !== '' || location.search || location.hash ||
+      !/^https?:\/\//.test(parentOrigin)) return;
+  const pixel = '963759066544104';
+  const categories = ['Trial class', 'Single class', 'Class package'];
+  let fbq;
+  addEventListener('message', ({ origin, source, data }) => {
+    if (source !== parent || origin !== parentOrigin || data?.type !== 'hoy.meta.event.v1') return;
+    const event = data.event;
+    let params;
+    switch (event?.name) {
+      case 'PageView':
+      case 'CompleteRegistration':
+        params = {};
+        break;
+      case 'ViewContent':
+        params = { content_name: 'Studio class', content_ids: ['studio-class'], content_type: 'product' };
+        break;
+      case 'InitiateCheckout': {
+        const value = event.params?.value;
+        const content_name = event.params?.content_name;
+        if (!Number.isSafeInteger(value) || value <= 0 || value > 100000000 || !categories.includes(content_name)) return;
+        params = { currency: 'COP', value, content_name };
+        break;
+      }
+      default:
+        return;
+    }
+    if (!fbq) {
+      fbq = function () {
+        if (fbq.callMethod) fbq.callMethod.apply(fbq, arguments);
+        else fbq.queue.push(arguments);
+      };
+      fbq.push = fbq;
+      fbq.loaded = true;
+      fbq.version = '2.0';
+      fbq.queue = [];
+      window.fbq = window._fbq = fbq;
+      fbq('set', 'autoConfig', false, pixel);
+      fbq('init', pixel);
+      const script = document.createElement('script');
+      script.async = true;
+      script.referrerPolicy = 'no-referrer';
+      script.src = 'https://connect.facebook.net/en_US/fbevents.js';
+      document.head.append(script);
+    }
+    fbq('trackSingle', pixel, event.name, params);
+  });
+})();
+</script></head><body></body></html>

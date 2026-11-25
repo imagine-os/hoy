@@ -1,3 +1,5 @@
+import { useMeasurementEntry } from '../../../measurement/Measurement';
+import { classView } from '../../../measurement/pixelPolicy';
 import { useSiteEdition } from '../edition';
 import { classPhotoPresentation } from '../classPhotoPresentation';
 import { useSiteHref } from '../links';
@@ -30,6 +32,7 @@ export function ClassDetailPage() {
   const photos = useClassPhotos();
   const { version } = useSiteEdition();
   const c = brandClass(slug);
+  useMeasurementEntry(c ? classView() : null, slug);
   const prices = useLivePricing();
   const trial = prices.item('trial');
   const trialPrice = trial?.price != null ? formatCOP(trial.price, lang) : '';

@@ -1,5 +1,7 @@
 import { requireSessionAdmission, sessionAdmissionAvailable } from '../../../data/sessionAdmission';
 import { sessionUnavailableReason } from '../../../data/sessionAvailability';
+import { useMeasurementEntry } from '../../../measurement/Measurement';
+import { classView } from '../../../measurement/pixelPolicy';
 import { useSession } from '../../../auth/SessionProvider';
 import { SessionEditorial } from '../../../components/molecule/SessionEditorial/SessionEditorial';
 import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
@@ -43,6 +45,10 @@ export function ClassDetailPage() {
   const navigationRoute = location.pathname + location.search;
   const { sections, isVisible } = useLayout(spec);
   const { joined, loading } = useSessionJoined(id);
+  useMeasurementEntry(
+    role === 'customer' && !!id && id !== 'sample' && joined?.session.id === id ? classView() : null,
+    id ?? '',
+  );
   const { rows: myBookings } = useMyBookings();
   // No waitlist at launch: production reads none (SERVER_RULES is fixed per build, so the hook order never changes).
   const { mine: myWait } = SERVER_RULES ? NO_WAITLIST : useWaitlistFor(id);
