@@ -37,9 +37,10 @@ export function MetaHomePilot({ lang }: { lang: string }) {
     if (spent.current || !isCleanHome(window.location)) return;
     spent.current = true;
     const form = event.currentTarget;
-    const key = new FormData(form).get('key');
-    form.reset();
-    if (typeof key !== 'string') return;
+    const field = form.elements.namedItem('key');
+    if (!(field instanceof HTMLInputElement)) return;
+    const key = field.value;
+    field.value = '';
     const request = new AbortController();
     activeRequest.current = request;
     setConsent('pending');
