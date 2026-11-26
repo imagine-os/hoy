@@ -17,6 +17,7 @@
 //   /coming-soon         a redirect to the same route after the `#`, so an address typed without it still arrives;
 //   everything else      the built frontend in dist/ (the app keeps HashRouter); any other path is a 404.
 // No framework: node:http only. Clerk verification is injected (see clerk.mjs) so tests can fake it.
+import { PILOT_FRAME_PATH, pilotAvailable, pilotFrame } from './metaHomePilot.mjs';
 import { createReadStream } from 'node:fs';
 import { readFile, stat } from 'node:fs/promises';
 import http from 'node:http';
@@ -129,7 +130,14 @@ export async function createHandler(config, deps) {
       if (rawPath === '/health') return health(req, res, release);
       if (rawPath === '/app-config.json') {
         if (req.method !== 'GET' && req.method !== 'HEAD') return sendError(res, 405, 'method_not_allowed');
-        return sendJson(res, 200, null, appConfig, req.method === 'HEAD');
+        const publicConfig = pilotAvailable(config, req) ? JSON.stringify({ ...JSON.parse(appConfig), metaHomePilot: true }) : appConfig;
+        return sendJson(res, 200, null, publicConfig, req.method === 'HEAD');
+      }
+      if (rawPath === PILOT_FRAME_PATH) {
+        const frame = pilotAvailable(config, req) && pilotFrame(req, rawQuery);
+        if (!frame) return sendError(res, 404, 'not_found');
+        res.writeHead(200, frame.headers);
+        return res.end(frame.body);
       }
       if (rawPath === '/webhooks/resend') {
         await webhook(req, res, config);

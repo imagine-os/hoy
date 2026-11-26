@@ -1,0 +1,34 @@
+name: HOY browser Pixel pilot QA
+on:
+  pull_request:
+    paths:
+      - 'server/metaHomePilot.mjs'
+      - 'server/app.mjs'
+      - 'server/config.mjs'
+      - 'src/auth/appConfig.ts'
+      - 'src/modules/website/MetaHomePilot.tsx'
+      - 'src/modules/website/SiteShell.tsx'
+      - 'scripts/meta-home/**'
+      - '.github/workflows/meta-home-pilot-qa.yml'
+permissions:
+  contents: read
+jobs:
+  intercepted-browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: |
+          node scripts/meta-home/contract.mjs
+          node scripts/meta-home/server.mjs
+          node scripts/meta-home/browser.mjs
+          npm run typecheck
+        env:
+          CHROMIUM_PATH: /usr/bin/google-chrome
