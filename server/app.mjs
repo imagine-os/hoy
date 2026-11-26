@@ -17,7 +17,7 @@
 //   /coming-soon         a redirect to the same route after the `#`, so an address typed without it still arrives;
 //   everything else      the built frontend in dist/ (the app keeps HashRouter); any other path is a 404.
 // No framework: node:http only. Clerk verification is injected (see clerk.mjs) so tests can fake it.
-import { PILOT_FRAME_PATH, pilotAvailable, pilotFrame } from './metaHomePilot.mjs';
+import { PILOT_FRAME_PATH, createPilotGate } from './metaHomePilot.mjs';
 import { createReadStream } from 'node:fs';
 import { readFile, stat } from 'node:fs/promises';
 import http from 'node:http';
@@ -107,6 +107,7 @@ export async function createHandler(config, deps) {
   const wwwHeaders = config.environment === 'production' && !config.testGate?.on
     ? { 'Cache-Control': 'public, max-age=3600' }
     : { 'Cache-Control': 'private, max-age=3600', 'X-Robots-Tag': 'noindex, nofollow' };
+  const pilot = createPilotGate(config, deps.now);
   const appConfig = JSON.stringify({
     tenant: config.tenant,
     apiBase: '/api/cos',
@@ -130,11 +131,11 @@ export async function createHandler(config, deps) {
       if (rawPath === '/health') return health(req, res, release);
       if (rawPath === '/app-config.json') {
         if (req.method !== 'GET' && req.method !== 'HEAD') return sendError(res, 405, 'method_not_allowed');
-        const publicConfig = pilotAvailable(config, req) ? JSON.stringify({ ...JSON.parse(appConfig), metaHomePilot: true }) : appConfig;
+        const publicConfig = pilot.available(req) ? JSON.stringify({ ...JSON.parse(appConfig), metaHomePilot: true }) : appConfig;
         return sendJson(res, 200, null, publicConfig, req.method === 'HEAD');
       }
       if (rawPath === PILOT_FRAME_PATH) {
-        const frame = pilotAvailable(config, req) && pilotFrame(req, rawQuery);
+        const frame = await pilot.claim(req, rawQuery, () => readBody(req, 64, 2500));
         if (!frame) return sendError(res, 404, 'not_found');
         res.writeHead(200, frame.headers);
         return res.end(frame.body);

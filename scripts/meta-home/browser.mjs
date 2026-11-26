@@ -1,9 +1,12 @@
 import assert from 'node:assert/strict';
 import { build } from 'esbuild';
 import { chromium } from 'playwright-core';
-import { pilotFrame } from '../../server/metaHomePilot.mjs';
+import { createHash } from 'node:crypto';
+import { createPilotGate } from '../../server/metaHomePilot.mjs';
 const origin = 'https://hoyhumanclub.com';
 const framePath = '/__hoy/meta-home-pageview';
+const key='a'.repeat(43);
+const digest=createHash('sha256').update(key).digest('hex');
 const app = await build({
   stdin: { contents: `import React from 'react'; import {createRoot} from 'react-dom/client';
   import {MetaHomePilot} from './src/modules/website/MetaHomePilot';
@@ -16,9 +19,10 @@ const browser = await chromium.launch({headless:true,executablePath:process.env.
 const sdk = `const queue = window.fbq.queue.map(x => Array.from(x));
 if (queue.length !== 3 || queue[2].join(',') !== 'trackSingle,963759066544104,PageView' || window.origin !== 'null' || document.referrer) throw Error('unexpected SDK contract');
 (new Image()).src='https://www.facebook.com/tr/?id=963759066544104&ev=PageView';`;
-async function run({path='/', enabled=true, choice, stop=false}={}){
+async function run({path='/', enabled=true, choice, stop=false, wrongKey=false}={}){
   const ctx = await browser.newContext({viewport:{width:390,height:800}});
   const seen = [];
+  const gate = createPilotGate({environment:'production',metaHomePilot:enabled ? {digest} : null});
   await ctx.route('**/*', async route => {
     const req = route.request(), url = new URL(req.url());
     if(url.origin === origin) {
@@ -26,8 +30,9 @@ async function run({path='/', enabled=true, choice, stop=false}={}){
       if (url.pathname === '/app-config.json') return route.fulfill({json:{tenant:'hoy',apiBase:'/api/cos',clerkPublishableKey:'pk_test_fixture',environment:'production',metaHomePilot:enabled}});
       if (url.pathname === framePath) {
         seen.push('frame');
-        const f = pilotFrame({method:req.method(),headers:await req.allHeaders()},url.search);
-        assert.ok(f, 'actual browser frame must pass Fetch Metadata');
+        const actual=await req.allHeaders();
+        const f=await gate.claim({method:req.method(),headers:{...actual,host:url.host}},url.search,async()=>req.postDataBuffer());
+        if(!f) return route.fulfill({status:404,body:'No test'});
         return route.fulfill({body:f.body,headers:f.headers});
       }
       return route.fulfill({body:'<!doctype html><div id="root"></div><script src="/bundle.js"></script>',contentType:'text/html'});
@@ -51,6 +56,7 @@ async function run({path='/', enabled=true, choice, stop=false}={}){
   if(choice) {
     await page.getByRole('button',{name:choice,exact:true}).waitFor();
     assert.deepEqual(seen, []);
+    if(choice==='Allow for this visit') await page.getByLabel('Test key').fill(wrongKey?'b'.repeat(43):key);
     await page.getByRole('button',{name:choice,exact:true}).click();
   }
   if (stop) {
@@ -69,6 +75,7 @@ try{
   for(const params of [{enabled:false},{path:'/?private=not-forwarded'},{path:'/#/app/checkout'},{path:'/horario'},{choice:'Do not allow'}]){
     assert.deepEqual(await run(params),[]);
   }
+  assert.deepEqual(await run({choice:'Allow for this visit',wrongKey:true}),['frame']);
   assert.deepEqual(await run({choice:'Allow for this visit',stop:true}),['frame','sdk','event']);
   console.log('Chromium: off/default, private URL, rejected consent and one opt-in event; withdraw removes frame. All Meta requests intercepted.');
 }finally{await browser.close();}

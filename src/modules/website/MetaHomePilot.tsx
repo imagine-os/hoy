@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { loadAppConfig } from '../../auth/appConfig';
 import { PRODUCTION_BUILD } from '../../config/launch';
 
@@ -14,6 +14,7 @@ export function MetaHomePilot({ lang }: { lang: string }) {
   const [enabled, setEnabled] = useState(false);
   const [consent, setConsent] = useState<'idle' | 'allow' | 'decline' | 'stop'>('idle');
   const spent = useRef(false);
+  const target = useRef('');
   useEffect(() => {
     if (!PRODUCTION_BUILD || !isCleanHome(window.location)) return;
     let active = true;
@@ -29,26 +30,30 @@ export function MetaHomePilot({ lang }: { lang: string }) {
   }, []);
   if (!enabled || !isCleanHome(window.location)) return null;
   const es = lang === 'es';
-  const allow = () => {
-    if (spent.current || !isCleanHome(window.location)) return;
+  if (!target.current) target.current = 'hoy-pilot-' + crypto.randomUUID();
+  const allow = (event: FormEvent<HTMLFormElement>) => {
+    if (spent.current || !isCleanHome(window.location)) {
+      event.preventDefault();
+      return;
+    }
     spent.current = true;
-    setConsent('allow');
+    const form = event.currentTarget;
+    window.setTimeout(() => { form.reset(); setConsent('allow'); }, 0);
   };
   return (
-    <section aria-label={es ? 'Medición publicitaria opcional' : 'Optional ad measurement'} className="container stack-sm">
-      {consent === 'idle' && <>
+    <section aria-label={es ? 'Prueba de medición publicitaria' : 'Ad measurement test'} className="container stack-sm">
+      <form action={FRAME} method="post" target={target.current} onSubmit={allow} hidden={consent !== 'idle'}>
         <p className="small">{es
-          ? 'Si lo permites, HOY usará Meta Pixel para registrar una visita a esta página y medir sus anuncios. Es opcional y no afecta tus reservas.'
-          : 'If you allow it, HOY will use Meta Pixel to record one visit to this page and measure its ads. This is optional and does not affect booking.'}</p>
-        <div>
-          <button type="button" onClick={allow}>{es ? 'Permitir esta visita' : 'Allow for this visit'}</button>{' '}
-          <button type="button" onClick={() => setConsent('decline')}>{es ? 'No permitir' : 'Do not allow'}</button>
-        </div>
-      </>}
-      {consent === 'allow' && <>
-        <button type="button" onClick={() => setConsent('stop')}>{es ? 'Detener la medición' : 'Stop measurement'}</button>
-        <iframe title={es ? 'Medición de visita' : 'Visit measurement'} hidden src={FRAME} sandbox="allow-scripts" referrerPolicy="no-referrer" />
-      </>}
+          ? 'Prueba para personal autorizado. Al continuar, Meta recibirá una visita de prueba y datos técnicos del navegador. No afecta tus reservas.'
+          : 'For authorized testers. If you continue, Meta receives one test visit and technical browser data. This does not affect booking.'}</p>
+        <label>{es ? 'Clave de prueba' : 'Test key'}{' '}
+          <input type="password" name="key" required minLength={43} maxLength={43} pattern={String.raw`[A-Za-z0-9_\-]{43}`} autoComplete="off" />
+        </label>{' '}
+        <button type="submit">{es ? 'Permitir esta visita' : 'Allow for this visit'}</button>{' '}
+        <button type="button" onClick={() => setConsent('decline')}>{es ? 'No permitir' : 'Do not allow'}</button>
+      </form>
+      {consent === 'allow' && <button type="button" onClick={() => setConsent('stop')}>{es ? 'Detener la medición' : 'Stop measurement'}</button>}
+      {(consent === 'idle' || consent === 'allow') && <iframe title={es ? 'Medición de visita' : 'Visit measurement'} hidden name={target.current} sandbox="allow-scripts" referrerPolicy="no-referrer" />}
       {(consent === 'decline' || consent === 'stop') && <p className="small" role="status">{es ? 'Medición desactivada para esta visita.' : 'Measurement is off for this visit.'}</p>}
     </section>
   );
