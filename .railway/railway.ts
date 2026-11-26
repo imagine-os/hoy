@@ -60,6 +60,15 @@ export default defineRailway((ctx) => {
       COOKIE_SIGNING_SECRET: preserve(),
       // The test site's passphrase gate (Company OS playbook rule D5). Never on production.
       ...(prod ? {} : { TEST_GATE_PASSPHRASE: preserve() }),
+      // A separate named test deployment controls the opt-in. These settings never exist in the prod spec.
+      ...(prod ? {} : {
+        HOY_PARTNER_TEST_ENABLE: preserve(),
+        HOY_PARTNER_TEST_KEY: preserve(),
+        HOY_PARTNER_TEST_UPSTREAM_KEY: preserve(),
+        HOY_PARTNER_TEST_HISTORY_FROM: preserve(),
+        HOY_PARTNER_TEST_EXPIRES_AT: preserve(),
+        HOY_PARTNER_TEST_PRODUCTS: preserve(),
+      }),
     },
   });
 

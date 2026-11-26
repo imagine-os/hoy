@@ -135,6 +135,8 @@ jobs:
         run: node scripts/check-company-os.mjs
       - name: Hoy server tests
         run: node scripts/test-hoy-server.mjs
+      - name: Partner reporting contract (synthetic; no network)
+        run: node --test scripts/partner-reporting/*.test.mjs
       - name: Test gate (the passphrase in front of the test site; rule D5)
         run: node scripts/test-test-gate.mjs
       - name: Docs gate (the Hub's docs for a signed-in super admin only; lane Y6)
