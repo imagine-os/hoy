@@ -5,6 +5,7 @@ export const PILOT_FRAME_PATH = '/__hoy/meta-home-pageview';
 const HOST = 'hoyhumanclub.com';
 const PIXEL_ID = '963759066544104';
 const SDK = 'https://connect.facebook.net/en_US/fbevents.js';
+const SDK_CONFIG = `https://connect.facebook.net/signals/config/${PIXEL_ID}`;
 
 export const PILOT_UNLOCK_PATH = '/__hoy/meta-home-unlock';
 const GRANT = '__Secure-hoy-meta-smoke';
@@ -80,7 +81,7 @@ const hash = createHash('sha256').update(bootstrap).digest('base64');
 const csp = [
   "default-src 'none'", "object-src 'none'", "base-uri 'none'", "form-action 'none'",
   "frame-ancestors 'self'", "sandbox allow-scripts",
-  `script-src 'sha256-${hash}' ${SDK}`,
+  `script-src 'sha256-${hash}' ${SDK} ${SDK_CONFIG}`,
   "connect-src https://www.facebook.com/tr/", "img-src https://www.facebook.com/tr/",
 ].join('; ');
 
