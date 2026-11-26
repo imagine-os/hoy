@@ -316,8 +316,32 @@ await test('sign-in return: a signed-out visitor comes back to the pass link, cl
   assert.equal(R.customerReturn('/app/pass/ABCD2345?c=occ_12-ab'), '/app/pass/ABCD2345?c=occ_12-ab');
   for (const bad of ['/app/pass/ABCD2345?c=occ_1&x=1', '/app/pass/ABCD2345?next=//evil', '/app/pass/ABCD2345?c=<script>', '/app/pass/../admin']) assert.equal(R.customerReturn(bad), null, bad);
 });
-await test('company-os.json requires Company OS 1.23.0 (bookings 1.11.0, credits 1.5.0, payments 2.10.0)', async () => {
-  assert.deepEqual(JSON.parse(await readFile('company-os.json', 'utf8')), { requires: '>=1.23.0' });
+// Group passes need at least Company OS 1.23.0. A different feature may raise the manifest floor.
+function meetsGroupPassFloor(manifest) {
+  if (!manifest || typeof manifest !== 'object' || Array.isArray(manifest)
+    || Object.keys(manifest).length !== 1 || typeof manifest.requires !== 'string') return false;
+  const match = /^>=(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$/.exec(manifest.requires);
+  if (!match) return false;
+  const floor = [1n, 23n, 0n];
+  const declared = match.slice(1).map(BigInt);
+  for (let i = 0; i < floor.length; i++) {
+    if (declared[i] !== floor[i]) return declared[i] > floor[i];
+  }
+  return true;
+}
+
+await test('company-os.json requires at least Company OS 1.23.0 (bookings 1.11.0, credits 1.5.0, payments 2.10.0)', async () => {
+  const manifest = JSON.parse(await readFile('company-os.json', 'utf8'));
+  assert.ok(meetsGroupPassFloor(manifest), 'expected a Company OS minimum of 1.23.0 or higher');
+});
+await test('group-pass floor accepts newer versions but refuses lower, invalid or ambiguous ranges', () => {
+  for (const requires of ['>=1.23.0', '>=1.23.1', '>=1.24.0', '>=1.100.0', '>=2.0.0']) {
+    assert.equal(meetsGroupPassFloor({ requires }), true, requires);
+  }
+  for (const requires of ['>=1.22.99', '>=0.99.99', '1.24.0', '>=1.24', '>=1.24.0-rc.1', '>=1.024.0', '>=1.24.0 || >=0.1.0']) {
+    assert.equal(meetsGroupPassFloor({ requires }), false, requires);
+  }
+  assert.equal(meetsGroupPassFloor({ requires: '>=1.24.0', unexpected: true }), false);
 });
 
 // ── review round 1: the screens' decision logic (C-43, C-44, S-02, S-04, C-08, PR-01) ─────────────────────────────────
