@@ -77,6 +77,21 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           CHECKED_SHA: ${{ github.sha }}
         run: node scripts/release-check-reuse.mjs
+      - name: Require named release evidence before enabling partner reporting
+        if: inputs['partner-report']
+        env:
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
+          CHECKED_SHA: ${{ github.sha }}
+          RELEASE_REUSED: ${{ steps.release-checks.outputs.reuse }}
+        run: |
+          if [ "$REF_TYPE" != tag ] || ! [[ "$REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] ||
+             [ "$(git cat-file -t "refs/tags/$REF_NAME" 2>/dev/null)" != tag ] ||
+             [ "$(git rev-parse "refs/tags/$REF_NAME^{}" 2>/dev/null)" != "$CHECKED_SHA" ] ||
+             [ "$RELEASE_REUSED" != true ]; then
+            echo "::error::Partner reporting requires an annotated release tag with successful Cut release checks on its exact commit."
+            exit 1
+          fi
       - run: npm ci
       - run: npm ci --prefix server
       - name: Company OS requirement
@@ -86,6 +101,7 @@ jobs:
         if: steps.release-checks.outputs.reuse != 'true'
         run: node scripts/test-hoy-server.mjs
       - name: Partner reporting contract (synthetic; no network)
+        if: steps.release-checks.outputs.reuse != 'true'
         run: node --test scripts/partner-reporting/*.test.mjs
       - name: Test gate (the passphrase in front of the test site; rule D5)
         if: steps.release-checks.outputs.reuse != 'true'
