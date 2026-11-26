@@ -28,11 +28,16 @@ async function run({path='/', enabled=true, choice, stop=false, wrongKey=false}=
     if(url.origin === origin) {
       if (url.pathname === '/bundle.js') return route.fulfill({body:app.outputFiles[0].text,contentType:'text/javascript'});
       if (url.pathname === '/app-config.json') return route.fulfill({json:{tenant:'hoy',apiBase:'/api/cos',clerkPublishableKey:'pk_test_fixture',environment:'production',metaHomePilot:enabled}});
+      if(url.pathname === '/__hoy/meta-home-unlock') {
+        seen.push('unlock');
+        const auth=await gate.unlock({method:req.method(),headers:{...await req.allHeaders(),host:url.host}},url.search,async()=>req.postDataBuffer());
+        return auth ? route.fulfill({status:204,headers:{'Set-Cookie':auth}}) : route.fulfill({status:404,body:'No test'});
+      }
       if (url.pathname === framePath) {
         seen.push('frame');
         const actual=await req.allHeaders();
-        const f=await gate.claim({method:req.method(),headers:{...actual,host:url.host}},url.search,async()=>req.postDataBuffer());
-        if(!f) return route.fulfill({status:404,body:'No test'});
+        const f=gate.frame({method:req.method(),headers:{...actual,host:url.host}},url.search);
+        if(!f) throw Error('Frame has no matched grant: ' + JSON.stringify({dest:actual['sec-fetch-dest'],site:actual['sec-fetch-site'],cookie:Boolean(actual.cookie),referrer:Boolean(actual.referer)}));
         return route.fulfill({body:f.body,headers:f.headers});
       }
       return route.fulfill({body:'<!doctype html><div id="root"></div><script src="/bundle.js"></script>',contentType:'text/html'});
@@ -75,7 +80,7 @@ try{
   for(const params of [{enabled:false},{path:'/?private=not-forwarded'},{path:'/#/app/checkout'},{path:'/horario'},{choice:'Do not allow'}]){
     assert.deepEqual(await run(params),[]);
   }
-  assert.deepEqual(await run({choice:'Allow for this visit',wrongKey:true}),['frame']);
-  assert.deepEqual(await run({choice:'Allow for this visit',stop:true}),['frame','sdk','event']);
+  assert.deepEqual(await run({choice:'Allow for this visit',wrongKey:true}),['unlock']);
+  assert.deepEqual(await run({choice:'Allow for this visit',stop:true}),['unlock','frame','sdk','event']);
   console.log('Chromium: off/default, private URL, rejected consent and one opt-in event; withdraw removes frame. All Meta requests intercepted.');
 }finally{await browser.close();}
