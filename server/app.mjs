@@ -25,6 +25,7 @@ import { extname, resolve, sep } from 'node:path';
 import { createGzip } from 'node:zlib';
 import { createDocsGate, DOCS_PREFIX } from './docsGate.mjs';
 import { createTestGate } from './testGate.mjs';
+import { makePartnerRoute, PARTNER_REPORT_PATH } from './partner-reporting.mjs';
 import { CANONICAL_ORIGIN, createSeo, wwwLocation } from './seo.mjs';
 
 /**
@@ -94,6 +95,7 @@ export async function createHandler(config, deps) {
   const docsGate = await createDocsGate(config, { verifySession: deps.verifySession, fetchMe: deps.fetchMe, log });
   // The test site's passphrase gate (playbook rule D5).
   const testGate = createTestGate(config.testGate, { now: deps.now, readBody, closeIfUnread });
+  const partnerRoute = makePartnerRoute(config);
   // Lane H-SEO (D11): the public website's pages, sitemap, robots and old addresses.
   const indexFile = resolve(distDir, 'index.html');
   const seo = createSeo(config, {
@@ -126,6 +128,7 @@ export async function createHandler(config, deps) {
         return res.end();
       }
       if (await testGate(req, res, rawPath)) return;
+      if (rawPath === PARTNER_REPORT_PATH) return partnerRoute ? await partnerRoute(req, res) : sendError(res, 404, 'not_found');
       if (rawPath === '/health') return health(req, res, release);
       if (rawPath === '/app-config.json') {
         if (req.method !== 'GET' && req.method !== 'HEAD') return sendError(res, 405, 'method_not_allowed');

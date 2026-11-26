@@ -1,3 +1,4 @@
+import { partnerSettings } from './partner-reporting.mjs';
 // The server's settings, all from environment variables (Railway sets them; see server/README.md).
 // No address, domain or organisation is written here: everything that differs per environment is a variable.
 import { fileURLToPath } from 'node:url';
@@ -126,6 +127,7 @@ export function loadConfig(env = process.env) {
     fileTimeoutMs: int(env.FILE_TIMEOUT_MS, 30_000),
     fileStorageOrigins,
     companyOsReadToken,
+    partnerReport: partnerSettings(env, environment, testGate.on, companyOsReadToken),
     publicReadRate: { perSecond: int(env.PUBLIC_READ_RATE_PER_SECOND, 20), burst: int(env.PUBLIC_READ_BURST, 120), totalPerSecond: 150, totalBurst: 400 },
     launch: { siteLive: siteLiveRaw === 'true', siteLiveAt },
     testGate,
