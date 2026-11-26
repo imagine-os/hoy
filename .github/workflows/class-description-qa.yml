@@ -7,6 +7,7 @@ on:
       - 'src/data/companyos/mapping.ts'
       - 'src/components/molecule/SessionEditorial/**'
       - 'scripts/test-class-description*.mjs'
+      - 'scripts/test-teacher-email*.mjs'
       - 'scripts/fixtures/class-description-harness.tsx'
       - '.github/workflows/class-description-qa.yml'
   workflow_dispatch:
@@ -26,6 +27,10 @@ jobs:
           cache: npm
       - run: npm ci
       - run: node scripts/test-class-description.mjs
+      - run: node scripts/test-teacher-email.mjs
+      - run: node scripts/test-teacher-email-ui.mjs
+        env:
+          CHROMIUM_PATH: /usr/bin/google-chrome
       - run: npm run build:production
       - run: node scripts/test-route-connectivity.mjs
       - run: node scripts/test-class-description-ui.mjs
