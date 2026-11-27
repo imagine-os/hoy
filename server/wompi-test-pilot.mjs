@@ -29,7 +29,7 @@ function reply(res,status,data) {
 // An unmounted, test-only pilot. Parent must enforce the actual HOY test gate
 // before invoking any endpoint; identify must return only authorized test-subject IDs.
 export function createPilot({environment,testGateOn,db,origin,publicKey,privateKey,integrityKey,
-  identify,request,now=Date.now,expiresNoLater=Infinity}) {
+  identify,request,now=Date.now,expiresNoLater=Infinity,measurementConsent}) {
   if(environment!=='test'||testGateOn!==true)return null;
   if(!db||typeof identify!=='function'||typeof origin!=='string'||!origin.startsWith('https://')
     ||new URL(origin).origin!==origin)throw Error('sandbox_pilot_not_configured');
@@ -37,6 +37,19 @@ export function createPilot({environment,testGateOn,db,origin,publicKey,privateK
   const order=db.prepare('SELECT * FROM sandbox_orders WHERE subject=?');
   const add=db.prepare('INSERT INTO sandbox_orders(subject,reference,expires) VALUES (?,?,?)');
   const save=db.prepare("UPDATE sandbox_orders SET state=?,transaction_id=? WHERE subject=? AND reference=? AND state='OPEN'");
+  // Synthetic evidence only: no browser Pixel or CAPI network transport is attached.
+  db.exec("CREATE TABLE IF NOT EXISTS sandbox_measurement_optin(reference TEXT PRIMARY KEY) STRICT; CREATE TABLE IF NOT EXISTS sandbox_purchase_events(reference TEXT PRIMARY KEY, event_json TEXT NOT NULL) STRICT");
+  const choice=db.prepare('INSERT INTO sandbox_measurement_optin VALUES (?)');
+  const chose=db.prepare('SELECT 1 FROM sandbox_measurement_optin WHERE reference=?');
+  const stage=db.prepare('INSERT INTO sandbox_purchase_events VALUES (?,?)');
+  const mayMeasure=async subject=>{
+    if(typeof measurementConsent!=='function')return false;
+    try{return await measurementConsent(subject)===true;}catch{return false;}
+  };
+  const atomic=fn=>{
+    db.exec('BEGIN IMMEDIATE');
+    try{const result=fn();db.exec('COMMIT');return result;}catch(error){db.exec('ROLLBACK');throw error;}
+  };
   const inFlight=new Map();
   return async (req,res)=>{
     const path=req.url;
@@ -51,10 +64,12 @@ export function createPilot({environment,testGateOn,db,origin,publicKey,privateK
       if(path.endsWith('/start')){
         if(Object.keys(body).length)return reply(res,400,{error:'invalid_input'});
         let row=order.get(subject);
+        const optedIn=!row&&await mayMeasure(subject);
+        row=order.get(subject);
         if(!row){
           const id='hoy-test-'+randomUUID(),expiresAt=new Date(Math.min(now()+CHECKOUT_LIFETIME_MS,expiresNoLater)).toISOString();
           const checkout=checkoutForQuote({id,amountInCents,currency,expiresAt},{publicKey,integrityKey,now});
-          add.run(subject,id,expiresAt);
+          atomic(()=>{add.run(subject,id,expiresAt);if(optedIn)choice.run(id);});
           return reply(res,201,{checkout});
         }
         if(row.state!=='OPEN')return reply(res,409,{error:'test_order_already_closed'});
@@ -73,8 +88,19 @@ export function createPilot({environment,testGateOn,db,origin,publicKey,privateK
       try {
         const verified=await checkSandboxTransaction(body.id,{id:row.reference,amountInCents,currency},{privateKey,request});
         if(verified.status!=='PENDING'){
-          if(save.run(verified.status,verified.id,subject,row.reference).changes!==1)
-            return reply(res,409,{error:'test_order_changed'});
+          const recordPurchase=verified.status==='APPROVED'&&!!chose.get(row.reference)&&await mayMeasure(subject);
+          const changed=atomic(()=>{
+            if(save.run(verified.status,verified.id,subject,row.reference).changes!==1)return false;
+            if(recordPurchase)stage.run(row.reference,JSON.stringify({
+              event_id:'hoy-purchase-'+randomUUID(),
+              event_name:'Purchase',
+              event_time:Math.floor(now()/1000),
+              action_source:'website',
+              custom_data:{currency,value:amountInCents/100},
+            }));
+            return true;
+          });
+          if(!changed)return reply(res,409,{error:'test_order_changed'});
         }
         return reply(res,200,verified);
       } finally {inFlight.delete(subject);}
