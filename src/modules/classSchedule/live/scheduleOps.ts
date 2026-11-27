@@ -17,7 +17,7 @@ export interface ResourceDraft { name: string; capacity: number }
 /** A teacher's public profile: `specialties` are class type slugs, `photo` a `/media/<id>` address or none. */
 export interface CoachProfile { bio: { es: string; en: string }; specialties: string[]; photo: string | null }
 /** `photoAtOpen`: the `photo` the record held when the form opened, as stored: a save is refused if it has changed since. */
-export interface CoachDraft { name: string; email?: string; phone?: string; active: boolean; profile?: CoachProfile; photoAtOpen?: unknown }
+export interface CoachDraft { name: string; email?: string; emailAtOpen?: unknown; phone?: string; active: boolean; profile?: CoachProfile; photoAtOpen?: unknown }
 
 export type ScheduleProblem = 'title' | 'weekday' | 'start_time' | 'resource' | 'coach' | 'capacity' | 'valid_from' | 'modality' | 'description';
 
@@ -88,6 +88,14 @@ export const coachProfileOf = (row: Record<string, unknown>): CoachProfile => ({
 });
 
 /** A teacher is a person with a `coach` facet, created together. */
+const normalizedCoachEmail = (email: unknown) => typeof email === 'string' ? email.trim().toLowerCase() : '';
+export function coachEmailProblem(email: string, emailAtOpen: unknown): 'empty_email' | 'invalid_email' | null {
+  const next = normalizedCoachEmail(email);
+  if (next === normalizedCoachEmail(emailAtOpen)) return null;
+  if (!next) return 'empty_email';
+  return next.length <= 254 && /^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$/.test(next) ? null : 'invalid_email';
+}
+
 export function createCoachOps(d: CoachDraft): BatchOp[] {
   return [
     { op: 'create', entity: 'person', data: { name: d.name.trim(), ...(d.email?.trim() ? { email: d.email.trim().toLowerCase() } : {}), ...(d.phone?.trim() ? { phone: d.phone.trim() } : {}) } },
@@ -99,8 +107,13 @@ export function updateCoachOps(coachId: string, personId: string, d: CoachDraft)
   // the current one with it. Company OS compares strictly: a field never set is matched by leaving the value out.
   const photo = d.profile ? coachPhotoValue(d.profile.photo) : null;
   const photoChanged = !!d.profile && photo !== coachPhotoValue(coachPhotoUrl(d.photoAtOpen));
+  const emailChanged = d.email !== undefined && normalizedCoachEmail(d.email) !== normalizedCoachEmail(d.emailAtOpen);
+  const emailProblem = emailChanged ? coachEmailProblem(d.email!, d.emailAtOpen) : null;
+  if (emailProblem) throw new Error(emailProblem);
   return [
-    { op: 'update', entity: 'person', id: personId, data: { name: d.name.trim(), ...(d.phone?.trim() ? { phone: d.phone.trim() } : {}) } },
+    { op: 'update', entity: 'person', id: personId, data: { name: d.name.trim(), ...(d.phone?.trim() ? { phone: d.phone.trim() } : {}), ...(emailChanged ? { email: normalizedCoachEmail(d.email) } : {}) },
+      // Match the raw previous value (including null vs. unset); never change the login/user link.
+      ...(emailChanged ? { ifMatch: { field: 'email', value: d.emailAtOpen } } : {}) },
     { op: 'update', entity: 'coach', id: coachId, data: { active: d.active, ...(d.profile ? textData(d.profile) : {}), ...(photoChanged ? { [COACH_FIELDS.photo]: photo } : {}) }, ...(photoChanged ? { ifMatch: { field: COACH_FIELDS.photo, value: d.photoAtOpen } } : {}) },
   ];
 }
