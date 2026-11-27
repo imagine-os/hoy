@@ -30,6 +30,12 @@ run-name: Deploy web (test) ${{ github.ref_name }}
 
 on:
   workflow_dispatch:
+    inputs:
+      partner-report:
+        description: Enable temporary partner reporting only for this gated test deployment
+        type: boolean
+        required: false
+        default: false
 
 concurrency:
   group: deploy-web-test
@@ -71,6 +77,21 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           CHECKED_SHA: ${{ github.sha }}
         run: node scripts/release-check-reuse.mjs
+      - name: Require named release evidence before enabling partner reporting
+        if: inputs['partner-report']
+        env:
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
+          CHECKED_SHA: ${{ github.sha }}
+          RELEASE_REUSED: ${{ steps.release-checks.outputs.reuse }}
+        run: |
+          if [ "$REF_TYPE" != tag ] || ! [[ "$REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] ||
+             [ "$(git cat-file -t "refs/tags/$REF_NAME" 2>/dev/null)" != tag ] ||
+             [ "$(git rev-parse "refs/tags/$REF_NAME^{}" 2>/dev/null)" != "$CHECKED_SHA" ] ||
+             [ "$RELEASE_REUSED" != true ]; then
+            echo "::error::Partner reporting requires an annotated release tag with successful Cut release checks on its exact commit."
+            exit 1
+          fi
       - run: npm ci
       - run: npm ci --prefix server
       - name: Company OS requirement
@@ -79,6 +100,9 @@ jobs:
       - name: Hoy server tests
         if: steps.release-checks.outputs.reuse != 'true'
         run: node scripts/test-hoy-server.mjs
+      - name: Partner reporting contract (synthetic; no network)
+        if: steps.release-checks.outputs.reuse != 'true'
+        run: node --test scripts/partner-reporting/*.test.mjs
       - name: Test gate (the passphrase in front of the test site; rule D5)
         if: steps.release-checks.outputs.reuse != 'true'
         run: node scripts/test-test-gate.mjs
@@ -157,6 +181,29 @@ jobs:
           if [ ${#COOKIE_SIGNING_SECRET} -lt 32 ]; then echo "::error::Set the test environment's secret COOKIE_SIGNING_SECRET (at least 32 characters: openssl rand -hex 32)"; exit 1; fi
           if ! printf '%s' "$APP_URL" | grep -Eq '^https://[a-zA-Z0-9.-]+$'; then echo "::error::Set the test environment's variable APP_URL to https://test.<the customer's domain> (no path, no trailing slash)"; exit 1; fi
 
+      - name: Validate optional partner fixture settings before Railway changes
+        if: inputs['partner-report']
+        env:
+          HOY_PARTNER_TEST_ENABLE: 'true'
+          HOY_PARTNER_TEST_KEY: ${{ secrets.HOY_PARTNER_TEST_KEY }}
+          HOY_PARTNER_TEST_UPSTREAM_KEY: ${{ secrets.HOY_PARTNER_TEST_UPSTREAM_KEY }}
+          HOY_PARTNER_TEST_HISTORY_FROM: ${{ vars.HOY_PARTNER_TEST_HISTORY_FROM }}
+          HOY_PARTNER_TEST_EXPIRES_AT: ${{ vars.HOY_PARTNER_TEST_EXPIRES_AT }}
+          HOY_PARTNER_TEST_PRODUCTS: ${{ vars.HOY_PARTNER_TEST_PRODUCTS }}
+        run: |
+          node --input-type=module <<'JS'
+          import { partnerSettings } from './server/partner-reporting.mjs';
+          try {
+            const config = partnerSettings(process.env, 'test', true);
+            if (!config || config.expiresAt <= Date.now() || config.expiresAt > Date.now() + 24 * 60 * 60 * 1000) {
+              throw Error('invalid validity window');
+            }
+          } catch {
+            console.error('::error::Invalid optional HOY partner test configuration; confirm distinct named test credentials and expiry within 24 hours.');
+            process.exitCode = 1;
+          }
+          JS
+
       # Review round 2 (r2hoy, L7): a variable left under a wrong or retired name (SET_LIVE, PUBLIC_DOCUMENTS) is warned
       # about here, before Apply infra (which fails on a variable the IaC doesn't declare). Never prints a value.
       - name: Leftover variables
@@ -195,6 +242,12 @@ jobs:
           APP_URL: ${{ vars.APP_URL }}
           TEST_GATE_PASSPHRASE: ${{ secrets.TEST_GATE_PASSPHRASE }}
           COOKIE_SIGNING_SECRET: ${{ secrets.COOKIE_SIGNING_SECRET }}
+          HOY_PARTNER_TEST_ENABLE: ${{ inputs['partner-report'] && 'true' || 'false' }}
+          HOY_PARTNER_TEST_KEY: ${{ secrets.HOY_PARTNER_TEST_KEY }}
+          HOY_PARTNER_TEST_UPSTREAM_KEY: ${{ secrets.HOY_PARTNER_TEST_UPSTREAM_KEY }}
+          HOY_PARTNER_TEST_HISTORY_FROM: ${{ vars.HOY_PARTNER_TEST_HISTORY_FROM }}
+          HOY_PARTNER_TEST_EXPIRES_AT: ${{ vars.HOY_PARTNER_TEST_EXPIRES_AT }}
+          HOY_PARTNER_TEST_PRODUCTS: ${{ vars.HOY_PARTNER_TEST_PRODUCTS }}
         run: |
           set_var() { printf '%s' "$2" | railway variable set "$1" --stdin --service "$SERVICE" --environment "$RAILWAY_ENV" --skip-deploys; }
           set_var APP_URL "$APP_URL"
@@ -202,6 +255,14 @@ jobs:
           set_var CLERK_PUBLISHABLE_KEY "$CLERK_PUBLISHABLE_KEY"
           set_var TEST_GATE_PASSPHRASE "$TEST_GATE_PASSPHRASE"
           set_var COOKIE_SIGNING_SECRET "$COOKIE_SIGNING_SECRET"
+          if [ "$HOY_PARTNER_TEST_ENABLE" = true ]; then
+            set_var HOY_PARTNER_TEST_KEY "$HOY_PARTNER_TEST_KEY"
+            set_var HOY_PARTNER_TEST_UPSTREAM_KEY "$HOY_PARTNER_TEST_UPSTREAM_KEY"
+            set_var HOY_PARTNER_TEST_HISTORY_FROM "$HOY_PARTNER_TEST_HISTORY_FROM"
+            set_var HOY_PARTNER_TEST_EXPIRES_AT "$HOY_PARTNER_TEST_EXPIRES_AT"
+            set_var HOY_PARTNER_TEST_PRODUCTS "$HOY_PARTNER_TEST_PRODUCTS"
+          fi
+          set_var HOY_PARTNER_TEST_ENABLE "$HOY_PARTNER_TEST_ENABLE"
 
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
@@ -216,6 +277,8 @@ jobs:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
           TEST_GATE_PASSPHRASE: ${{ secrets.TEST_GATE_PASSPHRASE }}
           COOKIE_SIGNING_SECRET: ${{ secrets.COOKIE_SIGNING_SECRET }}
+          HOY_PARTNER_TEST_KEY: ${{ secrets.HOY_PARTNER_TEST_KEY }}
+          HOY_PARTNER_TEST_UPSTREAM_KEY: ${{ secrets.HOY_PARTNER_TEST_UPSTREAM_KEY }}
         run: node server/check-bundle.mjs "$RUNNER_TEMP/web/site"
 
       # Uploads the checked bundle only (not the checkout). --no-gitignore: the bundle's site/ must not
