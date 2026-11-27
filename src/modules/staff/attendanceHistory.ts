@@ -49,10 +49,11 @@ export async function loadAttendance(cos: CosPort, range: AttendanceRange, now: 
   const idSort = { field: 'id', dir: 'asc' as const };
   const data = await completeQuery(cos, {
     entity: 'occurrence',
-    filter: { and: [{ field: 'starts_at', op: 'gte', value: start }, { field: 'starts_at', op: 'lt', value: end }] },
+    filter: { and: [{ field: 'starts_at', op: 'gte', value: start }, { field: 'starts_at', op: 'lt', value: end }, { field: 'kind', op: 'eq', value: 'class' }] },
     sort: [timeSort, idSort],
   }, active);
   const parsed = data.map(({ id, data: d }) => {
+    if (d.kind !== 'class') throw new Error('attendance_incomplete');
     const { starts_at, ends_at, status, title } = d;
     if (typeof starts_at !== 'string' || !Number.isFinite(Date.parse(starts_at)) || typeof ends_at !== 'string' || !Number.isFinite(Date.parse(ends_at)) || typeof title !== 'string' || typeof status !== 'string') throw new Error('attendance_incomplete');
     return { id, starts_at, ends_at, status: status as Session['status'], title };
