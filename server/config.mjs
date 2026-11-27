@@ -5,6 +5,7 @@ import { gateSettings } from './testGate.mjs';
 
 /**
  * @typedef {object} ServerConfig
+ * @property {{digest:string}|null} metaHomePilot   explicit homepage-only ads pilot, disabled by default
  * @property {number} port
  * @property {string} distDir
  * @property {string} companyOsUrl       Company OS on the private network, e.g. http://<api private domain>:4000
@@ -109,6 +110,8 @@ export function loadConfig(env = process.env) {
   }
 
   const config = {
+    metaHomePilot: production && /^[a-f0-9]{64}$/.test(env.HOY_META_HOME_PILOT_DIGEST ?? '')
+      ? { digest: env.HOY_META_HOME_PILOT_DIGEST } : null,
     port: int(env.PORT, 3000),
     distDir: env.DIST_DIR || fileURLToPath(new URL('../dist', import.meta.url)),
     companyOsUrl,

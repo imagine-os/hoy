@@ -10,6 +10,7 @@ export interface AppConfig {
   apiBase: string;
   clerkPublishableKey: string;
   environment: string;
+  metaHomePilot?: true;
 }
 
 export function parseAppConfig(raw: unknown): AppConfig {
@@ -21,7 +22,7 @@ export function parseAppConfig(raw: unknown): AppConfig {
   const key = typeof v.clerkPublishableKey === 'string' && /^pk_(test|live)_[A-Za-z0-9$=+/_-]+$/.test(v.clerkPublishableKey) ? v.clerkPublishableKey : null;
   const environment = typeof v.environment === 'string' && v.environment.length <= 40 ? v.environment : 'unknown';
   if (!tenant || !apiBase || !key) throw new Error('app_config_invalid');
-  return { tenant, apiBase, clerkPublishableKey: key, environment };
+  return { tenant, apiBase, clerkPublishableKey: key, environment, ...(v.metaHomePilot === true ? { metaHomePilot: true as const } : {}) };
 }
 
 let pending: Promise<AppConfig> | null = null;

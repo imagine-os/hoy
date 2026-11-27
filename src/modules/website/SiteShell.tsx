@@ -1,3 +1,4 @@
+import { MetaHomePilot } from './MetaHomePilot';
 import { studioParts } from '../../i18n/format';
 import { useState, useEffect, useRef, type ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
@@ -128,6 +129,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
             <LangToggle size="sm" />
           </div>
         </div>
+        {!archived && pathname === '/site' && <MetaHomePilot lang={lang} />}
         <div className="container site-foot-bottom">
           {reviewTools && edition === "sanctuary" && version !== 'photos' && <p className="site-concept-note">{t("site.new.demo")}</p>}
           {reviewTools && <a className="small" href="https://github.com/imagine-os/hoy/blob/main/docs/website-versions.md" target="_blank" rel="noreferrer">{t("site.edition.history")} ↗</a>}
