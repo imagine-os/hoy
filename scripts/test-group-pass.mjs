@@ -316,8 +316,12 @@ await test('sign-in return: a signed-out visitor comes back to the pass link, cl
   assert.equal(R.customerReturn('/app/pass/ABCD2345?c=occ_12-ab'), '/app/pass/ABCD2345?c=occ_12-ab');
   for (const bad of ['/app/pass/ABCD2345?c=occ_1&x=1', '/app/pass/ABCD2345?next=//evil', '/app/pass/ABCD2345?c=<script>', '/app/pass/../admin']) assert.equal(R.customerReturn(bad), null, bad);
 });
-await test('company-os.json requires Company OS 1.23.0 (bookings 1.11.0, credits 1.5.0, payments 2.10.0)', async () => {
-  assert.deepEqual(JSON.parse(await readFile('company-os.json', 'utf8')), { requires: '>=1.23.0' });
+await test('company-os.json requires Company OS 1.23.0 or newer for group passes', async () => {
+  const { requires } = JSON.parse(await readFile('company-os.json', 'utf8'));
+  const minimum = /^>=(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.exec(requires);
+  assert.ok(minimum, 'expected a stable >=major.minor.patch floor');
+  const [major, minor] = minimum.slice(1).map(Number);
+  assert.ok(major > 1 || (major === 1 && minor >= 23), requires);
 });
 
 // ── review round 1: the screens' decision logic (C-43, C-44, S-02, S-04, C-08, PR-01) ─────────────────────────────────
