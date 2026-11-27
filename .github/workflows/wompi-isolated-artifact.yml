@@ -1,0 +1,39 @@
+name: Wompi isolated artifact (no deploy)
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/wompi-isolated-artifact.yml'
+      - 'scripts/wompi-sandbox/**'
+      - 'server/app.mjs'
+      - 'server/docsGate.mjs'
+      - 'server/pageMeta.mjs'
+      - 'server/seo.mjs'
+      - 'server/testGate.mjs'
+      - 'server/wompi-*.mjs'
+permissions:
+  contents: read
+jobs:
+  bundle:
+    name: Build exact-source sandbox artifact
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24.22.3'
+      - name: Test and package exactly the PR source
+        env:
+          SOURCE_COMMIT: ${{ github.event.pull_request.head.sha }}
+        run: |
+          node --test scripts/wompi-sandbox/*.test.mjs scripts/wompi-sandbox/hosting/*.test.mjs
+          node scripts/wompi-sandbox/hosting/bundle.mjs "$SOURCE_COMMIT" "$RUNNER_TEMP/wompi-probe"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: wompi-probe-${{ github.event.pull_request.head.sha }}
+          path: ${{ runner.temp }}/wompi-probe/
+          retention-days: 2
+          if-no-files-found: error

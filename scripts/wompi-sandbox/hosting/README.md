@@ -1,0 +1,11 @@
+# HOY Wompi isolated checkout verification
+
+This is a standalone Node 24 verification harness, not the Hoy OS production or shared test entry point. It binds to the existing isolated Railway service only and exclusively accepts Wompi test-prefixed credentials. It does not mount real Clerk users, Company OS, bookings, mail or webhooks. No secrets belong in these files.
+
+Run `node --test scripts/wompi-sandbox/*.test.mjs scripts/wompi-sandbox/hosting/*.test.mjs` from the repo. To assemble the reviewed payload without secrets, check out its approved exact commit and run `node scripts/wompi-sandbox/hosting/bundle.mjs "$(git rev-parse HEAD)" <new-artifact-directory>`. The packer reads allowlisted bytes from the git object, not the worktree, and embeds its exact source commit in the artifact health metadata. This package does not deploy. Results exercise the actual HOY HTTP gate, both operator credentials, a server-priced 55,000 COP quote and synthetic provider approval, decline, cross-operator denial, replay, expiry and wrong-environment rejection.
+
+Readiness before any hosted run: record independent security/release review on the exact source and deployment target; keep the service disconnected from branch-triggered deployments and from the existing Hoy OS project. Generate a dedicated HTTPS Railway service domain, put operator secrets directly in the sandbox service, and set a close deadline no more than one hour ahead. Use one replica, no retries after shutdown, and no durable storage. Verify the exact origin and expiry and remove the domain and stop the deployment afterward. The in-memory results intentionally do not survive a restart.
+
+Run separate approval and decline cases with official Wompi sandbox data and the operator in control of checkout consent. Confirm MODO DE PRUEBAS before submitting. Do not record card or payer fields in issue trackers or logs. No live charge, app rollout, or other project changes are authorized by this verification procedure.
+
+No new checkout may start in the last 15 minutes of the window, so previously signed links expire no later than the service. Confirm merchant sandbox receipts and callbacks cannot reach live endpoints or real inboxes before generating the two test transactions. Use a protected operator client for the signed checkout request; never put operator tokens in URLs.
