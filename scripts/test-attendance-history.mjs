@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { createServer } from 'vite';
 const vite = await createServer({ configFile: false, server: { middlewareMode: true }, appType: 'custom' });
 try {
-  const { attendanceRange, attendanceReport, attendanceSessions, attendanceCsv, loadAttendance } = await vite.ssrLoadModule('/src/modules/staff/attendanceHistory.ts');
+  const { attendanceRange, attendanceReport, attendanceSessions, attendanceCsv, loadAttendance } = await vite.ssrLoadModule('/src/modules/staff/attendanceReportData.ts');
   const session = (id, starts_at, status = 'completed', title = id, ends_at = starts_at) => ({ id, starts_at, ends_at, status, title });
   const all = [
     session('ends-late', '2026-11-26T23:30:00Z', 'scheduled', 'late', '2026-11-27T16:00:00Z'),

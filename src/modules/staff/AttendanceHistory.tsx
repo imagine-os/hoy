@@ -10,7 +10,7 @@ import { useData, useTable } from '../../data/DataContext';
 import type { BookingRow, ClassSessionRow } from '../../data/schema';
 import { useI18n } from '../../i18n/I18nProvider';
 import { addDaysKey, dateKey, formatDate, formatTime } from '../../i18n/format';
-import { attendanceCsv, attendanceRange, attendanceReport, attendanceSessions, loadAttendance, type AttendanceRange } from './attendanceHistory';
+import { attendanceCsv, attendanceRange, attendanceReport, attendanceSessions, loadAttendance, type AttendanceRange } from './attendanceReportData';
 
 export function AttendanceHistory({ now }: { now: number }) {
   const { t } = useI18n();
