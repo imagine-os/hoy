@@ -29,6 +29,7 @@ import { S02 } from './specs';
 import { approvedPackageRows, packageState } from '../../data/packages';
 import { bookWithPackage } from '../../data/deskBooking';
 import { checkInOpen, staffWalkInOpen } from './desk/deskSale';
+import { AttendanceHistory } from './AttendanceHistory';
 import { checkinView } from './checkinSelection';
 import { useNow } from '../customer/hooks';
 import { SERVER_RULES } from '../customer/booking/bookingPolicy';
@@ -45,6 +46,28 @@ const MAIN = new Set(['TodayStrip (now / next / later)', 'MemberSearch + Capacit
 
 /** S-02 — the door board: today's strip, one roster, one search box, one-tap check-in, walk-ins and waitlist promotion. */
 export function CheckinPage() {
+  const { t } = useI18n();
+  const [params, setParams] = useSearchParams();
+  const now = useNow(15_000);
+  const history = params.get('view') === 'history';
+  const showHistory = (show: boolean) => setParams(prev => {
+    const next = new URLSearchParams(prev);
+    if (show) next.set('view', 'history'); else next.delete('view');
+    return next;
+  });
+  return (
+    <div className="stack">
+      <div className="page-head"><div><h1>{t('staff.checkin.title')}</h1><p className="muted small">{t('staff.checkin.subtitle')}</p></div></div>
+      <div className="row wrap">
+        <Button type="button" size="sm" variant={history ? 'ghost' : 'tonal'} aria-pressed={!history} onClick={() => showHistory(false)}>{t('staff.history.live')}</Button>
+        <Button type="button" size="sm" variant={history ? 'tonal' : 'ghost'} aria-pressed={history} onClick={() => showHistory(true)}>{t('staff.history.title')}</Button>
+      </div>
+      {history ? <AttendanceHistory now={now} /> : <LiveCheckin now={now} />}
+    </div>
+  );
+}
+
+function LiveCheckin({ now }: { now: number }) {
   // Contract §1: this screen polls Company OS every 20 s in the production build (no-op on the review build).
   useLiveUpdates(['bookings', 'class_sessions', 'payments', 'class_ledger']);
   const { t, lang } = useI18n();
@@ -76,7 +99,6 @@ export function CheckinPage() {
   const futureSessions = allSessions.filter(x => x.session.status === 'scheduled' && Date.parse(x.session.starts_at) > Date.now());
   const { rows: ledger } = useTable<ClassLedgerRow>('class_ledger');
   const { rows: payments } = useTable<PaymentRow>('payments');
-  const now = useNow(15_000); // re-read so a class that ends while the screen is open stops offering "Llegó"
   const wanted = params.get('session');
   const { selected, nextId } = useMemo(() => checkinView({ today: todayAll, all: allSessions, wantedId: wanted, now }), [todayAll, allSessions, wanted, now]);
   const selectedId = selected?.session.id;
@@ -400,12 +422,9 @@ export function CheckinPage() {
 
   const visible = sections.filter(isVisible).filter((s) => SECTIONS[s]);
   return (
-    <div className="stack">
-      <div className="page-head"><div><h1>{t('staff.checkin.title')}</h1><p className="muted small">{t('staff.checkin.subtitle')}</p></div></div>
-      <div className="checkin">
-        <div className="checkin-main">{visible.filter((s) => MAIN.has(s)).map((s) => <Fragment key={s}>{SECTIONS[s]()}</Fragment>)}</div>
-        <aside className="checkin-side">{visible.filter((s) => !MAIN.has(s)).map((s) => <Fragment key={s}>{SECTIONS[s]()}</Fragment>)}</aside>
-      </div>
+    <div className="checkin">
+      <div className="checkin-main">{visible.filter((s) => MAIN.has(s)).map((s) => <Fragment key={s}>{SECTIONS[s]()}</Fragment>)}</div>
+      <aside className="checkin-side">{visible.filter((s) => !MAIN.has(s)).map((s) => <Fragment key={s}>{SECTIONS[s]()}</Fragment>)}</aside>
     </div>
   );
 }
