@@ -1,13 +1,16 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useSession } from '../../auth/SessionProvider';
+import { PRODUCTION_BUILD } from '../../config/launch';
+import { cosOf } from '../transfers/launch/cos';
 import { Button } from '../../components/atom/Button/Button';
 import { Input } from '../../components/atom/Input/Input';
 import { Card } from '../../components/molecule/Card/Card';
 import { EmptyState } from '../../components/molecule/EmptyState/EmptyState';
-import { useTable } from '../../data/DataContext';
+import { useData, useTable } from '../../data/DataContext';
 import type { BookingRow, ClassSessionRow } from '../../data/schema';
 import { useI18n } from '../../i18n/I18nProvider';
 import { addDaysKey, dateKey, formatDate, formatTime } from '../../i18n/format';
-import { attendanceCsv, attendanceRange, attendanceReport, attendanceSessions, type AttendanceRange } from './attendanceHistory';
+import { attendanceCsv, attendanceRange, attendanceReport, attendanceSessions, loadAttendance, type AttendanceRange } from './attendanceHistory';
 
 export function AttendanceHistory({ now }: { now: number }) {
   const { t } = useI18n();
@@ -17,8 +20,8 @@ export function AttendanceHistory({ now }: { now: number }) {
   const [to, setTo] = useState(yesterday);
   const requested = attendanceRange(from, to, today);
   const [range, setRange] = useState<AttendanceRange>({ from: yesterday, to: yesterday });
-  const sessions = useTable<ClassSessionRow>('class_sessions', { orderBy: { column: 'starts_at' } });
-  const past = attendanceSessions(sessions.rows, range, now);
+  const data = useData();
+  const cos = cosOf(data);
 
   return <Card padding="sm">
     <section className="stack-sm" aria-labelledby="attendance-history-title">
@@ -31,20 +34,55 @@ export function AttendanceHistory({ now }: { now: number }) {
       </form>
       {!requested && <p className="small" role="status">{t('staff.history.rangeInvalid')}</p>}
       <p className="small muted" role="status">{t('staff.history.showing', range)}</p>
-      {sessions.error ? <EmptyState compact tone="error" title={t('staff.history.unavailable')} /> :
-        sessions.loading ? <EmptyState compact tone="loading" title={t('core.common.loading')} /> :
-        past.length ? <AttendanceCounts sessions={past} range={range} /> : <EmptyState compact title={t('staff.history.empty')} />}
+      {PRODUCTION_BUILD || cos ? <ConnectedAttendance range={range} now={now} /> : <MockAttendance range={range} now={now} />}
     </section>
   </Card>;
 }
 
-function AttendanceCounts({ sessions, range }: { sessions: ClassSessionRow[]; range: AttendanceRange }) {
-  const { t, lang } = useI18n();
+function ConnectedAttendance({ range, now }: { range: AttendanceRange; now: number }) {
+  const { t } = useI18n();
+  const data = useData();
+  const { user, role, viewAs, viewAsPerson, status, signedIn } = useSession();
+  const cos = cosOf(data);
+  const scope = useMemo(() => ({}), [data, user.id, role, viewAs, viewAsPerson?.id, status, signedIn, range]);
+  const [result, setResult] = useState<{ scope: object; report: ReturnType<typeof attendanceReport> | null } | null>(null);
+  useEffect(() => {
+    if (!cos || !signedIn || status !== 'ready') return;
+    let active = true;
+    void loadAttendance(cos, range, now, () => active).then(
+      report => { if (active) setResult({ scope, report }); },
+      () => { if (active) setResult({ scope, report: null }); },
+    );
+    return () => { active = false; };
+    // Snapshot the clock for this explicit date-range query; do not refresh it on every live-check-in tick.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scope, cos]);
+  if (!cos || (!signedIn && status === 'ready') || (result?.scope === scope && !result.report)) return <EmptyState compact tone="error" title={t('staff.history.unavailable')} />;
+  if (!result || result.scope !== scope) return <EmptyState compact tone="loading" title={t('core.common.loading')} />;
+  return <AttendanceResults report={result.report!} range={range} />;
+}
+
+function MockAttendance({ range, now }: { range: AttendanceRange; now: number }) {
+  const { t } = useI18n();
+  const sessions = useTable<ClassSessionRow>('class_sessions', { orderBy: { column: 'starts_at' } });
+  if (sessions.error) return <EmptyState compact tone="error" title={t('staff.history.unavailable')} />;
+  if (sessions.loading) return <EmptyState compact tone="loading" title={t('core.common.loading')} />;
+  const past = attendanceSessions(sessions.rows, range, now);
+  return past.length ? <MockAttendanceCounts sessions={past} range={range} /> : <EmptyState compact title={t('staff.history.empty')} />;
+}
+
+function MockAttendanceCounts({ sessions, range }: { sessions: ClassSessionRow[]; range: AttendanceRange }) {
+  const { t } = useI18n();
   const { rows, loading, error } = useTable<BookingRow>('bookings', { where: { session_id: sessions.map(s => s.id), status: 'checked_in' } });
   if (error) return <EmptyState compact tone="error" title={t('staff.history.unavailable')} />;
   if (loading) return <EmptyState compact tone="loading" title={t('core.common.loading')} />;
 
-  const report = attendanceReport(sessions, rows);
+  return <AttendanceResults report={attendanceReport(sessions, rows)} range={range} />;
+}
+
+function AttendanceResults({ report, range }: { report: ReturnType<typeof attendanceReport>; range: AttendanceRange }) {
+  const { t, lang } = useI18n();
+  if (!report.length) return <EmptyState compact title={t('staff.history.empty')} />;
   const headers = [t('staff.history.date'), t('staff.history.time'), t('staff.history.class'), t('staff.history.checkedIn')];
   const exportCsv = () => {
     const url = URL.createObjectURL(new Blob(['\uFEFF', attendanceCsv(report, headers, lang)], { type: 'text/csv;charset=utf-8' }));
