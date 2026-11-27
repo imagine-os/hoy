@@ -16,7 +16,8 @@ import { SessionCalendar } from '../../../components/organism/SessionCalendar/Se
 import { canvasSpecs } from '../specs';
 import { PageHead } from '../ui';
 import { useActions } from '../../../actions';
-import { sessionUnavailableReason, templateActiveOf } from '../../../data/sessionAvailability';
+import { publicSessionUnavailableReason } from '../../../data/publicBookingCutoff';
+import { templateActiveOf } from '../../../data/sessionAvailability';
 import { need, useAppNavHandlers } from '../actions';
 import { SERVER_RULES } from '../booking/bookingPolicy';
 import { holdsPlace, type ServerBookingRow } from '../booking/serverBooking';
@@ -98,7 +99,7 @@ export function SchedulePage({ view: routeView }: SchedulePageProps) {
       const id = need(p, 'session');
       const x = allRef.current.find((j) => j.session.id === id);
       if (!x) throw new Error(`unknown session "${id}"`);
-      if (sessionUnavailableReason(x)) throw new Error(`session "${id}" is not bookable (${x.session.status})`);
+      if (publicSessionUnavailableReason(x)) throw new Error(`session "${id}" is not bookable (${x.session.status})`);
       nav(`/app/checkout/${id}`);
       return `opened /app/checkout/${id}`;
     },
@@ -123,10 +124,10 @@ export function SchedulePage({ view: routeView }: SchedulePageProps) {
     ),
     // RES-01: the calendar keeps its day and view in the URL (syncUrl), so Back from a class returns to the same day; a
     // refetch keeps the rows (useCustomerRows), so the calendar stays mounted.
-    'ClassList → ClassRow': () => view === 'today' ? <SessionCalendar sessions={filtered} mine={mine} initialView="day" onPick={open} syncUrl /> : null,
+    'ClassList → ClassRow': () => view === 'today' ? <SessionCalendar publicBooking sessions={filtered} mine={mine} initialView="day" onPick={open} syncUrl /> : null,
     // The Today page renders one calendar (its toolbar already switches Day / Week / Month); the week route is C-02b.
-    WeekGrid: () => view === 'week' ? <SessionCalendar sessions={filtered} mine={mine} initialView="week" onPick={open} syncUrl /> : null,
-    'WeekGrid (Mon–Sat columns → DayChip)': () => <SessionCalendar sessions={filtered} mine={mine} initialView="week" onPick={open} syncUrl />,
+    WeekGrid: () => view === 'week' ? <SessionCalendar publicBooking sessions={filtered} mine={mine} initialView="week" onPick={open} syncUrl /> : null,
+    'WeekGrid (Mon–Sat columns → DayChip)': () => <SessionCalendar publicBooking sessions={filtered} mine={mine} initialView="week" onPick={open} syncUrl />,
     Legend: () => (
       <div className="row wrap cust-legend">
         <span className="eyebrow">{t('customer.schedule.legend')}</span>

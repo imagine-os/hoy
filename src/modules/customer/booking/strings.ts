@@ -86,6 +86,7 @@ export const bookingStrings: StringTable = {
   'customer.srv.cancel.held.done': { es: 'Liberamos el cupo. No se cobró nada.', en: 'The spot was released. Nothing was charged.' },
 
   // Refusals (rule C7). Bookings.
+  'customer.refusal.public_booking_closed': { es: 'Sin cupos disponibles', en: 'No spots available' },
   'customer.refusal.occurrence_full': { es: 'Alguien tomó el último cupo justo antes que tú. La clase está llena; elige otra.', en: 'Someone took the last spot just before you. The class is full; pick another.' },
   'customer.refusal.occurrence_not_open': { es: 'Esta clase ya no admite reservas (empezó, terminó o se canceló).', en: 'This class no longer takes bookings (it started, ended or was cancelled).' },
   'customer.refusal.already_booked': { es: 'Ya tienes una reserva en esta clase.', en: 'You already have a booking in this class.' },

@@ -1,3 +1,4 @@
+import { publicBookingClosed } from '../../../data/publicBookingCutoff';
 import { useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
@@ -103,7 +104,7 @@ export function ServerChangeSheet({ open, onClose, booking, joined, onResult }: 
   const canMove = moveOpen(booking, s.starts_at, policy, now);
   const deadline = moveDeadline(booking, s.starts_at, policy);
   const hours = booking.policy_reschedule_hours ?? policy.rescheduleHours;
-  const alts = useMemo(() => all.filter((a) => a.session.id !== s.id && classPhase(a.session, now) === 'open' && dateKey(new Date(a.session.starts_at)) === day), [all, s.id, day, now]);
+  const alts = useMemo(() => all.filter((a) => a.session.id !== s.id && !publicBookingClosed(a.session.starts_at) && classPhase(a.session, now) === 'open' && dateKey(new Date(a.session.starts_at)) === day), [all, s.id, day, now]);
   const chosen = alts.find((a) => a.session.id === target) ?? null;
   const close = () => { if (busy) return; setMode('menu'); setError(null); setTarget(null); onClose(); };
 
@@ -114,7 +115,7 @@ export function ServerChangeSheet({ open, onClose, booking, joined, onResult }: 
     catch (e) { key.settle(e); setError(e); }
     finally { inFlight.current = false; setBusy(false); }
   };
-  const move = () => !consentHeld && chosen && act(() => moveOnServer(data, { bookingId: booking.id, toSessionId: chosen.session.id }, moveKey.take()), moveKey,
+  const move = () => !consentHeld && chosen && !publicBookingClosed(chosen.session.starts_at) && act(() => moveOnServer(data, { bookingId: booking.id, toSessionId: chosen.session.id }, moveKey.take()), moveKey,
     { tone: 'success', text: t('customer.srv.move.done', { when: formatDateTime(chosen.session.starts_at, lang) }) });
   const cancel = () => act(() => cancelOnServer(data, { bookingId: booking.id }, cancelKey.take()), cancelKey,
     { tone: 'warn', text: t(held ? 'customer.srv.cancel.held.done' : 'customer.srv.cancel.done') });

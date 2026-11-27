@@ -1,3 +1,4 @@
+import { publicBookingClosed } from '../../../data/publicBookingCutoff';
 import { Fragment, type ReactNode } from 'react';
 import { Link, useNavigate } from '../links';
 import { useI18n } from '../../../i18n/I18nProvider';
@@ -83,7 +84,7 @@ export function ClassicHomePage() {
         <Card padding="sm">
           {today.length === 0 && <p className="muted" style={{ padding: 'var(--sp-lg)' }}>{t(todayAll.length ? 'site.today.done' : 'site.today.empty')}</p>}
           {today.map(({ session: s, modality: m, teacher: te }) => (
-            <ClassRow key={s.id} title={s.title} teacher={te?.display_name ?? ''} startsAt={s.starts_at} durationMin={m?.duration_min ?? 60} tone={m?.tone ?? 'river'} booked={s.booked_count} capacity={s.capacity} onClick={() => nav('/site/schedule')} />
+            <ClassRow key={s.id} title={s.title} teacher={te?.display_name ?? ''} startsAt={s.starts_at} durationMin={m?.duration_min ?? 60} tone={m?.tone ?? 'river'} booked={s.booked_count} capacity={s.capacity} availabilityLabel={publicBookingClosed(s.starts_at) ? t('site.calendar.status.public_booking_closed') : undefined} onClick={() => nav('/site/schedule')} />
           ))}
         </Card>
       </section>

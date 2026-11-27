@@ -1,3 +1,4 @@
+import { publicSessionUnavailableReason } from '../../../data/publicBookingCutoff';
 import { useEffect, useState, type ReactNode } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { readCalendarQuery, writeCalendarQuery } from './calendarQuery';
@@ -13,7 +14,7 @@ import { sessionUnavailableReason } from '../../../data/sessionAvailability';
 export type CalendarView = 'day' | 'week' | 'month';
 export interface CalendarSession { session: ClassSessionRow; modality?: ModalityRow; teacher?: TeacherRow; templateActive?: boolean }
 export interface SessionCalendarProps {
-  sessions: CalendarSession[]; onPick: (s: ClassSessionRow) => void; mine?: Set<string>; initialView?: CalendarView; allowUnavailable?: boolean;
+  sessions: CalendarSession[]; onPick: (s: ClassSessionRow) => void; mine?: Set<string>; initialView?: CalendarView; allowUnavailable?: boolean; publicBooking?: boolean;
   /**
    * RES-01: keep the day and view in the URL query (`day`, `cv`; replaced, not pushed), so Back from a class returns to
    * the same day and a remount keeps it. Needs a router; off by default (the state stays in the calendar).
@@ -59,7 +60,7 @@ function UrlCalendar(props: SessionCalendarProps) {
   return <CalendarBody {...props} state={state} set={set} />;
 }
 
-function CalendarBody({ sessions, onPick, mine, allowUnavailable = false, state, set }: SessionCalendarProps & { state: CalendarState; set: CalendarSet }) {
+function CalendarBody({ sessions, onPick, mine, allowUnavailable = false, publicBooking = false, state, set }: SessionCalendarProps & { state: CalendarState; set: CalendarSet }) {
   const { t, lang, bi } = useI18n();
   const [now, setNow] = useState(Date.now);
   // Refresh at the next start/end boundary, including a resumed background tab.
@@ -71,8 +72,9 @@ function CalendarBody({ sessions, onPick, mine, allowUnavailable = false, state,
     document.addEventListener('visibilitychange', refresh);
     return () => { window.clearTimeout(timer); window.removeEventListener('focus', refresh); document.removeEventListener('visibilitychange', refresh); };
   }, [sessions, now]);
-  const reason = (x: CalendarSession) => sessionUnavailableReason(x, now);
-  const pick = (x: CalendarSession) => { if (allowUnavailable || !sessionUnavailableReason(x)) onPick(x.session); };
+  const reason = (x: CalendarSession, at = now) => publicBooking ? publicSessionUnavailableReason(x, at) : sessionUnavailableReason(x, at);
+  const disabled = (x: CalendarSession, at = now) => !allowUnavailable && !!reason(x, at) && !(reason(x, at) === 'public_booking_closed' && mine?.has(x.session.id));
+  const pick = (x: CalendarSession) => { if (!disabled(x, Date.now())) onPick(x.session); };
   const compact = !useMinWidth('shell');
   const { date, view } = state;
   const setDate = (d: Date) => set({ date: d });
@@ -94,7 +96,7 @@ function CalendarBody({ sessions, onPick, mine, allowUnavailable = false, state,
   const dayList = (d: Date, full: boolean): ReactNode => <>
     <div className="calendar-day-heading"><span className="eyebrow">{full ? longDay(d) : formatDate(d, lang, { weekday: 'long' })}</span><span className="small muted">{t('site.calendar.classes', { n: onDay(d).length })}</span></div>
     {onDay(d).length === 0 && <p className="calendar-empty">{t('site.calendar.empty')}</p>}
-    {onDay(d).map(x => <ClassRow key={x.session.id} {...name(x)} thumbnail={<ClassThumbnail modality={x.modality} imageUrl={x.session.image_url}/>} startsAt={x.session.starts_at} durationMin={Math.round((Date.parse(x.session.ends_at) - Date.parse(x.session.starts_at)) / 60000)} tone={x.modality?.tone ?? 'river'} booked={x.session.booked_count} capacity={x.session.capacity} status={x.session.status} booked_by_me={mine?.has(x.session.id)} disabled={!allowUnavailable && !!reason(x)} availabilityLabel={reason(x) ? t(`site.calendar.status.${reason(x)}`) : undefined} onClick={() => pick(x)} />)}
+    {onDay(d).map(x => <ClassRow key={x.session.id} {...name(x)} thumbnail={<ClassThumbnail modality={x.modality} imageUrl={x.session.image_url}/>} startsAt={x.session.starts_at} durationMin={Math.round((Date.parse(x.session.ends_at) - Date.parse(x.session.starts_at)) / 60000)} tone={x.modality?.tone ?? 'river'} booked={x.session.booked_count} capacity={x.session.capacity} status={x.session.status} booked_by_me={mine?.has(x.session.id)} disabled={disabled(x)} availabilityLabel={reason(x) ? t(`site.calendar.status.${reason(x)}`) : undefined} onClick={() => pick(x)} />)}
   </>;
   return <section className={`session-calendar ${compact ? 'is-compact' : ''}`}>
     <div className="calendar-toolbar">
@@ -115,8 +117,8 @@ function CalendarBody({ sessions, onPick, mine, allowUnavailable = false, state,
         <div className="calendar-grid">{days.map(d => <div key={dateKey(d)} className={`calendar-column ${isSameDay(d, today) ? 'is-today' : ''} ${view === 'month' && studioParts(d).month !== studioParts(date).month ? 'is-outside' : ''}`}>
           <button className="calendar-day-head" type="button" onClick={() => openDay(d)} aria-label={longDay(d)}><span>{formatDate(d, lang, { weekday: 'short' })}</span><strong>{studioParts(d).day}</strong><small>{t('site.calendar.classes', { n: onDay(d).length })}</small></button>
           {onDay(d).length === 0 && <p className="calendar-empty small">{t('site.calendar.noClasses')}</p>}
-          {onDay(d).slice(0, view === 'month' ? 2 : undefined).map(x => <button key={x.session.id} type="button" className={`calendar-session ${reason(x) ? 'is-off' : ''}`} data-tone={x.modality?.tone ?? 'river'} disabled={!allowUnavailable && !!reason(x)} onClick={() => pick(x)}>
-            <ClassThumbnail modality={x.modality} imageUrl={x.session.image_url}/><span className="calendar-session-copy"><time>{formatTime(x.session.starts_at, lang)}</time><strong>{name(x).title}</strong>{view === 'week' && <span>{x.teacher?.display_name}</span>}<small>{reason(x) ? t(`site.calendar.status.${reason(x)}`) : mine?.has(x.session.id) ? t('core.status.booked') : x.session.booked_count >= x.session.capacity ? t('core.common.full') : t('core.common.spots', { n: x.session.capacity - x.session.booked_count })}</small></span>
+          {onDay(d).slice(0, view === 'month' ? 2 : undefined).map(x => <button key={x.session.id} type="button" className={`calendar-session ${reason(x) ? 'is-off' : ''}`} data-tone={x.modality?.tone ?? 'river'} disabled={disabled(x)} onClick={() => pick(x)}>
+            <ClassThumbnail modality={x.modality} imageUrl={x.session.image_url}/><span className="calendar-session-copy"><time>{formatTime(x.session.starts_at, lang)}</time><strong>{name(x).title}</strong>{view === 'week' && <span>{x.teacher?.display_name}</span>}<small>{reason(x) === 'public_booking_closed' && mine?.has(x.session.id) ? t('core.status.booked') : reason(x) ? t(`site.calendar.status.${reason(x)}`) : mine?.has(x.session.id) ? t('core.status.booked') : x.session.booked_count >= x.session.capacity ? t('core.common.full') : t('core.common.spots', { n: x.session.capacity - x.session.booked_count })}</small></span>
           </button>)}
           {view === 'month' && onDay(d).length > 2 && <button type="button" className="calendar-more" onClick={() => openDay(d)}>{t('site.calendar.more', { n: onDay(d).length - 2 })}</button>}
         </div>)}</div>

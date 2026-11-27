@@ -1,3 +1,4 @@
+import { publicBookingClosed } from '../../../data/publicBookingCutoff';
 import { requireSessionAdmission, sessionAdmissionAvailable } from '../../../data/sessionAdmission';
 import { sessionUnavailableReason } from '../../../data/sessionAvailability';
 import { useSession } from '../../../auth/SessionProvider';
@@ -64,7 +65,7 @@ export function ClassDetailPage() {
   useEffect(() => { live.current.mounted = true; return () => { live.current.mounted = false; }; }, []);
   useEffect(() => { operation.current++; navigationLock.current = false; setNavigating(false); setNavigationError(false); }, [data, user.id, role, id, navigationRoute]);
   const openAdmission = async () => {
-    if (!joined || navigationLock.current) return;
+    if (!joined || publicBookingClosed(joined.session.starts_at) || navigationLock.current) return;
     // Production: straight to checkout; capacity, the daily limit and the last spot are the server's answer there.
     if (SERVER_RULES) { nav(`/app/checkout/${joined.session.id}`); return; }
     const captured = live.current, version = ++operation.current;
@@ -72,7 +73,7 @@ export function ClassDetailPage() {
     navigationLock.current = true; setNavigating(true); setNavigationError(false);
     try {
       const fresh = await requireSessionAdmission(data, joined.session.id, { isCurrent: current });
-      if (current()) nav(fresh.booked_count >= fresh.capacity ? `/app/waitlist/${fresh.id}` : `/app/checkout/${fresh.id}`);
+      if (current() && !publicBookingClosed(fresh.starts_at)) nav(fresh.booked_count >= fresh.capacity ? `/app/waitlist/${fresh.id}` : `/app/checkout/${fresh.id}`);
     } catch { if (current()) setNavigationError(true); }
     finally { if (operation.current === version) { navigationLock.current = false; if (current()) setNavigating(false); } }
   };
@@ -95,8 +96,9 @@ export function ClassDetailPage() {
   const openPhase = SERVER_RULES ? phase === 'open' || phase === 'full' : sessionAdmissionAvailable(s, m, s.template_id ? { id: s.template_id, active: joined.templateActive } : undefined, now);
   // Lane Y1: a class without a class type is not open for booking, here as on the schedule's tile.
   const noClassType = !m && (SERVER_RULES ? openPhase : sessionUnavailableReason(joined, now) === 'no_class_type');
-  const admissionAvailable = openPhase && !noClassType;
-  const unavailableReason = noClassType ? 'no_class_type' : SERVER_RULES ? phase : sessionUnavailableReason(joined, now) ?? 'unavailable';
+  const publicClosed = openPhase && !noClassType && publicBookingClosed(s.starts_at);
+  const admissionAvailable = openPhase && !noClassType && !publicClosed;
+  const unavailableReason = publicClosed ? 'public_booking_closed' : noClassType ? 'no_class_type' : SERVER_RULES ? phase : sessionUnavailableReason(joined, now) ?? 'unavailable';
 
   const share = async () => {
     const r = await shareText(`${s.title} · ${formatDate(s.starts_at, lang)} ${formatTime(s.starts_at, lang)} · ${tenant.name}`, window.location.href);
@@ -131,7 +133,7 @@ export function ClassDetailPage() {
         </p>
       </div>
     ),
-    CapacityMeter: () => cancelled ? <StudioCancelledBlock joined={joined} /> : (
+    CapacityMeter: () => cancelled ? <StudioCancelledBlock joined={joined} /> : publicClosed ? <Notice tone="info">{t('site.calendar.status.public_booking_closed')}</Notice> : (
       <Card padding="sm" className="row-between wrap">
         <CapacityMeter booked={s.booked_count} capacity={s.capacity} />
         <span className="xs muted">{t('customer.class.capacityNote', { mats: tenant.studio.mats })}</span>

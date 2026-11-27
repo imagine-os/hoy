@@ -1,3 +1,4 @@
+import { publicBookingClosed } from '../../data/publicBookingCutoff';
 import { useEffect, useMemo, useRef, type ReactNode } from 'react';
 import { SplitSections } from './split';
 import { useActions } from '../../actions';
@@ -110,7 +111,7 @@ export function CustomerHomePage() {
         <Card padding="sm">
           {today.length === 0 && <p className="muted small" style={{ padding: 'var(--sp-md)' }}>{t('customer.home.today.empty')}</p>}
           {today.map(({ session: s, modality: m, teacher: te }) => (
-            <ClassRow key={s.id} title={s.title} teacher={te?.display_name ?? ''} startsAt={s.starts_at} durationMin={m?.duration_min ?? 60} tone={m?.tone ?? 'river'} booked={s.booked_count} capacity={s.capacity} booked_by_me={activeBookingIds.has(s.id)} onClick={() => (activeBookingIds.has(s.id) ? nav(`/app/class/${s.id}`) : !SERVER_RULES && s.booked_count >= s.capacity ? nav(`/app/waitlist/${s.id}`) : book(s.id))} />
+            <ClassRow key={s.id} title={s.title} teacher={te?.display_name ?? ''} startsAt={s.starts_at} durationMin={m?.duration_min ?? 60} tone={m?.tone ?? 'river'} booked={s.booked_count} capacity={s.capacity} booked_by_me={activeBookingIds.has(s.id)} disabled={!activeBookingIds.has(s.id) && publicBookingClosed(s.starts_at)} availabilityLabel={publicBookingClosed(s.starts_at) ? t('site.calendar.status.public_booking_closed') : undefined} onClick={() => (activeBookingIds.has(s.id) ? nav(`/app/class/${s.id}`) : !SERVER_RULES && s.booked_count >= s.capacity ? nav(`/app/waitlist/${s.id}`) : book(s.id))} />
           ))}
         </Card>
       </section>
