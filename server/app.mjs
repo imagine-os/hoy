@@ -126,6 +126,11 @@ export async function createHandler(config, deps) {
         return res.end();
       }
       if (await testGate(req, res, rawPath)) return;
+      if (rawPath.startsWith('/api/test/wompi/')) {
+        if (config.environment !== 'test' || !config.testGate?.on || !deps.checkoutPilot)
+          return sendError(res, 404, 'not_found');
+        return await deps.checkoutPilot(req, res);
+      }
       if (rawPath === '/health') return health(req, res, release);
       if (rawPath === '/app-config.json') {
         if (req.method !== 'GET' && req.method !== 'HEAD') return sendError(res, 405, 'method_not_allowed');
