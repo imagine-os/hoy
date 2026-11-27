@@ -4,7 +4,7 @@ import {createServer} from 'node:http';
 import {resolve} from 'node:path';
 import {createHandler} from '../../../server/app.mjs';
 import {gateSettings} from '../../../server/testGate.mjs';
-import {createPilot} from '../../../server/wompi-test-pilot.mjs';
+import {createPilot,CHECKOUT_LIFETIME_MS} from '../../../server/wompi-test-pilot.mjs';
 
 const ids = {
   RAILWAY_PROJECT_ID:'47b41e1d-b201-4da2-9b16-df8636fa136c',
@@ -32,7 +32,7 @@ export async function build(env,{now=Date.now,request}={}){
   const gate=gateSettings(env);
   const origin=env.APP_URL;
   const checkoutPilot=createPilot({
-    environment:'test',testGateOn:gate.on,origin,db,now,request,
+    environment:'test',testGateOn:gate.on,origin,db,now,request,expiresNoLater:ends,
     publicKey:env.WOMPI_SANDBOX_PUBLIC_KEY,privateKey:env.WOMPI_SANDBOX_PRIVATE_KEY,integrityKey:env.WOMPI_SANDBOX_INTEGRITY_SECRET,
     identify: req=>{
       const match=/^Bearer ([A-Za-z0-9_-]{43,128})$/.exec(req.headers.authorization??'');
@@ -46,7 +46,10 @@ export async function build(env,{now=Date.now,request}={}){
     now,checkoutPilot,verifySession:async()=>{throw Error('no_hoy_accounts');},log(){},
   });
   const server=createServer({headersTimeout:10000,requestTimeout:15000,maxHeaderSize:8192},(req,res)=>{
-    if(now()>=ends || !gateAndCheckout.has((req.url??'').split('?')[0])){
+    const path=(req.url??'').split('?')[0];
+    const at=now();
+    if(at>=ends || !gateAndCheckout.has(path) ||
+      (path==='/api/test/wompi/start' && at+CHECKOUT_LIFETIME_MS>ends)){
       res.writeHead(404,{'Cache-Control':'no-store','X-Robots-Tag':'noindex, nofollow','Content-Type':'text/plain'});
       res.end('Not found');
       return;

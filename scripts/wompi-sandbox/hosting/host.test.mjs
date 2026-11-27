@@ -71,6 +71,9 @@ test('native gate and separate operator auth before any sandbox access; approval
   refs.set('test-decline',declinedRef);
   assert.deepEqual(await (await post('result',{id:'test-decline'},decline)).json(),{id:'test-decline',status:'DECLINED'});
   assert.equal(calls,2);
+  clock=Date.parse(cfg.WOMPI_TEST_CLOSE_AT)-15*60*1000+1;
+  assert.equal((await post('start',{},permit)).status,404);
+  assert.equal((await post('result',body,permit)).status,200);
   clock=Date.parse(cfg.WOMPI_TEST_CLOSE_AT);
   assert.equal((await post('start',{},permit)).status,404);
   assert.equal(calls,2);

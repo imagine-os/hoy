@@ -3,7 +3,7 @@ import {checkoutForQuote,checkSandboxTransaction} from './wompi-sandbox.mjs';
 
 const amountInCents=5500000;
 const currency='COP';
-const lifetime=15*60*1000;
+export const CHECKOUT_LIFETIME_MS=15*60*1000;
 const invalid=Symbol('invalid body');
 
 async function input(req) {
@@ -29,7 +29,7 @@ function reply(res,status,data) {
 // An unmounted, test-only pilot. Parent must enforce the actual HOY test gate
 // before invoking any endpoint; identify must return only authorized test-subject IDs.
 export function createPilot({environment,testGateOn,db,origin,publicKey,privateKey,integrityKey,
-  identify,request,now=Date.now}) {
+  identify,request,now=Date.now,expiresNoLater=Infinity}) {
   if(environment!=='test'||testGateOn!==true)return null;
   if(!db||typeof identify!=='function'||typeof origin!=='string'||!origin.startsWith('https://')
     ||new URL(origin).origin!==origin)throw Error('sandbox_pilot_not_configured');
@@ -52,7 +52,7 @@ export function createPilot({environment,testGateOn,db,origin,publicKey,privateK
         if(Object.keys(body).length)return reply(res,400,{error:'invalid_input'});
         let row=order.get(subject);
         if(!row){
-          const id='hoy-test-'+randomUUID(),expiresAt=new Date(now()+lifetime).toISOString();
+          const id='hoy-test-'+randomUUID(),expiresAt=new Date(Math.min(now()+CHECKOUT_LIFETIME_MS,expiresNoLater)).toISOString();
           const checkout=checkoutForQuote({id,amountInCents,currency,expiresAt},{publicKey,integrityKey,now});
           add.run(subject,id,expiresAt);
           return reply(res,201,{checkout});
