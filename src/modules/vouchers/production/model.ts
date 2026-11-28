@@ -1,7 +1,7 @@
 import type { BaseRow } from '../../../data/schema';
 import type { DataProvider } from '../../../data/types';
 import { addDaysKey, dateKey } from '../../../i18n/format';
-import { CosError, cosOf, myPerson, outcomeUnknown, queryAll, type CosPort } from '../../transfers/launch/cos';
+import { batch, CosError, cosOf, myPerson, outcomeUnknown, queryAll, type CosPort } from '../../transfers/launch/cos';
 
 /**
  * H-6 · vouchers on Company OS credits (production build). The server decides everything: the code, `uses`, expiry,
@@ -218,6 +218,23 @@ export async function createVoucher(data: DataProvider, body: Loose, key: string
   if (!v) throw new CosError('unknown');
   return v;
 }
+/** BO-03: correct an expiry without invalidating existing claims, changing the code or sending a second email. */
+export const canCorrectVoucherExpiry = (v: CosVoucher) =>
+  isGiftOrCourtesy(v) && !v.voided_at && (v.uses ?? 0) === 0;
+
+export async function correctVoucherExpiry(data: DataProvider, v: CosVoucher, next: string, today: string, key: string): Promise<true> {
+  const day = /^\d{4}-\d{2}-\d{2}$/.test(next) ? new Date(next + 'T12:00:00Z') : null;
+  if (!canCorrectVoucherExpiry(v) || !day || !Number.isFinite(+day) || day.toISOString().slice(0, 10) !== next || next < today || next === v.valid_until) {
+    throw new CosError('invalid_voucher_expiry_correction');
+  }
+  const cos = port(data);
+  const ids = await batch(cos, [{ op: 'update', entity: VOUCHER_ENTITY, id: v.id,
+    data: { valid_until: next }, ifMatch: { field: 'valid_until', value: v.valid_until } }], key);
+  if (ids[0] !== v.id) throw new CosError('unknown', 502);
+  cos.refreshTables?.();
+  return true;
+}
+
 /** BO-02: the desk issues a paid gift; the voucher's create sends the recipient's email. */
 export const issueGiftVoucher = (data: DataProvider, payment: GiftPayment, product: GiftProduct, recipient: Recipient, validUntil: string, key: string) =>
   createVoucher(data, giftBody(payment, product, recipient, validUntil), key);
