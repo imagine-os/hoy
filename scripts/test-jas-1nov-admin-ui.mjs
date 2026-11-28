@@ -55,7 +55,9 @@ function reset({ hostileOccurrence = false, refuseSettings = false, deskSale = f
       ...(deskSale ? [rec('per_lucia', { name: 'Lucía Prueba', email: 'lucia@example.test', phone: '+57 300 000 0042' })] : [])]),
     resource: m([rec('res_big', { name: 'Sala Grande', kind: 'room', capacity: 16 })]),
     coach: m([rec('co_ana', { person: 'per_ana', kind: 'teacher', active: true })]),
-    schedule: m([rec('sch_pulso', { title: 'Pulso mañana', kind: 'class', weekday: 1, start_time: '07:00', duration_minutes: 50, resource: 'res_big', coach: 'co_ana', capacity: 16, spots_enabled: true, valid_from: '2026-10-01', valid_until: null, active: true })]),
+    schedule: m([rec('sch_pulso', { title: 'Pulso mañana', kind: 'class', weekday: 1, start_time: '07:00', duration_minutes: 50, resource: 'res_big', coach: 'co_ana', capacity: 16, spots_enabled: true, valid_from: '2026-10-01', valid_until: null, active: true }),
+      rec('sch_sunday', { title: 'Domingo ejemplo', kind: 'class', modality: 'pulso', weekday: 0, start_time: '06:10', duration_minutes: 50, resource: 'res_big', coach: 'co_ana', capacity: 16, valid_from: '2026-11-08', valid_until: '2026-11-08', active: false }),
+      rec('sch_bad_day', { title: 'Fecha cruzada', kind: 'class', modality: 'pulso', weekday: 0, start_time: '06:10', duration_minutes: 50, resource: 'res_big', coach: 'co_ana', capacity: 16, valid_from: '2026-11-09', valid_until: '2026-11-09', active: false })]),
     occurrence: m([
       rec('oc_open', { title: 'Pulso mañana', starts_at: '2026-11-03T12:00:00.000Z', ends_at: '2026-11-03T12:50:00.000Z', status: 'scheduled', booked_count: 3, capacity: 16, coach: 'co_ana', resource: 'res_big', schedule: 'sch_pulso' }),
       rec('oc_off', { title: 'Fuerza tarde', starts_at: '2026-11-04T23:00:00.000Z', ends_at: '2026-11-04T23:50:00.000Z', status: 'cancelled', booked_count: 0, capacity: 16, coach: 'co_ana', resource: 'res_big', schedule: 'sch_pulso', cancel_reason: 'Ficticio' }),
@@ -188,6 +190,19 @@ try {
   check('Classes: its day and time show ("lunes · 07:00")', /lunes · 07:00/i.test(body), body.slice(0, 500));
   check('Classes: the teacher (included person) and the room show, with "16 tapetes"', /Ana Fictional · Sala Grande · 16 tapetes/.test(body), body.slice(0, 500));
   check('Classes: a published class reads "Publicada"', /Publicada/.test(body));
+  const oneDate = page.locator('[data-schedule="sch_sunday"]');
+  const invalidDate = page.locator('[data-schedule="sch_bad_day"]');
+  check('Classes: same-time draft shows its exact single date', /Solo esta fecha: 2026-11-08/.test(await oneDate.innerText()) && await oneDate.getByRole('button', { name: 'Publicar', exact: true }).isEnabled());
+  check('Classes: a draft cannot publish in a date window without its weekday', /no cae dentro de estas fechas/.test(await invalidDate.innerText()) && await invalidDate.getByRole('button', { name: 'Publicar', exact: true }).isDisabled());
+  await invalidDate.getByRole('button', { name: 'Editar', exact: true }).click();
+  const saveSchedule = page.getByRole('button', { name: 'Guardar', exact: true });
+  check('Classes: on edit, invalid dates cannot be saved', await saveSchedule.isDisabled());
+  await page.getByLabel('Desde', { exact: true }).fill('2026-11-15');
+  await page.getByLabel(/Hasta/).fill('2026-11-15');
+  check('Classes: changing both dates to an actual Sunday enables Save', await saveSchedule.isEnabled());
+  await page.getByRole('button', { name: 'Cancelar', exact: true }).click();
+  check('Classes: invalid edit and cancel send no writes', !world.log.some(x => x.route === '/batch'));
+
   await tab(page, 'Próximas fechas');
   await page.waitForTimeout(600);
   body = await text(page);
