@@ -53,7 +53,9 @@ export function PendingPaymentsPage() {
   const onSale = inForce(q.products, today);
   const clock = (i: PendingItem) => i.clock.state === 'waiting' ? <Badge tone={i.clock.msLeft < 5 * 60_000 ? 'danger' : 'warn'}>{t('payLaunch.queue.left', { minutes: Math.ceil(i.clock.msLeft / 60_000) })}</Badge>
     : i.clock.state === 'frozen' ? <Badge tone="primary">{i.clock.minutesLeft == null ? t('payLaunch.queue.frozenNoMinutes') : t('payLaunch.queue.frozen', { minutes: i.clock.minutesLeft })}</Badge>
-      : i.clock.state === 'expired' ? <Badge tone="danger">{t('payLaunch.queue.expired')}</Badge> : <Badge>{t('payLaunch.queue.noClock')}</Badge>;
+      : i.clock.state === 'expired' ? <Badge tone="danger">{t('payLaunch.queue.expired')}</Badge>
+        : i.clock.state === 'unverified' ? <Badge tone="warn">{t('payLaunch.queue.holdUnverified')}</Badge>
+          : i.clock.state === 'unknown_time' ? <Badge tone="warn">{t('payLaunch.queue.timeUnverified')}</Badge> : <Badge>{t('payLaunch.queue.noClock')}</Badge>;
   const done = (text: string, paymentId?: string) => { setOpen(null); setDesk(null); setNotice({ tone: 'success', text, paymentId }); reload(); };
 
   return <div className="stack">

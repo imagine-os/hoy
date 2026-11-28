@@ -7,7 +7,7 @@ export const pendingPaymentsSpec = defineSpec({
   data: ['payments', 'transfer_receipts', 'bookings', 'plans', 'profiles'],
   logic: ['PG-05: pending payments (with receipt image) and held desk bookings in one list, soonest deadline first; polls every 20 s.', 'PG-04: approve with the amount received; a different amount needs a new reason (amount_mismatch override). Decline with a reason. ifMatch status=pending.', 'PG-07: the desk records cash / card terminal / transfer as approved; the desk user is createdBy.', 'PR-05: the Santa María pack shows and sets the member price_audience.', 'PG-09: every write is one /batch with an Idempotency-Key reused on retry.'],
   integrations: ['Company OS payments 2.6.0, bookings 1.4.0, files 1.1.0, people'],
-  states: ['loading', 'read error with retry', 'empty', 'list', 'reviewing', 'receipt unavailable', 'refused with code copy', 'saved'],
+  states: ['loading', 'read error with retry', 'empty', 'list', 'no linked class reservation', 'linked reservation unverified', 'hold time unavailable', 'reviewing', 'receipt unavailable', 'refused with code copy', 'saved'],
 });
 export const transferPaySpec = defineSpec({
   code: 'C-40', name: { es: 'Pagar por transferencia', en: 'Pay by transfer' },

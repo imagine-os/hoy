@@ -136,14 +136,15 @@ export async function runPaymentOps(cos: CosPort, ops: BatchOp[], key: string): 
 export interface PendingItem {
   id: string; kind: 'receipt' | 'desk_hold'; payment: PaymentRec | null; booking: BookingRec | null; person: string | null;
   product: ProductRow | null; amount: number | null; receipt: FileRec | null; createdAt: string | null;
-  /** `frozen`: receipt sent, the hold waits for reception. `waiting`: the clock runs. `none`: a purchase without a place. */
-  clock: { state: 'frozen'; minutesLeft: number | null } | { state: 'waiting'; until: string; msLeft: number } | { state: 'expired' } | { state: 'none' };
+  /** `none`: no booking link. `unverified`: a claimed link has no visible hold. `unknown_time`: a visible hold has no readable clock. */
+  clock: { state: 'frozen'; minutesLeft: number | null } | { state: 'waiting'; until: string; msLeft: number } | { state: 'expired' } | { state: 'none' } | { state: 'unverified' } | { state: 'unknown_time' };
 }
 export function holdClock(b: BookingRec | null, now: number): PendingItem['clock'] {
-  if (!b || b.data.status !== 'held') return { state: 'none' };
+  if (!b) return { state: 'none' };
+  if (b.data.status !== 'held') return { state: 'unverified' };
   if (b.data.hold_frozen_at) return { state: 'frozen', minutesLeft: typeof b.data.hold_left_minutes === 'number' ? b.data.hold_left_minutes : null };
   const until = b.data.hold_until ? Date.parse(b.data.hold_until) : NaN;
-  if (!Number.isFinite(until)) return { state: 'none' };
+  if (!Number.isFinite(until)) return { state: 'unknown_time' };
   return until <= now ? { state: 'expired' } : { state: 'waiting', until: b.data.hold_until!, msLeft: until - now };
 }
 export function pendingItems(input: { payments: PaymentRec[]; bookings: BookingRec[]; files: FileRec[]; products: ProductRow[] }, now: number): PendingItem[] {
@@ -154,10 +155,13 @@ export function pendingItems(input: { payments: PaymentRec[]; bookings: BookingR
     if (p.data.status !== 'pending') continue;
     const booking = bookingOf(p);
     if (booking) paid.add(booking.id);
+    // Only held bookings are in the queue read. A missing referenced row can be terminal or unreadable.
+    const claimsBooking = p.data.for_entity === 'booking' || (!p.data.for_entity && !!p.data.for_id);
+    const clock: PendingItem['clock'] = !booking && claimsBooking ? { state: 'unverified' } : holdClock(booking, now);
     const receipt = input.files.filter((f) => f.data.owner_entity === 'payment' && f.data.owner_id === p.id && f.data.kind === 'receipt' && f.data.status === 'ready')
       .sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''))[0] ?? null;
     items.push({ id: `payment:${p.id}`, kind: 'receipt', payment: p, booking, person: p.data.person ?? null, product: input.products.find((r) => r.id === p.data.product) ?? null,
-      amount: Number.isFinite(p.data.amount) ? p.data.amount : null, receipt, createdAt: p.createdAt ?? null, clock: holdClock(booking, now) });
+      amount: Number.isFinite(p.data.amount) ? p.data.amount : null, receipt, createdAt: p.createdAt ?? null, clock });
   }
   for (const b of input.bookings) {
     if (b.data.status !== 'held' || b.data.payment_method !== 'desk' || paid.has(b.id)) continue;

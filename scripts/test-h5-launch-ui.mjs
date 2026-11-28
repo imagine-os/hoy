@@ -69,16 +69,21 @@ try {
         const prod = c.db.product.find((x) => x.data.key === 'single');
         const { ids } = await c.request('POST', '/batch', { ops: [{ op: 'create', entity: 'payment', data: { person: c.db.person[0].id, product: prod.id, amount: 55000, method: 'transfer', reference: 'R1', status: 'pending', date: '2026-11-01', for_entity: 'booking', for_id: window.H5.heldId } }] }, { idempotencyKey: 'seed-key-0001' });
         const { file, uploadUrl } = await c.request('POST', '/files', { ownerEntity: 'payment', ownerId: ids[0], kind: 'receipt', filename: 'r.png', mime: 'image/png', sizeBytes: 12 });
-        await c.put(uploadUrl, { body: new Uint8Array([137, 80, 78, 71]) }); await c.request('POST', `/files/${file.id}/confirm`); c.as('usr_desk');
+        await c.put(uploadUrl, { body: new Uint8Array([137, 80, 78, 71]) }); await c.request('POST', `/files/${file.id}/confirm`);
+        const person = c.db.person[0].id, pack = c.db.product.find((x) => x.data.key === 'pack12');
+        await c.request('POST', '/batch', { ops: [{ op: 'create', entity: 'payment', data: { person, product: pack.id, amount: 600000, method: 'transfer', reference: 'R-PG05-PACK', status: 'pending', date: '2026-11-01' } }] }, { idempotencyKey: 'seed-key-pg05-pack' });
+        c.seed('payment', { person, product: prod.id, amount: 55000, method: 'transfer', status: 'pending', for_entity: 'booking', for_id: 'qa-unavailable-hold' });
+        c.as('usr_desk');
       });
-      await p.getByRole('button', { name: t(lang, 'Reintentar', 'Retry') }).click().catch(() => {});
+      await p.evaluate(() => window.H5.mount('queue', '/staff/transfers', 'usr_desk'));
       await p.getByTestId('pending-item').first().waitFor();
-      // a reload picks the seeded payment up (the page polls every 20 s; force it)
-      await p.evaluate(() => window.dispatchEvent(new Event('focus')));
-      await p.waitForTimeout(50);
       await sane(p, `${tag} queue`); await p.screenshot({ path: `${out}/${tag}-queue.jpg`, fullPage: true });
+      await p.getByText(t(lang, 'Esperando recepción', 'Waiting for the desk'), { exact: false }).waitFor();
+      await p.getByText(t(lang, 'Sin reserva de clase asociada', 'No linked class reservation'), { exact: true }).waitFor();
+      await p.getByText(t(lang, 'No se pudo verificar la reserva', 'Could not verify the linked reservation'), { exact: true }).waitFor();
+      assert(!(await p.getByTestId('pending-list').innerText()).match(/compra sin cupo|purchase without a place|no spots available|sin cupos disponibles/i));
       const items = await p.getByTestId('pending-item').count();
-      assert(items >= 1, 'pending list shows items');
+      assert(items >= 4, 'pending list shows the linked, standalone and unverified rows, plus the desk hold');
       checks.push(`${tag} PG-05 pending list renders (${items} items)`);
       // PG-07 / PG-06 — record the desk hold's payment
       const record = p.getByRole('button', { name: t(lang, 'Registrar pago', 'Record payment') }).first();
