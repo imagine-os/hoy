@@ -27,7 +27,6 @@ import { refusalCopy } from '../../data/companyos/refusals';
 import { memberNames, type CosPort } from '../transfers/launch/cos';
 import { useLoad } from '../transfers/launch/useCos';
 
-const str = (v: unknown) => (typeof v === 'string' ? v : null);
 /** The review build's active memberships (MockProvider). The production build never reads `memberships` (no adapter). */
 const useReviewMemberships: () => MembershipRow[] = PRODUCTION_BUILD ? () => [] : () => useTable<MembershipRow>('memberships', { where: { status: 'active' } }).rows;
 

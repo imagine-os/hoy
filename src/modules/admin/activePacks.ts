@@ -1,12 +1,12 @@
-import { fieldsOf, type Lot } from './customers/customerBalances';
-import { CosError, queryAll, type CosPort, type QuerySpec } from '../transfers/launch/cos';
+import type { Lot } from './customers/customerBalances';
+import { CosError, queryAll, type CosPort } from '../transfers/launch/cos';
 
 const MAX_RECORDS = 5000;
 const LOT_BATCH = 100;
 const byId = [{ field: 'id', dir: 'asc' as const }];
 
 /** Classify by the purchased product row, not remaining quantity or display name. Historical products still count. */
-export const ACTIVE_PACK_QUERIES: Record<'lots' | 'left' | 'products', QuerySpec> = {
+export const ACTIVE_PACK_QUERIES = {
   lots: { entity: 'credit_lot', sort: byId },
   left: { entity: 'credit_entry', aggregate: { groupBy: ['lot'], metrics: [{ op: 'sum', field: 'delta', alias: 'left' }] } },
   products: { entity: 'product', sort: byId },
@@ -21,10 +21,10 @@ export async function readDashboardCreditCounts(cos: CosPort, today: string) {
     queryAll<Record<string, unknown>>(cos, ACTIVE_PACK_QUERIES.products, MAX_RECORDS),
   ]);
   if (l.length >= MAX_RECORDS || p.length >= MAX_RECORDS) throw new CosError('dashboard_credits_incomplete');
-  const products = p.map((r) => ({ id: r.id, kind: fieldsOf(r).kind }));
+  const products = p.map((r) => ({ id: r.id, kind: r.data.kind }));
   const eligible = new Set(products.filter(({ kind }) => kind === 'pack' || kind === 'single').map(({ id }) => id));
   const lots = l.flatMap((r) => {
-    const d = fieldsOf(r);
+    const d = r.data;
     const person = str(d.person), product = str(d.product), valid_from = str(d.valid_from), valid_until = str(d.valid_until);
     return typeof r.id === 'string' && person && product && eligible.has(product) && (!valid_from || valid_from <= today) && (!valid_until || valid_until >= today)
       ? [{ id: r.id, person, product, valid_from, valid_until }] : [];
