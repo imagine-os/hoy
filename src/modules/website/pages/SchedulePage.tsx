@@ -1,5 +1,5 @@
+import { publicSessionUnavailableReason, publicBookingClosed } from '../../../data/publicBookingCutoff';
 import { requireSessionAdmission, sessionAdmissionAvailable } from '../../../data/sessionAdmission';
-import { sessionUnavailableReason } from '../../../data/sessionAvailability';
 import { Notice } from '../../../components/molecule/Notice/Notice';
 import { useSettings } from '../../admin/settings';
 import { useSiteEdition } from '../edition';
@@ -64,16 +64,16 @@ export function SchedulePage() {
   useEffect(() => { live.current.mounted = true; return () => { live.current.mounted = false; }; }, []);
   useEffect(() => { operation.current++; navigationLock.current = false; setNavigating(false); setNavigationError(false); }, [data, user.id, role, picked, navigationRoute]);
   const full = !!chosen && chosen.session.booked_count >= chosen.session.capacity;
-  const unavailable = !!chosen && !sessionAdmissionAvailable(chosen.session, chosen.modality, chosen.session.template_id ? { id: chosen.session.template_id, active: chosen.templateActive } : undefined, now);
-  const unavailableReason = chosen ? sessionUnavailableReason(chosen, now) ?? 'unavailable' : 'unavailable';
+  const unavailable = !!chosen && (publicBookingClosed(chosen.session.starts_at) || !sessionAdmissionAvailable(chosen.session, chosen.modality, chosen.session.template_id ? { id: chosen.session.template_id, active: chosen.templateActive } : undefined, now));
+  const unavailableReason = chosen ? publicSessionUnavailableReason(chosen, now) ?? 'unavailable' : 'unavailable';
   const signInAndBook = async () => {
-    if (!chosen || consentHeld || navigationLock.current || !sessionAdmissionAvailable(chosen.session, chosen.modality, chosen.session.template_id ? { id: chosen.session.template_id, active: chosen.templateActive } : undefined)) return;
+    if (!chosen || publicBookingClosed(chosen.session.starts_at) || consentHeld || navigationLock.current || !sessionAdmissionAvailable(chosen.session, chosen.modality, chosen.session.template_id ? { id: chosen.session.template_id, active: chosen.templateActive } : undefined)) return;
     const captured = live.current, version = ++operation.current;
     const current = () => operation.current === version && live.current.mounted && live.current.data === captured.data && live.current.actor === captured.actor && live.current.role === captured.role && live.current.navigationRoute === captured.navigationRoute && live.current.picked === captured.picked;
     navigationLock.current = true; setNavigating(true); setNavigationError(false);
     try {
       const fresh = await requireSessionAdmission(data, chosen.session.id, { isCurrent: current });
-      if (!current()) return;
+      if (!current() || publicBookingClosed(fresh.starts_at)) return;
       // Production has no waitlist at launch: a full class goes to checkout, where the server says it is full.
       const next = !PRODUCTION_BUILD && fresh.booked_count >= fresh.capacity ? `/app/waitlist/${fresh.id}` : `/app/checkout/${fresh.id}`;
       nav(purchaseEntry(user, next));
@@ -90,7 +90,7 @@ export function SchedulePage() {
   const SECTIONS: Record<string, () => ReactNode> = {
     PageHead: () => <PageHead title={t('site.schedule.title')} body={t('site.schedule.body')} />,
     DayTabs: () => null,
-    ClassList: () => <section className="container"><SessionCalendar sessions={list} onPick={s => { setPicked(s.id); }} /></section>,
+    ClassList: () => <section className="container"><SessionCalendar publicBooking sessions={list} onPick={s => { setPicked(s.id); }} /></section>,
     Legend: () => (
       <section className="container" style={{ paddingBottom: 'var(--sp-4xl)' }}>
         <div className="site-legend">

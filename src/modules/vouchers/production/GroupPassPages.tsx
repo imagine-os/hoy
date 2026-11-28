@@ -1,3 +1,4 @@
+import { publicBookingClosed } from '../../../data/publicBookingCutoff';
 import { useMemo, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
@@ -100,7 +101,9 @@ function JoinScreen({ code, occurrence }: { code: string; occurrence: string | n
   const { target, offered, locked } = view;
   const chosen = (target ? sessions.find((x) => x.session.id === target) : sessions.find((x) => x.session.id === picked)) ?? null;
 
+  const newGroupClosed = view.lead && !!chosen && publicBookingClosed(chosen.session.starts_at);
   const book = (occurrenceId: string) => action.run(async (key) => {
+    if (view.lead && sessions.some((x) => x.session.id === occurrenceId && publicBookingClosed(x.session.starts_at))) return;
     setFailure(null);
     try { setDone(await joinPass(data, { personId: user.id, occurrenceId, code }, key)); }
     catch (e) { const f = joinFailure(e); setFailure(f); if (f.named) setNamed(f.named); throw e; }
@@ -124,9 +127,9 @@ function JoinScreen({ code, occurrence }: { code: string; occurrence: string | n
     {view.mode === 'take' && target ? <Card>
       <div className="stack-sm">
         <span className="eyebrow">{t('vouchers.group.join.yourClass')}</span>
-        {chosen ? <ClassRow title={chosen.session.title} teacher={chosen.teacher?.display_name ?? ''} startsAt={chosen.session.starts_at} durationMin={chosen.modality?.duration_min ?? 60} tone={chosen.modality?.tone ?? 'river'} booked={chosen.session.booked_count} capacity={chosen.session.capacity} />
+        {chosen ? <ClassRow title={chosen.session.title} teacher={chosen.teacher?.display_name ?? ''} startsAt={chosen.session.starts_at} durationMin={chosen.modality?.duration_min ?? 60} tone={chosen.modality?.tone ?? 'river'} booked={chosen.session.booked_count} capacity={chosen.session.capacity} availabilityLabel={newGroupClosed ? t('site.calendar.status.public_booking_closed') : undefined} />
           : <p className="small muted">{t('vouchers.group.join.classHidden')}</p>}
-        <Button loading={action.busy} disabled={action.busy} onClick={() => void book(target)}>{t('vouchers.group.join.take')}</Button>
+        <Button loading={action.busy} disabled={action.busy || newGroupClosed} onClick={() => void book(target)}>{t('vouchers.group.join.take')}</Button>
       </div>
     </Card> : <Card>
       <div className="stack-sm">
@@ -134,10 +137,10 @@ function JoinScreen({ code, occurrence }: { code: string; occurrence: string | n
         <p className="xs muted">{t('vouchers.group.join.pickHint')}</p>
         {offered.length === 0 ? <p className="small muted">{t('vouchers.group.join.noClasses')}</p>
           : <div className="stack-sm">{offered.slice(0, 40).map((x) => <div key={x.session.id} data-picked={picked === x.session.id || undefined}>
-            <ClassRow title={x.session.title} teacher={x.teacher?.display_name ?? ''} startsAt={x.session.starts_at} durationMin={x.modality?.duration_min ?? 60} tone={x.modality?.tone ?? 'river'} booked={x.session.booked_count} capacity={x.session.capacity} booked_by_me={picked === x.session.id} disabled={locked || action.busy} onClick={() => { if (locked) return; setPicked(x.session.id); action.renew(); }} />
+            <ClassRow title={x.session.title} teacher={x.teacher?.display_name ?? ''} startsAt={x.session.starts_at} durationMin={x.modality?.duration_min ?? 60} tone={x.modality?.tone ?? 'river'} booked={x.session.booked_count} capacity={x.session.capacity} booked_by_me={picked === x.session.id} availabilityLabel={publicBookingClosed(x.session.starts_at) ? t('site.calendar.status.public_booking_closed') : undefined} disabled={locked || action.busy || publicBookingClosed(x.session.starts_at)} onClick={() => { if (locked || publicBookingClosed(x.session.starts_at)) return; setPicked(x.session.id); action.renew(); }} />
           </div>)}</div>}
         {picked && <p className="xs" role="status">{t('vouchers.group.join.picked', { cls: offered.find((x) => x.session.id === picked)?.session.title ?? '' })}</p>}
-        <Button loading={action.busy} disabled={action.busy || !picked} onClick={() => picked && void book(picked)}>{t('vouchers.group.join.book')}</Button>
+        <Button loading={action.busy} disabled={action.busy || !picked || newGroupClosed} onClick={() => picked && void book(picked)}>{t('vouchers.group.join.book')}</Button>
       </div>
     </Card>}
     {view.lead && <Notice tone="info" data-lead-note>{view.places ? t('vouchers.group.join.leadNote', { n: view.places }) : t('vouchers.group.join.leadNoteUnknown')}</Notice>}

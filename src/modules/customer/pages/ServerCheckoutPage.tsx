@@ -1,3 +1,4 @@
+import { publicBookingClosed } from '../../../data/publicBookingCutoff';
 import { useRef, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useI18n } from '../../../i18n/I18nProvider';
@@ -97,8 +98,16 @@ export function ServerCheckoutPage() {
   const buyFirst = !!kind && BUY_FIRST.includes(kind);
   const holdMinutes = method === 'desk' ? policy.holdMinutesDesk : policy.holdMinutesTransfer;
 
+  if (s.status === 'scheduled' && Date.parse(s.starts_at) > now && publicBookingClosed(s.starts_at)) return (
+    <div className="container page cust-page">
+      <PageHead back={`/app/class/${s.id}`} title={s.title} />
+      {existing ? <Notice tone="info" action={<Link to={`/app/booking/${existing.id}`}><Button size="sm" variant="secondary">{t('customer.class.viewBooking')}</Button></Link>}>{t('customer.home.booked')}</Notice>
+        : <Notice tone="warn" action={<Link to="/app/schedule"><Button size="sm" variant="secondary">{t('customer.class.backToSchedule')}</Button></Link>}>{t('site.calendar.status.public_booking_closed')}</Notice>}
+    </div>
+  );
+
   const confirm = async () => {
-    if (inFlight.current || !kind || consentHeld) return;
+    if (inFlight.current || !kind || consentHeld || publicBookingClosed(s.starts_at)) return;
     if (buyFirst) { nav(purchaseReturnLink(kind, s.id)); return; }
     inFlight.current = true; setBusy(true); setError(null);
     try {

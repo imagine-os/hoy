@@ -40,6 +40,7 @@ export const strings: StringTable = {
   'site.calendar.status.unpublished': { es: 'No publicada', en: 'Unpublished' },
   'site.calendar.status.unavailable': { es: 'No disponible', en: 'Unavailable' },
   // Lane Y1: a class without a class type (no colour, letter or description yet).
+  'site.calendar.status.public_booking_closed': { es: 'Sin cupos disponibles', en: 'No spots available' },
   'site.calendar.status.no_class_type': { es: 'Aún no abre reservas', en: 'Not open for booking yet' },
   'site.calendar.prev': { es: "Período anterior", en: "Previous period" },
   'site.calendar.next': { es: "Período siguiente", en: "Next period" },
