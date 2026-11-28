@@ -96,8 +96,14 @@ const cos = createServer((req, res) => {
       if (body.sort?.[0]) out.sort((a, b) => (a.data[body.sort[0].field] < b.data[body.sort[0].field] ? -1 : 1));
       out = out.slice(body.offset ?? 0, (body.offset ?? 0) + (body.limit ?? 100));
       for (const inc of body.include ?? []) for (const r of out) {
-        const person = DATA.person.find((p) => p.id === r.data[inc.field]);
-        r.data[inc.field] = person ? { id: person.id, name: person.data.name } : null;
+        // Company OS resolves the reference by entity and writes the projection to its alias.
+        // An aliased include must leave the original relation ID available for the UI's teacher join.
+        const targetEntity = { person: 'person', schedule: 'schedule', coach: 'coach' }[inc.field];
+        const target = DATA[targetEntity]?.find((row) => row.id === r.data[inc.field]);
+        const fields = inc.fields ?? (targetEntity === 'person' ? ['name'] : []);
+        r.data[inc.as ?? inc.field] = target
+          ? { id: target.id, ...Object.fromEntries(fields.filter((field) => Object.hasOwn(target.data, field)).map((field) => [field, target.data[field]])) }
+          : null;
       }
       return json(res, 200, { data: out });
     }
