@@ -52,6 +52,25 @@ check('M-01 classifies historical lots by exact product kind and sums only valid
 const spec = JSON.stringify(A.ACTIVE_PACK_QUERIES ?? null);
 check('M-01 queries lots, product kinds and server-side balances, not memberships', spec.includes('"credit_lot"') && spec.includes('"product"') && spec.includes('"sum"') && !spec.includes('membership'));
 
+const lotsOverCap = Array.from({ length: 1005 }, (_, index) => lot('lot-' + index, 'user-' + index, { product: index % 2 ? 'prd_pack' : 'prd_single' }));
+const requests = [];
+const creditPort = {
+  request: async (_method, _path, spec) => {
+    requests.push(spec);
+    if (spec.entity === 'credit_lot') return { data: lotsOverCap.slice(spec.offset, spec.offset + spec.limit).map(({ id, ...data }) => ({ id, data })) };
+    if (spec.entity === 'product') return { data: products.map(({ id, ...data }) => ({ id, data })) };
+    if (spec.entity === 'credit_entry' && spec.filter?.op === 'in' && spec.filter.value.length <= 100) return { data: spec.filter.value.map(lot => ({ lot, left: '1' })) };
+    throw Error('unbounded credit aggregate');
+  }
+};
+let aggregateCounts;
+try { aggregateCounts = await A.readDashboardCreditCounts?.(creditPort, '2026-10-31'); } catch (e) { console.log(e.message); }
+check('M-01 bounded backend aggregates cover more than the Company OS 1,000-group limit', aggregateCounts?.packCustomers === 502 && aggregateCounts?.unusedSingleCredits === 503 && requests.filter(x => x.entity === 'credit_entry').length === 11);
+let rejected = false;
+try { await A.readDashboardCreditCounts?.({ request: async (...args) => args[2].entity === 'credit_entry' ? { data: [] } : creditPort.request(...args) }, '2026-10-31'); }
+catch { rejected = true; }
+check('M-01 a missing lot aggregate is unavailable instead of being treated as a zero', rejected);
+
 // ── The other `memberships` readers (lane G's route-connectivity finding): desk/CRM people join, practice and
 // studio analytics. In production they read packs: one plan row per person from their active credit lot.
 const L = (id, user, delta, extra = {}) => ({ id, tenant_id: 'hoy', created_at: '2026-10-01T10:00:00Z', updated_at: '2026-10-01T10:00:00Z', user_id: user, delta, reason: delta > 0 ? 'purchase' : 'booking', expires_at: null, plan_id: null, purchase_ledger_id: null, ...extra });
@@ -77,7 +96,7 @@ check('people/analytics: one person in two tenants gets a row per tenant', rows(
 // ── review round 2, L3: the dashboard's active-pack count dates "today" by the studio's calendar (America/Bogota) ──
 const { readFileSync } = await import('node:fs');
 const dash = readFileSync('src/modules/admin/DashboardPage.tsx', 'utf8');
-check('M-01 the active-pack count takes the studio\'s today() (src/data/companyos/dates), not a date made in the page', /today:\s*studioToday\(\)/.test(dash) && /import \{[^}]*today as studioToday[^}]*\} from '\.\.\/\.\.\/data\/companyos\/dates'/.test(dash) && !/today:\s*dateKey\(new Date\(\)\)/.test(dash));
+check('M-01 the active-pack count takes the studio\'s today() (src/data/companyos/dates), not a date made in the page', /const creditDay = studioToday\(\)/.test(dash) && /import \{[^}]*today as studioToday[^}]*\} from '\.\.\/\.\.\/data\/companyos\/dates'/.test(dash) && !/today:\s*dateKey\(new Date\(\)\)/.test(dash));
 const D = await tryImport("export * from './src/data/companyos/dates';");
 {
   const RealDate = Date, tz = process.env.TZ;

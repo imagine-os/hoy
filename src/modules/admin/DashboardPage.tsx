@@ -19,15 +19,13 @@ import { usePeople } from '../staff/people';
 import { M01, M12 } from './specs';
 import './admin.css';
 import { auditTitle } from '../staff/audit';
-import { useCosQueries } from '../staff/desk/useCos';
-import { ACTIVE_PACK_QUERIES, dashboardCreditCounts } from './activePacks';
+import { readDashboardCreditCounts } from './activePacks';
 import { PRODUCTION_BUILD } from '../../config/launch';
 import { today as studioToday } from '../../data/companyos/dates';
 import { activityRows, readAuditPage } from '../../data/companyos/audit';
 import { refusalCopy } from '../../data/companyos/refusals';
 import { memberNames, type CosPort } from '../transfers/launch/cos';
 import { useLoad } from '../transfers/launch/useCos';
-import { fieldsOf } from './customers/customerBalances';
 
 const str = (v: unknown) => (typeof v === 'string' ? v : null);
 /** The review build's active memberships (MockProvider). The production build never reads `memberships` (no adapter). */
@@ -42,21 +40,12 @@ export function DashboardPage() {
   const { can, hasRole } = useSession();
   const { sections, isVisible } = useLayout(M01);
   // Production uses the authoritative credit balance and the exact purchased product kind.
-  const packs = useCosQueries(ACTIVE_PACK_QUERIES);
+  const creditDay = studioToday();
+  const { state: credits } = useLoad(PRODUCTION_BUILD ? (cos) => readDashboardCreditCounts(cos, creditDay) : null, [creditDay]);
   const memberships = useReviewMemberships();
-  const packRows = packs.current ? packs.rows : null;
-  const credits = packRows ? dashboardCreditCounts({
-    lots: packRows.lots.map((r) => {
-      const d = fieldsOf(r);
-      return { id: r.id, person: str(d.person) ?? '', product: str(d.product), valid_from: str(d.valid_from), valid_until: str(d.valid_until) };
-    }),
-    left: packRows.left.map((x) => ({ lot: str(x.lot) ?? '', left: typeof x.left === 'number' || typeof x.left === 'string' ? Number(x.left) : NaN })),
-    products: packRows.products.map((r) => ({ id: r.id, kind: fieldsOf(r).kind })),
-    today: studioToday(),
-  }) : null;
-  const unavailable = packs.error ? '—' : '…';
-  const members: number | string = !packs.request ? memberships.length : credits?.packCustomers ?? unavailable;
-  const unusedSingleCredits: number | string = !packs.request ? '—' : credits?.unusedSingleCredits ?? unavailable;
+  const unavailable = credits.status === 'error' ? '—' : '…';
+  const members: number | string = !PRODUCTION_BUILD ? memberships.length : credits.status === 'ready' ? credits.value.packCustomers : unavailable;
+  const unusedSingleCredits: number | string = !PRODUCTION_BUILD ? '—' : credits.status === 'ready' ? credits.value.unusedSingleCredits : unavailable;
   const { rows: payments } = useTable<PaymentRow>('payments', { where: { status: 'approved' } });
   const since = Date.now() - 30 * MS.day;
   const revenue = payments.filter((p) => p.paid_at && new Date(p.paid_at).getTime() > since).reduce((a, p) => a + p.amount, 0);
