@@ -230,6 +230,18 @@ const png = () => new File([new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 
   check('PG-05 every pending item is in one list: transfer receipts, a pack purchase and the desk hold', items.length === 3 && items.some((i) => i.kind === 'desk_hold' && i.booking.id === bd.id) && items.some((i) => i.payment?.id === packPid));
   check('PG-05 each row has customer, product, amount and receipt', q.people.get(r.person) === 'Carla Cliente' && r.product.data.name === 'Clase individual' && r.amount === 55000 && !!r.receipt);
   check('PG-05 the desk hold shows its time left; the soonest deadline comes first', items[0].kind === 'desk_hold' && items[0].clock.state === 'waiting');
+  const clockFor = (data, bookings = []) => M.pendingItems({ ...q, bookings, payments: [{ ...r.payment, data: { ...r.payment.data, ...data } }] }, T0)[0].clock.state;
+  check('PG-05 H-08 says no class linked only when the payment does not claim a booking', items.find(i => i.payment?.id === packPid).clock.state === 'none' &&
+    clockFor({ for_entity: null, for_id: null }) === 'none' && clockFor({ for_entity: 'charge', for_id: 'fictional_charge' }) === 'none');
+  check('PG-05 H-08 missing, untyped or terminal booking links are unverified, never marked no reservation', clockFor({}) === 'unverified' &&
+    clockFor({ for_id: null }) === 'unverified' && clockFor({ for_entity: null }) === 'unverified' &&
+    clockFor({}, [{ ...r.booking, data: { ...r.booking.data, status: 'cancelled' } }]) === 'unverified');
+  const unknownClock = { ...r.booking, data: { ...r.booking.data, hold_until: null, hold_frozen_at: null } };
+  check('PG-05 H-08 unverified hold clock is distinct from verified frozen or expired', r.clock.state === 'frozen' &&
+    clockFor({}, [unknownClock]) === 'unknown_time' &&
+    clockFor({}, [{ ...unknownClock, data: { ...unknownClock.data, hold_until: new Date(T0).toISOString() } }]) === 'expired');
+  check('PG-05 H-08 new badge copy is available in Spanish and English', ['payLaunch.queue.noClock', 'payLaunch.queue.holdUnverified', 'payLaunch.queue.timeUnverified'].every(
+    key => M.payLaunchStrings[key]?.en && M.payLaunchStrings[key]?.es));
   check('PG-05 a customer reading the same queries sees only their own payments (row policies)', (await (async () => { cos.as('usr_cust'); const qq = await M.readQueue(cos); return qq.payments.length > 0 && qq.payments.every((p) => p.data.person === carla.id); })()));
 }
 
