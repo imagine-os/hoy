@@ -209,7 +209,9 @@ function Teachers({ rows, canWrite, busy, photoBusy, setPhotoBusy, run }: { rows
   const setProfile = (change: Partial<CoachProfile>) => setEdit(e => e && { ...e, profile: { ...e.profile, ...change } });
   return <div className="stack">
     {photoNotice && <p className="small register-diff" role="status">{photoNotice === 'old_image_remains' ? t('media.picker.oldRemains') : refusalCopy(photoNotice, lang)}</p>}
-    {canWrite && <Button icon="plus" disabled={!!cover || busy || photoBusy} onClick={() => setEdit({ id: null, personId: '', name: '', email: '', phone: '', active: true, profile: coachProfileOf({}), photoAtOpen: undefined, draft: new ImageDraft(data as unknown as ImagePort), key: newActionKey() })}>{t('live.new')}</Button>}
+    {/* New and Edit another teacher may replace a portrait draft during an upload. Only an unmounted field can safely
+        release its busy flag and discard a late upload. Save waits for the current draft; never interrupt active writes. */}
+    {canWrite && <Button icon="plus" disabled={!!cover || busy} onClick={() => setEdit({ id: null, personId: '', name: '', email: '', phone: '', active: true, profile: coachProfileOf({}), photoAtOpen: undefined, draft: new ImageDraft(data as unknown as ImagePort), key: newActionKey() })}>{t('live.new')}</Button>}
     {cover && canWrite && <Card title={t('live.f.classCover')}>
       <p className="small muted">{t('live.f.classCoverHint')}</p>
       <SharedImageField key={cover.id} label={t('live.f.classCover')} value={cover.photo} disabled={busy}
@@ -241,7 +243,7 @@ function Teachers({ rows, canWrite, busy, photoBusy, setPhotoBusy, run }: { rows
       <div className="row wrap"><Button disabled={busy || photoBusy || !edit.name.trim()} loading={busy} onClick={async () => { const d = { name: edit.name, email: edit.email, phone: edit.phone, active: edit.active, profile: edit.profile, photoAtOpen: edit.photoAtOpen }; setPhotoNotice(null); const out = await saveThenRemoveOld(data as unknown as ImagePort, { saved: edit.photoAtOpen, next: edit.profile.photo, owner: edit.id ? { ...COACH_PHOTO, ownerId: edit.id } : undefined, draft: edit.draft }, () => run(edit.id ? updateCoachOps(edit.id, edit.personId, d) : createCoachOps(d), edit.key, t('live.saved'))); setPhotoNotice(out.notice); if (out.result) setEdit(null); }}>{t('live.save')}</Button><Button variant="ghost" disabled={busy || photoBusy} onClick={() => setEdit(null)}>{t('core.common.cancel')}</Button></div>
     </Card>}
     {sorted.length === 0 ? <EmptyState compact title={t('live.empty')} /> : sorted.map(c => <Card key={c.id} padding="sm" title={str(person(c).name) || '—'} actions={canWrite && <div className="row wrap">
-      <Button size="sm" variant="outline" disabled={!!cover || busy || photoBusy} onClick={() => setEdit({ id: c.id, personId: str(person(c).id), name: str(person(c).name), email: str(person(c).email), phone: str(person(c).phone), active: c.active !== false, profile: coachProfileOf(c), photoAtOpen: c.photo, draft: new ImageDraft(data as unknown as ImagePort), key: newActionKey() })}>{t('live.edit')}</Button>
+      <Button size="sm" variant="outline" disabled={!!cover || busy || (photoBusy && edit?.id === c.id)} onClick={() => setEdit({ id: c.id, personId: str(person(c).id), name: str(person(c).name), email: str(person(c).email), phone: str(person(c).phone), active: c.active !== false, profile: coachProfileOf(c), photoAtOpen: c.photo, draft: new ImageDraft(data as unknown as ImagePort), key: newActionKey() })}>{t('live.edit')}</Button>
       <Button size="sm" variant="outline" disabled={!!edit || !!cover || busy || photoBusy} onClick={() => {
         setPhotoNotice(null);
         setCover({ id: c.id, saved: c[COACH_FIELDS.classCover], photo: coachPhotoUrl(c[COACH_FIELDS.classCover]), draft: new ImageDraft(data as unknown as ImagePort), key: newActionKey() });
