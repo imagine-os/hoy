@@ -19,17 +19,14 @@ import { usePeople } from '../staff/people';
 import { M01, M12 } from './specs';
 import './admin.css';
 import { auditTitle } from '../staff/audit';
-import { useCosQueries } from '../staff/desk/useCos';
-import { ACTIVE_PACK_QUERIES, activePackCustomers } from './activePacks';
+import { readDashboardCreditCounts } from './activePacks';
 import { PRODUCTION_BUILD } from '../../config/launch';
 import { today as studioToday } from '../../data/companyos/dates';
 import { activityRows, readAuditPage } from '../../data/companyos/audit';
 import { refusalCopy } from '../../data/companyos/refusals';
 import { memberNames, type CosPort } from '../transfers/launch/cos';
 import { useLoad } from '../transfers/launch/useCos';
-import { fieldsOf } from './customers/customerBalances';
 
-const str = (v: unknown) => (typeof v === 'string' ? v : null);
 /** The review build's active memberships (MockProvider). The production build never reads `memberships` (no adapter). */
 const useReviewMemberships: () => MembershipRow[] = PRODUCTION_BUILD ? () => [] : () => useTable<MembershipRow>('memberships', { where: { status: 'active' } }).rows;
 
@@ -41,19 +38,13 @@ export function DashboardPage() {
   const { t, lang } = useI18n();
   const { can, hasRole } = useSession();
   const { sections, isVisible } = useLayout(M01);
-  // R-05 (Hoy all-roles): production counts customers with an active pack from Company OS credits (two queries, the
-  // balance a server aggregate); `memberships` has no adapter there. The review build keeps counting its membership
-  // rows (`request` is null outside production). A role that may not read credits sees "—", not a crash.
-  const packs = useCosQueries(ACTIVE_PACK_QUERIES);
+  // Production uses the authoritative credit balance and the exact purchased product kind.
+  const creditDay = studioToday();
+  const { state: credits } = useLoad(PRODUCTION_BUILD ? (cos) => readDashboardCreditCounts(cos, creditDay) : null, [creditDay]);
   const memberships = useReviewMemberships();
-  const packRows = packs.rows;
-  const members: number | string = !packs.request ? memberships.length : packs.error ? '—' : !packRows ? '…' : activePackCustomers({
-    // `/query` rows carry their fields under `data` (integration guide §4); aggregate rows are flat.
-    lots: packRows.lots.map((l) => fieldsOf(l)).map((d, i) => ({ id: packRows.lots[i].id, person: str(d.person) ?? '', valid_from: str(d.valid_from), valid_until: str(d.valid_until) })),
-    left: packRows.left.map((x) => ({ lot: str(x.lot) ?? '', left: typeof x.left === 'number' ? x.left : Number(x.left) })),
-    // The studio's calendar day (America/Bogota), as every Company OS screen dates "today" (review round 2, L3).
-    today: studioToday(),
-  });
+  const unavailable = credits.status === 'error' ? '—' : '…';
+  const members: number | string = !PRODUCTION_BUILD ? memberships.length : credits.status === 'ready' ? credits.value.packCustomers : unavailable;
+  const unusedSingleCredits: number | string = !PRODUCTION_BUILD ? '—' : credits.status === 'ready' ? credits.value.unusedSingleCredits : unavailable;
   const { rows: payments } = useTable<PaymentRow>('payments', { where: { status: 'approved' } });
   const since = Date.now() - 30 * MS.day;
   const revenue = payments.filter((p) => p.paid_at && new Date(p.paid_at).getTime() > since).reduce((a, p) => a + p.amount, 0);
@@ -82,6 +73,7 @@ export function DashboardPage() {
     'KPIRow ×4': () => (
       <div className="grid grid-4">
         <div data-members-tile><StatTile label={t('admin.dashboard.members')} value={members} trend="up" /></div>
+        <div data-unused-single-credits><StatTile label={t('admin.dashboard.unusedSingleCredits')} value={unusedSingleCredits} /></div>
         <StatTile label={t('admin.dashboard.revenue')} value={formatCOP(revenue, lang)} />
         <StatTile label={t('admin.dashboard.occupancy')} value={`${occ}%`} trend={occ > 70 ? 'up' : 'flat'} />
         <StatTile label={t('admin.dashboard.arrivals')} value={todayBookings.length} hint={t('admin.dashboard.arrivals.hint', { n: todayIds.length })} />

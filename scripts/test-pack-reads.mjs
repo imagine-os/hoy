@@ -33,15 +33,43 @@ check('C-01 hostile values do not show as classes (negative, NaN)', card({ membe
 
 // ── M-01 members tile: customers with an active pack ───────────────────────────────────────────────────────────
 const lot = (id, person, extra = {}) => ({ id, person, source: 'purchase', product: 'prd_pack', valid_from: '2026-10-01', valid_until: '2026-12-31', frozen_from: null, frozen_until: null, voucher: null, ...extra });
-const count = (lots, left, today = '2026-10-31') => A.activePackCustomers?.({ lots, left, today });
+const products = [{ id: 'prd_pack', kind: 'pack' }, { id: 'prd_single', kind: 'single' }, { id: 'prd_trial', kind: 'trial' }, { id: 'prd_group', kind: 'group' }];
+const balances = (lots, left, today = '2026-10-31') => A.dashboardCreditCounts?.({ lots, left, products, today });
+const count = (lots, left, today) => balances(lots, left, today)?.packCustomers;
 check('M-01 one customer with classes left counts once, however many lots', count([lot('l1', 'p1'), lot('l2', 'p1')], [{ lot: 'l1', left: 3 }, { lot: 'l2', left: 12 }]) === 1);
 check('M-01 a used-up pack does not count', count([lot('l1', 'p1')], [{ lot: 'l1', left: 0 }]) === 0);
 check('M-01 an expired pack does not count', count([lot('l1', 'p1', { valid_until: '2026-10-30' })], [{ lot: 'l1', left: 4 }]) === 0);
 check('M-01 a pack that starts later does not count yet', count([lot('l1', 'p1', { valid_from: '2026-11-05' })], [{ lot: 'l1', left: 4 }]) === 0);
-check('M-01 a pack frozen today still counts (the customer still holds it)', count([lot('l1', 'p1', { frozen_from: '2026-10-20', frozen_until: '2026-11-10' })], [{ lot: 'l1', left: 4 }]) === 1);
-check('M-01 three customers, one without classes: 2', count([lot('l1', 'p1'), lot('l2', 'p2'), lot('l3', 'p3')], [{ lot: 'l1', left: 1 }, { lot: 'l2', left: 9 }, { lot: 'l3', left: 0 }]) === 2);
-check('M-01 a lot without a person or with a hostile balance is ignored', count([lot('l1', ''), lot('l2', 'p2')], [{ lot: 'l1', left: 5 }, { lot: 'l2', left: 'x' }]) === 0);
-check('M-01 the queries read credit lots and the per-lot balance (server aggregate), not memberships', JSON.stringify(A.ACTIVE_PACK_QUERIES ?? null).includes('"credit_lot"') && JSON.stringify(A.ACTIVE_PACK_QUERIES ?? null).includes('"sum"') && !JSON.stringify(A.ACTIVE_PACK_QUERIES ?? null).includes('membership'));
+check('M-01 a frozen pack still counts (the customer still holds it)', count([lot('l1', 'p1', { frozen_from: '2026-10-20', frozen_until: '2026-11-10' })], [{ lot: 'l1', left: 4 }]) === 1);
+check('M-01 ignores missing people and invalid, negative, fractional, non-finite balances', count([lot('l1', ''), lot('l2', 'p2'), lot('l3', 'p3'), lot('l4', 'p4'), lot('l5', 'p5')], [{ lot: 'l1', left: 5 }, { lot: 'l2', left: 'x' }, { lot: 'l3', left: -1 }, { lot: 'l4', left: 0.25 }, { lot: 'l5', left: Infinity }]) === 0);
+const mixedKinds = [
+  lot('p', 'u1'), lot('s1', 'u1', { product: 'prd_single' }), lot('s2', 'u1', { product: 'prd_single', valid_until: '2026-10-31' }),
+  lot('s3', 'u2', { product: 'prd_single', valid_until: '2026-10-30' }), lot('t', 'u3', { product: 'prd_trial' }),
+  lot('g', 'u4', { product: 'prd_group' }), lot('x', 'u5', { product: 'deleted' }), lot('n', 'u6', { product: null }),
+];
+check('M-01 classifies historical lots by exact product kind and sums only valid unused single credits',
+  JSON.stringify(balances(mixedKinds, mixedKinds.map(l => ({ lot: l.id, left: 1 })))) === JSON.stringify({ packCustomers: 1, unusedSingleCredits: 2 }));
+const spec = JSON.stringify(A.ACTIVE_PACK_QUERIES ?? null);
+check('M-01 queries lots, product kinds and server-side balances, not memberships', spec.includes('"credit_lot"') && spec.includes('"product"') && spec.includes('"sum"') && !spec.includes('membership'));
+
+const lotsOverCap = Array.from({ length: 1005 }, (_, index) => lot('lot-' + index, 'user-' + index, { product: index % 2 ? 'prd_pack' : 'prd_single' }));
+const requests = [];
+const creditPort = {
+  request: async (_method, _path, spec) => {
+    requests.push(spec);
+    if (spec.entity === 'credit_lot') return { data: lotsOverCap.slice(spec.offset, spec.offset + spec.limit).map(({ id, ...data }) => ({ id, data })) };
+    if (spec.entity === 'product') return { data: products.map(({ id, ...data }) => ({ id, data })) };
+    if (spec.entity === 'credit_entry' && spec.filter?.op === 'in' && spec.filter.value.length <= 100) return { data: spec.filter.value.map(lot => ({ lot, left: '1' })) };
+    throw Error('unbounded credit aggregate');
+  }
+};
+let aggregateCounts;
+try { aggregateCounts = await A.readDashboardCreditCounts?.(creditPort, '2026-10-31'); } catch (e) { console.log(e.message); }
+check('M-01 bounded backend aggregates cover more than the Company OS 1,000-group limit', aggregateCounts?.packCustomers === 502 && aggregateCounts?.unusedSingleCredits === 503 && requests.filter(x => x.entity === 'credit_entry').length === 11);
+let rejected = false;
+try { await A.readDashboardCreditCounts?.({ request: async (...args) => args[2].entity === 'credit_entry' ? { data: [] } : creditPort.request(...args) }, '2026-10-31'); }
+catch { rejected = true; }
+check('M-01 a missing lot aggregate is unavailable instead of being treated as a zero', rejected);
 
 // ── The other `memberships` readers (lane G's route-connectivity finding): desk/CRM people join, practice and
 // studio analytics. In production they read packs: one plan row per person from their active credit lot.
@@ -68,7 +96,7 @@ check('people/analytics: one person in two tenants gets a row per tenant', rows(
 // ── review round 2, L3: the dashboard's active-pack count dates "today" by the studio's calendar (America/Bogota) ──
 const { readFileSync } = await import('node:fs');
 const dash = readFileSync('src/modules/admin/DashboardPage.tsx', 'utf8');
-check('M-01 the active-pack count takes the studio\'s today() (src/data/companyos/dates), not a date made in the page', /today:\s*studioToday\(\)/.test(dash) && /import \{[^}]*today as studioToday[^}]*\} from '\.\.\/\.\.\/data\/companyos\/dates'/.test(dash) && !/today:\s*dateKey\(new Date\(\)\)/.test(dash));
+check('M-01 the active-pack count takes the studio\'s today() (src/data/companyos/dates), not a date made in the page', /const creditDay = studioToday\(\)/.test(dash) && /import \{[^}]*today as studioToday[^}]*\} from '\.\.\/\.\.\/data\/companyos\/dates'/.test(dash) && !/today:\s*dateKey\(new Date\(\)\)/.test(dash));
 const D = await tryImport("export * from './src/data/companyos/dates';");
 {
   const RealDate = Date, tz = process.env.TZ;
