@@ -307,6 +307,7 @@ export const strings: StringTable = {
   // M-01 dashboard
   'admin.dashboard.title': { es: 'Panel', en: 'Dashboard' },
   'admin.dashboard.members': { es: 'Con paquete activo', en: 'With an active pack' },
+  'admin.dashboard.unusedSingleCredits': { es: 'Créditos de clase individual sin usar', en: 'Unused single-class credits' },
   'admin.dashboard.revenue': { es: 'Ingresos 30 días', en: 'Revenue 30 days' },
   'admin.dashboard.occupancy': { es: 'Ocupación 7 días', en: 'Occupancy 7 days' },
   'admin.dashboard.arrivals': { es: 'Llegadas hoy', en: 'Arrivals today' },

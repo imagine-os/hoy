@@ -33,15 +33,24 @@ check('C-01 hostile values do not show as classes (negative, NaN)', card({ membe
 
 // ── M-01 members tile: customers with an active pack ───────────────────────────────────────────────────────────
 const lot = (id, person, extra = {}) => ({ id, person, source: 'purchase', product: 'prd_pack', valid_from: '2026-10-01', valid_until: '2026-12-31', frozen_from: null, frozen_until: null, voucher: null, ...extra });
-const count = (lots, left, today = '2026-10-31') => A.activePackCustomers?.({ lots, left, today });
+const products = [{ id: 'prd_pack', kind: 'pack' }, { id: 'prd_single', kind: 'single' }, { id: 'prd_trial', kind: 'trial' }, { id: 'prd_group', kind: 'group' }];
+const balances = (lots, left, today = '2026-10-31') => A.dashboardCreditCounts?.({ lots, left, products, today });
+const count = (lots, left, today) => balances(lots, left, today)?.packCustomers;
 check('M-01 one customer with classes left counts once, however many lots', count([lot('l1', 'p1'), lot('l2', 'p1')], [{ lot: 'l1', left: 3 }, { lot: 'l2', left: 12 }]) === 1);
 check('M-01 a used-up pack does not count', count([lot('l1', 'p1')], [{ lot: 'l1', left: 0 }]) === 0);
 check('M-01 an expired pack does not count', count([lot('l1', 'p1', { valid_until: '2026-10-30' })], [{ lot: 'l1', left: 4 }]) === 0);
 check('M-01 a pack that starts later does not count yet', count([lot('l1', 'p1', { valid_from: '2026-11-05' })], [{ lot: 'l1', left: 4 }]) === 0);
-check('M-01 a pack frozen today still counts (the customer still holds it)', count([lot('l1', 'p1', { frozen_from: '2026-10-20', frozen_until: '2026-11-10' })], [{ lot: 'l1', left: 4 }]) === 1);
-check('M-01 three customers, one without classes: 2', count([lot('l1', 'p1'), lot('l2', 'p2'), lot('l3', 'p3')], [{ lot: 'l1', left: 1 }, { lot: 'l2', left: 9 }, { lot: 'l3', left: 0 }]) === 2);
-check('M-01 a lot without a person or with a hostile balance is ignored', count([lot('l1', ''), lot('l2', 'p2')], [{ lot: 'l1', left: 5 }, { lot: 'l2', left: 'x' }]) === 0);
-check('M-01 the queries read credit lots and the per-lot balance (server aggregate), not memberships', JSON.stringify(A.ACTIVE_PACK_QUERIES ?? null).includes('"credit_lot"') && JSON.stringify(A.ACTIVE_PACK_QUERIES ?? null).includes('"sum"') && !JSON.stringify(A.ACTIVE_PACK_QUERIES ?? null).includes('membership'));
+check('M-01 a frozen pack still counts (the customer still holds it)', count([lot('l1', 'p1', { frozen_from: '2026-10-20', frozen_until: '2026-11-10' })], [{ lot: 'l1', left: 4 }]) === 1);
+check('M-01 ignores missing people and invalid, negative, fractional, non-finite balances', count([lot('l1', ''), lot('l2', 'p2'), lot('l3', 'p3'), lot('l4', 'p4'), lot('l5', 'p5')], [{ lot: 'l1', left: 5 }, { lot: 'l2', left: 'x' }, { lot: 'l3', left: -1 }, { lot: 'l4', left: 0.25 }, { lot: 'l5', left: Infinity }]) === 0);
+const mixedKinds = [
+  lot('p', 'u1'), lot('s1', 'u1', { product: 'prd_single' }), lot('s2', 'u1', { product: 'prd_single', valid_until: '2026-10-31' }),
+  lot('s3', 'u2', { product: 'prd_single', valid_until: '2026-10-30' }), lot('t', 'u3', { product: 'prd_trial' }),
+  lot('g', 'u4', { product: 'prd_group' }), lot('x', 'u5', { product: 'deleted' }), lot('n', 'u6', { product: null }),
+];
+check('M-01 classifies historical lots by exact product kind and sums only valid unused single credits',
+  JSON.stringify(balances(mixedKinds, mixedKinds.map(l => ({ lot: l.id, left: 1 })))) === JSON.stringify({ packCustomers: 1, unusedSingleCredits: 2 }));
+const spec = JSON.stringify(A.ACTIVE_PACK_QUERIES ?? null);
+check('M-01 queries lots, product kinds and server-side balances, not memberships', spec.includes('"credit_lot"') && spec.includes('"product"') && spec.includes('"sum"') && !spec.includes('membership'));
 
 // ── The other `memberships` readers (lane G's route-connectivity finding): desk/CRM people join, practice and
 // studio analytics. In production they read packs: one plan row per person from their active credit lot.

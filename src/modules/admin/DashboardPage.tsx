@@ -20,7 +20,7 @@ import { M01, M12 } from './specs';
 import './admin.css';
 import { auditTitle } from '../staff/audit';
 import { useCosQueries } from '../staff/desk/useCos';
-import { ACTIVE_PACK_QUERIES, activePackCustomers } from './activePacks';
+import { ACTIVE_PACK_QUERIES, dashboardCreditCounts } from './activePacks';
 import { PRODUCTION_BUILD } from '../../config/launch';
 import { today as studioToday } from '../../data/companyos/dates';
 import { activityRows, readAuditPage } from '../../data/companyos/audit';
@@ -41,19 +41,22 @@ export function DashboardPage() {
   const { t, lang } = useI18n();
   const { can, hasRole } = useSession();
   const { sections, isVisible } = useLayout(M01);
-  // R-05 (Hoy all-roles): production counts customers with an active pack from Company OS credits (two queries, the
-  // balance a server aggregate); `memberships` has no adapter there. The review build keeps counting its membership
-  // rows (`request` is null outside production). A role that may not read credits sees "—", not a crash.
+  // Production uses the authoritative credit balance and the exact purchased product kind.
   const packs = useCosQueries(ACTIVE_PACK_QUERIES);
   const memberships = useReviewMemberships();
-  const packRows = packs.rows;
-  const members: number | string = !packs.request ? memberships.length : packs.error ? '—' : !packRows ? '…' : activePackCustomers({
-    // `/query` rows carry their fields under `data` (integration guide §4); aggregate rows are flat.
-    lots: packRows.lots.map((l) => fieldsOf(l)).map((d, i) => ({ id: packRows.lots[i].id, person: str(d.person) ?? '', valid_from: str(d.valid_from), valid_until: str(d.valid_until) })),
-    left: packRows.left.map((x) => ({ lot: str(x.lot) ?? '', left: typeof x.left === 'number' ? x.left : Number(x.left) })),
-    // The studio's calendar day (America/Bogota), as every Company OS screen dates "today" (review round 2, L3).
+  const packRows = packs.current ? packs.rows : null;
+  const credits = packRows ? dashboardCreditCounts({
+    lots: packRows.lots.map((r) => {
+      const d = fieldsOf(r);
+      return { id: r.id, person: str(d.person) ?? '', product: str(d.product), valid_from: str(d.valid_from), valid_until: str(d.valid_until) };
+    }),
+    left: packRows.left.map((x) => ({ lot: str(x.lot) ?? '', left: typeof x.left === 'number' || typeof x.left === 'string' ? Number(x.left) : NaN })),
+    products: packRows.products.map((r) => ({ id: r.id, kind: fieldsOf(r).kind })),
     today: studioToday(),
-  });
+  }) : null;
+  const unavailable = packs.error ? '—' : '…';
+  const members: number | string = !packs.request ? memberships.length : credits?.packCustomers ?? unavailable;
+  const unusedSingleCredits: number | string = !packs.request ? '—' : credits?.unusedSingleCredits ?? unavailable;
   const { rows: payments } = useTable<PaymentRow>('payments', { where: { status: 'approved' } });
   const since = Date.now() - 30 * MS.day;
   const revenue = payments.filter((p) => p.paid_at && new Date(p.paid_at).getTime() > since).reduce((a, p) => a + p.amount, 0);
@@ -82,6 +85,7 @@ export function DashboardPage() {
     'KPIRow ×4': () => (
       <div className="grid grid-4">
         <div data-members-tile><StatTile label={t('admin.dashboard.members')} value={members} trend="up" /></div>
+        <div data-unused-single-credits><StatTile label={t('admin.dashboard.unusedSingleCredits')} value={unusedSingleCredits} /></div>
         <StatTile label={t('admin.dashboard.revenue')} value={formatCOP(revenue, lang)} />
         <StatTile label={t('admin.dashboard.occupancy')} value={`${occ}%`} trend={occ > 70 ? 'up' : 'flat'} />
         <StatTile label={t('admin.dashboard.arrivals')} value={todayBookings.length} hint={t('admin.dashboard.arrivals.hint', { n: todayIds.length })} />
