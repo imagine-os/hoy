@@ -66,11 +66,12 @@ const make = (api) => new provider.CompanyOSProvider({ fetch: api.fetch, getToke
 const png = () => new Blob([new Uint8Array([0x89, 0x50, 0x4e, 0x47])], { type: 'image/png' });
 
 // ── The names Lane C1 fixed ──────────────────────────────────────────────────────────────────────────────────────
-await test('names: the coach photo and the settings image, in one place, as Company OS declares them', () => {
+await test('names: the coach photo, default class cover and settings image have separate fields and kinds', () => {
   needs(images);
   assert.deepEqual(images.COACH_PHOTO, { ownerEntity: 'coach', kind: 'photo' });
+  assert.deepEqual(images.COACH_CLASS_COVER, { ownerEntity: 'coach', kind: 'class-cover' });
   assert.deepEqual(images.SETTING_IMAGE, { ownerEntity: 'setting', kind: 'image' });
-  assert.deepEqual(images.COACH_FIELDS, { bio: 'bio', specialties: 'specialties', photo: 'photo' });
+  assert.deepEqual(images.COACH_FIELDS, { bio: 'bio', specialties: 'specialties', photo: 'photo', classCover: 'default_class_photo' });
 });
 
 // ── The real upload path ─────────────────────────────────────────────────────────────────────────────────────────
