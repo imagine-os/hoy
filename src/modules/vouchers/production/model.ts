@@ -220,7 +220,7 @@ export async function createVoucher(data: DataProvider, body: Loose, key: string
 }
 /** BO-03: correct an expiry without invalidating existing claims, changing the code or sending a second email. */
 export const canCorrectVoucherExpiry = (v: CosVoucher) =>
-  isGiftOrCourtesy(v) && !v.voided_at && (v.uses ?? 0) === 0;
+  isGiftOrCourtesy(v) && !v.voided_at && !v.redeemed_at && !v.redeemed_by && v.uses === 0;
 
 export async function correctVoucherExpiry(data: DataProvider, v: CosVoucher, next: string, today: string, key: string): Promise<true> {
   const day = /^\d{4}-\d{2}-\d{2}$/.test(next) ? new Date(next + 'T12:00:00Z') : null;
@@ -229,8 +229,15 @@ export async function correctVoucherExpiry(data: DataProvider, v: CosVoucher, ne
   }
   const cos = port(data);
   const ids = await batch(cos, [{ op: 'update', entity: VOUCHER_ENTITY, id: v.id,
-    data: { valid_until: next }, ifMatch: { field: 'valid_until', value: v.valid_until } }], key);
+    data: { voucher_expiry_correction: { expectedValidUntil: v.valid_until ?? null, nextValidUntil: next } } }], key);
   if (ids[0] !== v.id) throw new CosError('unknown', 502);
+  // The command is additive. A pre-command server could ignore it and still return the id; never infer success.
+  const { data: rows } = await cos.request<{ data: unknown[] }>('POST', '/query', {
+    entity: VOUCHER_ENTITY, filter: { field: 'id', op: 'eq', value: v.id }, limit: 1,
+  }).catch(() => { throw new CosError('voucher_expiry_unverified', 502); });
+  if (rows.length !== 1 || cosVoucher(rows[0])?.id !== v.id || cosVoucher(rows[0])?.valid_until !== next) {
+    throw new CosError('voucher_expiry_unverified', 502);
+  }
   cos.refreshTables?.();
   return true;
 }

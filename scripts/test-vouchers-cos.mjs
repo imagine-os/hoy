@@ -120,22 +120,28 @@ try {
     await assert.rejects(m.createVoucher(data, body, 'key-courtesy-3'), (e) => m.writeMayHaveCommitted(e), 'no answer: the key is kept for the retry');
   });
 
-  await test('BO-03 expiry correction updates only a single gift or courtesy, with a stale-value guard', async () => {
-    let sent;
-    const data = { request: async (...args) => { sent = args; return { ids: ['fixture'] }; } };
-    const voucher = { id: 'fixture', kind: 'gift', classes: 1, uses: 0, max_uses: 1, valid_until: '2026-11-15' };
-    await m.correctVoucherExpiry(data, voucher, '2026-11-30', today, 'test-expiry-key');
-    assert.deepEqual(sent, ['POST', '/batch', { ops: [{ op: 'update', entity: 'voucher', id: 'fixture', data: { valid_until: '2026-11-30' }, ifMatch: { field: 'valid_until', value: '2026-11-15' } }] }, { idempotencyKey: 'test-expiry-key' }]);
-    const recent = sent;
+  await test('BO-03 expiry correction uses the atomic voucher command and verifies the new date', async () => {
+    const calls = [];
+    const v = { id: 'fixture', kind: 'gift', classes: 1, uses: 0, max_uses: 1, valid_until: '2026-11-15' };
+    let persist = true;
+    const data = { request: async (...args) => {
+      calls.push(args);
+      return args[1] === '/batch' ? { ids: [v.id] } : { data: [{ id: v.id, data: { ...v, valid_until: persist ? '2026-11-30' : v.valid_until } }] };
+    } };
+    await m.correctVoucherExpiry(data, v, '2026-11-30', today, 'test-expiry-key');
+    assert.deepEqual(calls[0], ['POST', '/batch', { ops: [{ op: 'update', entity: 'voucher', id: v.id, data: { voucher_expiry_correction: { expectedValidUntil: '2026-11-15', nextValidUntil: '2026-11-30' } } }] }, { idempotencyKey: 'test-expiry-key' }]);
+    assert.deepEqual(calls[1], ['POST', '/query', { entity: 'voucher', filter: { field: 'id', op: 'eq', value: v.id }, limit: 1 }]);
     for (const bad of ['', '2026-11-01', '2026-11-31', '2026-11-15', 'not a date']) {
-      await assert.rejects(m.correctVoucherExpiry(data, voucher, bad, today, 'test-expiry-key'), { code: 'invalid_voucher_expiry_correction' });
+      await assert.rejects(m.correctVoucherExpiry(data, v, bad, today, 'test-expiry-key'), { code: 'invalid_voucher_expiry_correction' });
     }
-    for (const bad of [{ ...voucher, kind: 'group' }, { ...voucher, uses: 1 }, { ...voucher, voided_at: '2026-11-02' }]) {
+    for (const bad of [{ ...v, kind: 'group' }, { ...v, uses: 1 }, { ...v, uses: undefined }, { ...v, voided_at: '2026-11-02' }, { ...v, redeemed_at: '2026-11-02' }]) {
       await assert.rejects(m.correctVoucherExpiry(data, bad, '2026-11-30', today, 'test-expiry-key'), { code: 'invalid_voucher_expiry_correction' });
     }
-    assert.equal(sent, recent, 'invalid or unsupported edits never reach the server');
-    await m.correctVoucherExpiry(data, { ...voucher, valid_until: undefined }, '2026-11-30', today, 'test-expiry-key');
-    assert.deepEqual(JSON.parse(JSON.stringify(sent[2].ops[0].ifMatch)), { field: 'valid_until' }, 'missing expiry is not coerced to null');
+    assert.equal(calls.length, 2, 'invalid or unsupported edits never reach the server');
+    await m.correctVoucherExpiry(data, { ...v, valid_until: undefined }, '2026-11-30', today, 'test-expiry-key');
+    assert.equal(calls[2][2].ops[0].data.voucher_expiry_correction.expectedValidUntil, null);
+    persist = false;
+    await assert.rejects(m.correctVoucherExpiry(data, v, '2026-11-30', today, 'test-expiry-key'), { code: 'voucher_expiry_unverified' }, 'ids-only response is not proof the command ran');
   });
 
   await test("BO-04 opening the link and redeeming adds the voucher's classes to the person's balance", async () => {

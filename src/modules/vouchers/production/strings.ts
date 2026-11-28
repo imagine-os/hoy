@@ -12,6 +12,7 @@ export const productionStrings: StringTable = {
   'vouchers.cos.expiry.save': { es: 'Guardar vencimiento', en: 'Save expiry' },
   'vouchers.cos.expiry.saved': { es: 'Vencimiento guardado.', en: 'Expiry saved.' },
   'vouchers.cos.expiry.changed': { es: 'Este bono cambió. Cierra y vuelve a abrir para revisar los datos actuales.', en: 'This voucher changed. Close and reopen to review its current details.' },
+  'vouchers.cos.expiry.forbidden': { es: 'Tu cuenta no tiene permiso para cambiar este bono.', en: 'Your account does not have permission to change this voucher.' },
   'vouchers.cos.expiry.failed': { es: 'No se pudo guardar. Actualiza y revisa si el bono cambió o si tienes permiso.', en: 'Could not save. Refresh to check whether the voucher changed or you have permission.' },
   'vouchers.cos.expiry.uncertain': { es: 'No pudimos confirmar el resultado. Reintenta esta misma solicitud para comprobarlo.', en: 'The result could not be confirmed. Retry this same request to check it.' },
   'vouchers.cos.expiry.retry': { es: 'Reintentar la misma solicitud', en: 'Retry same request' },

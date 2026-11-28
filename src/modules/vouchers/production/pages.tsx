@@ -223,6 +223,10 @@ function VoucherExpiryEditor({ voucher, stale }: { voucher: CosVoucher; stale: b
   const changed = voucher.valid_until !== snapshot.current?.valid_until || !canCorrectVoucherExpiry(voucher);
   const retrying = submit.keptKey();
   const canSave = !submit.busy && !!next && next >= today && next !== snapshot.current?.valid_until && (!changed || retrying) && (!stale || retrying);
+  const errorCopy = retrying ? 'uncertain'
+    : submit.error?.code === 'voucher_expiry_correction_stale' || submit.error?.code === 'voucher_redeemed' ? 'changed'
+    : submit.error?.code === 'forbidden' || submit.error?.code === 'write_forbidden' ? 'forbidden'
+    : 'failed';
   return (
     <div className="stack-sm">
       <Field label={t('vouchers.cos.validUntil')} hint={t('vouchers.cos.expiry.hint')} required>
@@ -231,14 +235,14 @@ function VoucherExpiryEditor({ voucher, stale }: { voucher: CosVoucher; stale: b
         }} />}
       </Field>
       {changed && !retrying && <Notice tone="warn">{t('vouchers.cos.expiry.changed')}</Notice>}
-      {submit.error && <Notice tone="danger">{t(retrying ? 'vouchers.cos.expiry.uncertain' : 'vouchers.cos.expiry.failed')}</Notice>}
+      {submit.error && <Notice tone="danger">{t(`vouchers.cos.expiry.${errorCopy}`)}</Notice>}
       <div className="row wrap">
         <Button size="sm" disabled={!canSave} loading={submit.busy} onClick={async () => {
           const original = snapshot.current;
           if (!canSave || !original) return;
           if (await submit.run((key) => correctVoucherExpiry(data, original, next, today, key))) { setSaved(true); setOpen(false); }
         }}>{t(retrying ? 'vouchers.cos.expiry.retry' : 'vouchers.cos.expiry.save')}</Button>
-        <Button size="sm" variant="ghost" disabled={submit.busy} onClick={() => setOpen(false)}>{t('core.common.cancel')}</Button>
+        <Button size="sm" variant="ghost" disabled={submit.busy || retrying} onClick={() => setOpen(false)}>{t('core.common.cancel')}</Button>
       </div>
     </div>
   );
