@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useI18n } from '../../../i18n/I18nProvider';
 import { addDaysKey, dateKey, formatCOP, formatDate, fromDateKey } from '../../../i18n/format';
 import { useData, useTable } from '../../../data/DataContext';
+import { today as studioToday } from '../../../data/companyos/dates';
 import { useLiveUpdates } from '../../../data/companyos/hooks';
 import type { BaseRow } from '../../../data/schema';
 import { Card } from '../../../components/molecule/Card/Card';
@@ -13,7 +14,7 @@ import { Notice } from '../../../components/molecule/Notice/Notice';
 import { Badge } from '../../../components/atom/Badge/Badge';
 import { codeFromLink, useCosVouchers, useGiftProducts, useGiftProductsOnSale, useKeyedSubmit, type CosVoucherList } from './hooks';
 import {
-  PAYMENT_TABLE, VOUCHER_CHANGES, courtesyBody, courtesyErrors, createVoucher, giftCheckoutPath, giftPaymentNotes, giftValidUntil, giftsToIssue,
+  PAYMENT_TABLE, VOUCHER_CHANGES, canCorrectVoucherExpiry, correctVoucherExpiry, courtesyBody, courtesyErrors, createVoucher, giftCheckoutPath, giftPaymentNotes, giftValidUntil, giftsToIssue,
   giftBody, isCode, isEmail, normalizeCode, redeemVoucher, voucherState,
   type CosVoucher, type CourtesyForm, type GiftPayment, type GiftProduct, type RedeemedLot,
 } from './model';
@@ -202,7 +203,52 @@ function GiftsToIssue({ list }: { list: VoucherList }) {
 }
 
 // ── voucher list (BO-05, BO-06: sent and used, as the studio sees them) ─────────────────────────────────────────
-function VoucherList({ list: { vouchers, loading, failed } }: { list: VoucherList }) {
+function VoucherExpiryEditor({ voucher, stale }: { voucher: CosVoucher; stale: boolean }) {
+  const { t } = useI18n();
+  const data = useData();
+  const [open, setOpen] = useState(false);
+  const [next, setNext] = useState('');
+  const [saved, setSaved] = useState(false);
+  const submit = useKeyedSubmit();
+  const snapshot = useRef<CosVoucher | null>(null);
+  const today = studioToday();
+  if (!open) return (
+    <div className="row wrap">
+      {canCorrectVoucherExpiry(voucher) && <Button size="sm" variant="secondary" disabled={stale} onClick={() => {
+        snapshot.current = voucher; setSaved(false); setNext(voucher.valid_until ?? ''); submit.clearError(); submit.renew(); setOpen(true);
+      }}>{t('vouchers.cos.expiry.edit')}</Button>}
+      {saved && <span role="status" className="small">{t('vouchers.cos.expiry.saved')}</span>}
+    </div>
+  );
+  const changed = voucher.valid_until !== snapshot.current?.valid_until || !canCorrectVoucherExpiry(voucher);
+  const retrying = submit.keptKey();
+  const canSave = !submit.busy && !!next && next >= today && next !== snapshot.current?.valid_until && (!changed || retrying) && (!stale || retrying);
+  const errorCopy = retrying ? 'uncertain'
+    : submit.error?.code === 'voucher_expiry_correction_stale' || submit.error?.code === 'voucher_redeemed' ? 'changed'
+    : submit.error?.code === 'forbidden' || submit.error?.code === 'write_forbidden' ? 'forbidden'
+    : 'failed';
+  return (
+    <div className="stack-sm">
+      <Field label={t('vouchers.cos.validUntil')} hint={t('vouchers.cos.expiry.hint')} required>
+        {(id) => <Input id={id} type="date" min={today} value={next} disabled={submit.busy || retrying} onChange={(e) => {
+          setNext(e.target.value); submit.clearError(); submit.renew();
+        }} />}
+      </Field>
+      {changed && !retrying && <Notice tone="warn">{t('vouchers.cos.expiry.changed')}</Notice>}
+      {submit.error && <Notice tone="danger">{t(`vouchers.cos.expiry.${errorCopy}`)}</Notice>}
+      <div className="row wrap">
+        <Button size="sm" disabled={!canSave} loading={submit.busy} onClick={async () => {
+          const original = snapshot.current;
+          if (!canSave || !original) return;
+          if (await submit.run((key) => correctVoucherExpiry(data, original, next, today, key))) { setSaved(true); setOpen(false); }
+        }}>{t(retrying ? 'vouchers.cos.expiry.retry' : 'vouchers.cos.expiry.save')}</Button>
+        <Button size="sm" variant="ghost" disabled={submit.busy || retrying} onClick={() => setOpen(false)}>{t('core.common.cancel')}</Button>
+      </div>
+    </div>
+  );
+}
+
+function VoucherList({ list: { vouchers, loading, stale, failed }, allowExpiryEdit = false }: { list: VoucherList; allowExpiryEdit?: boolean }) {
   const { t, lang } = useI18n();
   const today = dateKey();
   return (
@@ -227,6 +273,7 @@ function VoucherList({ list: { vouchers, loading, failed } }: { list: VoucherLis
                 {v.valid_until ? t('vouchers.cos.list.until', { date: day(v.valid_until, lang) }) : t('vouchers.cos.list.noEnd')}
                 {v.redeemed_at && <> · {t('vouchers.cos.list.used', { date: day(v.redeemed_at, lang) })}</>}
               </p>
+              {allowExpiryEdit && <VoucherExpiryEditor voucher={v} stale={loading || stale || failed} />}
             </div>
           </Card>
         );
@@ -290,7 +337,7 @@ export function VoucherStudioPage() {
       <div className="stack">
         <CourtesyCard />
         <GiftsToIssue list={list} />
-        <VoucherList list={list} />
+        <VoucherList list={list} allowExpiryEdit />
       </div>
     </div>
   );

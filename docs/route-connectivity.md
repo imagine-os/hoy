@@ -250,8 +250,8 @@ W = written, with each table's adapter kind (`none` = no adapter). Findings name
 | `/staff/transfers` | R: —<br>W: — | GET /me, GET /members, POST /batch, POST /query | none |
 | `/app/pay/:what/:id` | R: tenants (settings)<br>W: — | GET /api/booking/:x, GET /api/occurrence/:x, POST /batch, POST /files, POST /files/:x/confirm, POST /query | none |
 | `/admin/payments/report` | R: —<br>W: — | GET /members, POST /query | none |
-| `/staff/vouchers` | R: payments (entity), plans (entity)<br>W: — | POST /api/:x, POST /query | none |
-| `/admin/vouchers` | R: payments (entity), plans (entity)<br>W: — | POST /api/:x, POST /query | none |
+| `/staff/vouchers` | R: payments (entity), plans (entity)<br>W: — | POST /api/:x, POST /batch, POST /query | none |
+| `/admin/vouchers` | R: payments (entity), plans (entity)<br>W: — | POST /api/:x, POST /batch, POST /query | none |
 | `/admin/vouchers/teachers` | R: payments (entity), teachers (entity)<br>W: — | POST /api/:x, POST /query | none |
 | `/app/vouchers` | R: —<br>W: — | POST /api/:x, POST /query | none |
 | `/app/vouchers/:code` | R: —<br>W: — | POST /api/:x, POST /query | none |
