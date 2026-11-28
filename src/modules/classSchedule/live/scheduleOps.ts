@@ -19,7 +19,30 @@ export interface CoachProfile { bio: { es: string; en: string }; specialties: st
 /** `photoAtOpen`: the `photo` the record held when the form opened, as stored: a save is refused if it has changed since. */
 export interface CoachDraft { name: string; email?: string; phone?: string; active: boolean; profile?: CoachProfile; photoAtOpen?: unknown }
 
-export type ScheduleProblem = 'title' | 'weekday' | 'start_time' | 'resource' | 'coach' | 'capacity' | 'valid_from' | 'modality' | 'description';
+type DateWindowProblem = 'valid_from' | 'valid_until' | 'date_order' | 'weekday_outside_range';
+export type ScheduleProblem = 'title' | 'weekday' | 'start_time' | 'resource' | 'coach' | 'capacity' | 'modality' | 'description' | DateWindowProblem;
+
+const dateAtUtcNoon = (key: unknown): Date | null => {
+  if (typeof key !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(key)) return null;
+  const day = new Date(`${key}T12:00:00Z`);
+  return Number.isFinite(day.getTime()) && day.toISOString().slice(0, 10) === key ? day : null;
+};
+
+/** The stored dates are studio calendar labels; use UTC math solely to count days, not as a studio clock. */
+export function scheduleDateProblem(row: { valid_from?: unknown; valid_until?: unknown; weekday?: unknown }): DateWindowProblem | null {
+  const from = dateAtUtcNoon(row.valid_from);
+  if (!from) return 'valid_from';
+  if (row.valid_until == null || row.valid_until === '') return null;
+  const until = dateAtUtcNoon(row.valid_until);
+  if (!until) return 'valid_until';
+  if (until < from) return 'date_order';
+  const weekday = row.weekday;
+  if (typeof weekday === 'number' && Number.isInteger(weekday) && weekday >= 0 && weekday <= 6) {
+    const daysUntilFirst = (weekday - from.getUTCDay() + 7) % 7;
+    if (from.getTime() + daysUntilFirst * 86_400_000 > until.getTime()) return 'weekday_outside_range';
+  }
+  return null;
+}
 
 /** Checks a class before it is sent; the server checks types and references. */
 export function scheduleProblems(d: ScheduleDraft, roomCapacity: number | undefined): ScheduleProblem[] {
@@ -31,14 +54,16 @@ export function scheduleProblems(d: ScheduleDraft, roomCapacity: number | undefi
   if (!d.resource) out.push('resource');
   if (!d.coach) out.push('coach');
   if (!Number.isInteger(d.capacity) || d.capacity < 1 || (roomCapacity != null && d.capacity > roomCapacity)) out.push('capacity');
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(d.valid_from)) out.push('valid_from');
+  const dateProblem = scheduleDateProblem(d);
+  if (dateProblem) out.push(dateProblem);
   // A class without a class type is not open for booking (`no_class_type`), so a published row must have one; a draft may wait.
   if (d.active && !d.modality?.trim()) out.push('modality');
   return out;
 }
 
-/** The list's Publish button: a draft without a class type can't go live; switching a published row off is always possible. */
-export const schedulePublishBlocked = (row: Record<string, unknown>): boolean => row.active === false && !hasClassType(row);
+/** A draft needs a class type and usable dates; switching a published row off stays possible. */
+export const schedulePublishBlocked = (row: Record<string, unknown>): boolean =>
+  row.active === false && (!hasClassType(row) || (row.valid_from !== undefined && scheduleDateProblem(row) !== null));
 const hasClassType = (row: Record<string, unknown>): boolean => typeof row.modality === 'string' && !!row.modality.trim();
 
 /** What a row without a class type says: a draft how to publish; a published one that its classes can't be booked. */

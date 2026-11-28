@@ -21,7 +21,7 @@ import { SharedImageField } from '../../../components/organism/SharedImageField/
 import { COACH_PHOTO, SCHEDULE_IMAGE, ImageDraft, coachPhotoUrl, saveThenRemoveOld, type ImagePort, type ImageSaveNotice } from '../../../data/companyos/publicImages';
 import {
   WEEKDAYS, cancelOccurrenceOps, createCoachOps, createResourceOps, createScheduleOps, generateOps, publishScheduleOps,
-  coachProfileOf, scheduleImageOf, schedulePublishBlocked, scheduleProblems, scheduleTypeHint, updateCoachOps, updateResourceOps, updateScheduleOps, type CoachProfile, type ScheduleDraft,
+  coachProfileOf, scheduleDateProblem, scheduleImageOf, schedulePublishBlocked, scheduleProblems, scheduleTypeHint, updateCoachOps, updateResourceOps, updateScheduleOps, type CoachProfile, type ScheduleDraft,
 } from './scheduleOps';
 
 import { downloadScheduleWorkbook, exportRows } from './scheduleExport';
@@ -152,18 +152,22 @@ function Classes({ rows, rooms, coaches, roomName, coachName, weekday, scope, ca
         {problems.map(p => <p key={p} className="xs register-diff">{t(`live.problem.${p}`)}</p>)}
         <div className="row wrap"><Button disabled={busy || photoBusy || problems.length > 0} loading={busy} onClick={save}>{t('live.save')}</Button><Button variant="ghost" disabled={busy || photoBusy} onClick={() => { setImageNotice(null); setEdit(null); }}>{t('core.common.cancel')}</Button></div>
       </Card>}
-      {rows.length === 0 ? <EmptyState compact title={t('live.empty')} /> : rows.map(r => (
-        <Card key={r.id} data-schedule={r.id} padding="sm" title={str(r.title)} eyebrow={`${weekday(num(r.weekday))} · ${str(r.start_time)}`} actions={canWrite && <div className="row wrap">
+      {rows.length === 0 ? <EmptyState compact title={t('live.empty')} /> : rows.map(r => {
+        const dateProblem = scheduleDateProblem({ valid_from: r.valid_from, valid_until: r.valid_until, weekday: r.weekday });
+        const startDate = str(r.valid_from).slice(0, 10);
+        const endDate = str(r.valid_until).slice(0, 10);
+        return <Card key={r.id} data-schedule={r.id} padding="sm" title={str(r.title)} eyebrow={`${weekday(num(r.weekday))} · ${str(r.start_time)}`} actions={canWrite && <div className="row wrap">
           <Button size="sm" variant="outline" onClick={() => { setImageNotice(null); setEdit({ scope, id: r.id, draft: toDraft(r), key: newActionKey(), imageDraft: new ImageDraft(data as unknown as ImagePort) }); }}>{t('live.edit')}</Button>
           <Button size="sm" variant="tonal" disabled={busy || schedulePublishBlocked(r)} onClick={() => run(publishScheduleOps(r.id, r.active === false), newActionKey(), t('live.saved'))}>{r.active === false ? t('live.publish') : t('live.unpublish')}</Button>
         </div>}>
           <p className="small">{coachName(r.coach)} · {roomName(r.resource)} · {t('live.rooms.mats', { n: num(r.capacity) })} <Badge tone={r.active === false ? 'neutral' : 'success'}>{r.active === false ? t('live.draft') : t('live.published')}</Badge> {str(r.modality) ? <Badge>{typeName(r.modality)}</Badge> : <Badge tone="warn">{t('live.noType')}</Badge>}</p>
-           {str(r.valid_until)
-             ? <p className="small muted">{t('live.validity.bounded', { from: str(r.valid_from).slice(0, 10) || '—', until: str(r.valid_until).slice(0, 10) })}</p>
-             : <p className="small muted">{t('live.validity.open', { from: str(r.valid_from).slice(0, 10) || '—' })}</p>}
+          {startDate && startDate === endDate && !dateProblem
+            ? <p className="small muted">{t('live.validity.single', { date: startDate })}</p>
+            : <p className="small muted">{endDate ? t('live.validity.bounded', { from: startDate || '—', until: endDate }) : t('live.validity.open', { from: startDate || '—' })}</p>}
+          {canWrite && dateProblem && <p className="xs register-diff">{t(`live.problem.${dateProblem}`)}</p>}
           {canWrite && scheduleTypeHint(r) && <p className="xs muted" data-type-hint>{t(`live.typeHint.${scheduleTypeHint(r)}`)}</p>}
         </Card>
-      ))}
+      })}
     </div>
   );
 }

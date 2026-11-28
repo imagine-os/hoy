@@ -30,6 +30,13 @@ const D = await load("export { strings } from './src/modules/admin/strings';");
 // ── Class type in Class schedule ─────────────────────────────────────────────────────────────────────────────────
 const draft = (extra = {}) => ({ title: 'Pulso mañana', weekday: 1, start_time: '07:00', resource: 'room', coach: 'c1', capacity: 16, valid_from: '2026-11-09', valid_until: '', active: true, modality: 'pulso', ...extra });
 const problems = (d) => S.scheduleProblems?.(d, 16) ?? [];
+check('date range: impossible starts and ends are refused', problems(draft({ valid_from: '2026-02-30' })).includes('valid_from') && problems(draft({ valid_until: '2026-13-01' })).includes('valid_until'));
+check('date range: an end before start is refused', problems(draft({ valid_until: '2026-11-08' })).includes('date_order'));
+check('date range: a Monday-only window cannot publish a Sunday', problems(draft({ weekday: 0, valid_until: '2026-11-09' })).includes('weekday_outside_range'));
+check('date range: a Sunday-only window can publish its actual Sunday', problems(draft({ weekday: 0, valid_from: '2026-11-15', valid_until: '2026-11-15' })).length === 0);
+check('date range: Sunday at the inclusive end is valid; the day before is not', problems(draft({ weekday: 0, valid_until: '2026-11-15' })).length === 0 && problems(draft({ weekday: 0, valid_until: '2026-11-14' })).includes('weekday_outside_range'));
+check('date range: legacy invalid draft cannot publish but can still unpublish if active', S.schedulePublishBlocked?.(draft({ weekday: 0, valid_until: '2026-11-09', active: false })) === true && S.schedulePublishBlocked?.(draft({ weekday: 0, valid_until: '2026-11-09', active: true })) === false);
+
 check('class type: a published class without one is refused', problems(draft({ modality: '' })).includes('modality'), JSON.stringify(problems(draft({ modality: '' }))));
 check('class type: a draft (not published) may wait for it', !problems(draft({ modality: '', active: false })).includes('modality'));
 check('class type: a published class with one has no problem', problems(draft()).length === 0, JSON.stringify(problems(draft())));
