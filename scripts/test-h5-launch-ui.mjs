@@ -71,7 +71,7 @@ try {
         const { file, uploadUrl } = await c.request('POST', '/files', { ownerEntity: 'payment', ownerId: ids[0], kind: 'receipt', filename: 'r.png', mime: 'image/png', sizeBytes: 12 });
         await c.put(uploadUrl, { body: new Uint8Array([137, 80, 78, 71]) }); await c.request('POST', `/files/${file.id}/confirm`);
         const person = c.db.person[0].id, pack = c.db.product.find((x) => x.data.key === 'pack12');
-        await c.request('POST', '/batch', { ops: [{ op: 'create', entity: 'payment', data: { person, product: pack.id, amount: 600000, method: 'transfer', status: 'pending', date: '2026-11-01' } }] }, { idempotencyKey: 'seed-key-pg05-pack' });
+        await c.request('POST', '/batch', { ops: [{ op: 'create', entity: 'payment', data: { person, product: pack.id, amount: 600000, method: 'transfer', reference: 'R-PG05-PACK', status: 'pending', date: '2026-11-01' } }] }, { idempotencyKey: 'seed-key-pg05-pack' });
         c.seed('payment', { person, product: prod.id, amount: 55000, method: 'transfer', status: 'pending', for_entity: 'booking', for_id: 'qa-unavailable-hold' });
         c.as('usr_desk');
       });
