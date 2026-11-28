@@ -50,18 +50,20 @@ const userOf = (req) => /^Bearer fake\.([^.]+)\.[^.]+$/.exec(req.headers.authori
 const json = (res, status, body) => { res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(body)); };
 const readBody = (req) => new Promise((r) => { let s = ''; req.on('data', (c) => { s += c; }); req.on('end', () => { try { r(JSON.parse(s || '{}')); } catch { r({}); } }); });
 const roleOfUser = (user) => user?.startsWith('user_') ? user.slice(5) : null;
-// Credits for the customer (an 8-class pack to 31 Dec) and two other customers (one with classes, one used up).
+// Three pack holders (one used up); a fourth has one unused single-class credit and is not an active pack holder.
 const LOTS = [
   { id: 'lot_c1', data: { person: 'per_customer', source: 'purchase', product: 'prd_pack', valid_from: '2026-10-01', valid_until: '2026-12-31', frozen_from: null, frozen_until: null, voucher: null } },
   { id: 'lot_c2', data: { person: 'per_other', source: 'purchase', product: 'prd_pack', valid_from: '2026-10-01', valid_until: '2026-12-31', frozen_from: null, frozen_until: null, voucher: null } },
   { id: 'lot_c3', data: { person: 'per_done', source: 'purchase', product: 'prd_pack', valid_from: '2026-09-01', valid_until: '2026-11-30', frozen_from: null, frozen_until: null, voucher: null } },
+  { id: 'lot_single', data: { person: 'per_single', source: 'purchase', product: 'prd_single', valid_from: '2026-10-01', valid_until: '2026-12-31', frozen_from: null, frozen_until: null, voucher: null } },
 ];
-const LEFT = [{ lot: 'lot_c1', left: 8 }, { lot: 'lot_c2', left: 3 }, { lot: 'lot_c3', left: 0 }];
+const LEFT = [{ lot: 'lot_c1', left: 8 }, { lot: 'lot_c2', left: 3 }, { lot: 'lot_c3', left: 0 }, { lot: 'lot_single', left: 1 }];
 const queries = [];
 function answerQuery(user, q) {
   queries.push({ user, entity: q.entity, aggregate: !!q.aggregate });
   const role = roleOfUser(user);
   if (q.entity === 'person') return [{ id: `per_${role}`, data: { name: `${role} Prueba`, user, email: `${role}@example.test` }, createdAt: '2026-10-01T10:00:00Z' }];
+  if (q.entity === 'product') return [{ id: 'prd_pack', data: { kind: 'pack' } }, { id: 'prd_single', data: { kind: 'single' } }];
   if (q.entity === 'credit_lot') return role === 'customer' ? LOTS.filter((l) => l.data.person === 'per_customer') : LOTS;
   if (q.entity === 'credit_entry' && q.aggregate) return role === 'customer' ? LEFT.filter((l) => l.lot === 'lot_c1') : LEFT;
   if (q.entity === 'credit_entry') {
@@ -159,7 +161,9 @@ try {
       await page.waitForTimeout(800);
       const tile = await page.locator('[data-members-tile]').first().innerText().catch(() => '');
       check('M-01 the dashboard counts customers with an active pack (2 of 3)', /\b2\b/.test(tile), tile);
-      check('M-01 the dashboard reads credit lots and their balances, not memberships', queries.some((q) => q.user === 'user_admin' && q.entity === 'credit_lot') && queries.some((q) => q.user === 'user_admin' && q.entity === 'credit_entry' && q.aggregate) && !queries.some((q) => /membership/.test(q.entity)));
+      const singles = await page.locator('[data-unused-single-credits]').first().innerText().catch(() => '');
+      check('M-01 the dashboard shows the one unused single separately', /\b1\b/.test(singles), singles);
+      check('M-01 the dashboard reads product kinds, credit lots and their balances, not memberships', queries.some((q) => q.user === 'user_admin' && q.entity === 'product') && queries.some((q) => q.user === 'user_admin' && q.entity === 'credit_lot') && queries.some((q) => q.user === 'user_admin' && q.entity === 'credit_entry' && q.aggregate) && !queries.some((q) => /membership/.test(q.entity)));
     }
     await ctx.close();
   }
