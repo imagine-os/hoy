@@ -1579,6 +1579,8 @@ export const strings: StringTable = {
   'admin.analytics.nav': { es: 'Analítica', en: 'Analytics' },
   'admin.analytics.title': { es: 'Analítica de práctica', en: 'Practice analytics' },
   'admin.analytics.subtitle': { es: 'Asistencia y retención del estudio. Sin cifras de ingresos: el dinero vive en Finanzas.', en: 'Studio attendance and retention. No revenue here: money lives in Finance.' },
+  'admin.analytics.loading': { es: 'Cargando clases y reservas…', en: 'Loading classes and bookings…' },
+  'admin.analytics.unavailable': { es: 'No se pudieron cargar las clases o las reservas. Intenta actualizar la página.', en: 'Classes or bookings could not be loaded. Try refreshing the page.' },
   'admin.analytics.range': { es: 'Rango', en: 'Range' },
   'admin.analytics.range.7': { es: '7 días', en: '7 days' },
   'admin.analytics.range.30': { es: '30 días', en: '30 days' },

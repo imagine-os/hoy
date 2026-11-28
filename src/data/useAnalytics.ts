@@ -106,8 +106,8 @@ export function useMilestoneRecorder(stats: PracticeStats): void {
 
 /** Everything `studioStats` needs, read once and shared by M-12 and the teacher hook. */
 function useStudioInput(rangeDays: number) {
-  const { rows: bookings } = useTable<BookingRow>('bookings');
-  const { rows: sessions } = useTable<ClassSessionRow>('class_sessions');
+  const { rows: bookings, loading: bookingsLoading, error: bookingsError } = useTable<BookingRow>('bookings');
+  const { rows: sessions, loading: sessionsLoading, error: sessionsError } = useTable<ClassSessionRow>('class_sessions');
   const { rows: profiles } = useTable<ProfileRow>('profiles');
   const { rows: users } = useTable<UserRow>('users');
   const { rows: ledger } = useTable<ClassLedgerRow>('class_ledger');
@@ -115,18 +115,26 @@ function useStudioInput(rangeDays: number) {
   const { rows: goals } = useTable<PracticeGoalRow>('practice_goals', { where: { active: true } });
   const { rows: teachers } = useTable<TeacherRow>('teachers');
   const { rows: modalities } = useTable<ModalityRow>('modalities');
-  return useMemo(() => ({ bookings, sessions, memberships, profiles, users, ledger, goals, teachers, modalities, rangeDays }), [bookings, sessions, memberships, profiles, users, ledger, goals, teachers, modalities, rangeDays]);
+  const input = useMemo(() => ({ bookings, sessions, memberships, profiles, users, ledger, goals, teachers, modalities, rangeDays }), [bookings, sessions, memberships, profiles, users, ledger, goals, teachers, modalities, rangeDays]);
+  const state = bookingsError || sessionsError ? 'unavailable' : bookingsLoading || sessionsLoading ? 'loading' : 'ready';
+  return { input, state } as const;
 }
 
 /** M-12: the studio over the last 7 / 30 / 90 days. */
+export function useStudioStatsStatus(rangeDays: number): { stats: StudioStats; state: 'ready' | 'loading' | 'unavailable' } {
+  const { input, state } = useStudioInput(rangeDays);
+  const stats = useMemo(() => studioStats(input), [input]);
+  return { stats, state };
+}
+
+/** Teacher views keep their existing stats API. */
 export function useStudioStats(rangeDays: number): StudioStats {
-  const input = useStudioInput(rangeDays);
-  return useMemo(() => studioStats(input), [input]);
+  return useStudioStatsStatus(rangeDays).stats;
 }
 
 /** S-03 / M-12 per teacher: classes, fill, new faces, regulars, first-timer return and ratings over the range. */
 export function useTeacherStats(teacherId: string, rangeDays: number): TeacherStats {
-  const input = useStudioInput(rangeDays);
+  const { input } = useStudioInput(rangeDays);
   const { rows: reviews } = useTable<ReviewRow>('reviews', { where: { teacher_id: teacherId } });
   return useMemo(() => teacherStats(teacherId, { ...input, reviews }), [teacherId, input, reviews]);
 }
