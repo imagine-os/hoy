@@ -17,6 +17,10 @@ Current 2026-10-22: PR71 merged checkedfeaff4e9 (17 workflows/41 jobs), deployme
 
 # HoyOS kanban
 
+## S-09 payment review visibility (2026-11-23 UTC)
+
+- Local implementation complete from live v1.6.5: the existing bank comparison checkbox is now a numbered required step, and nearby copy explains disabled confirmation in ES/EN. Build, types, spacing, and fictional H5 DOM checks passed with no payment behavior changes. Native browser layout/keyboard verification, release consent, and test deployment pending. [Pending changelog](changelog/_pending/payment-comparison-visibility-20261122.md).
+
 ## Payment reporting repair (2026-10-23)
 
 - PR84 availability follow-up: reproduce prior zero/empty Finance displays on source75538481; gate dependent KPIs/balance/charts/history until reads succeed. Expanded EN/ES390/1280 fault, empty-success/recovery and retry checks; independent payroll retained. Shared provider/schema and release ownership remain separate.

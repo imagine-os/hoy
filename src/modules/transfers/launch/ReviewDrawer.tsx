@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { formatCOP } from '../../../i18n/format';
 import { Button } from '../../../components/atom/Button/Button';
@@ -10,6 +10,7 @@ import type { ProductRow } from '../../products/launch/productMaster';
 import { CosError, refusalKey } from './cos';
 import { amountDiffers, reviewOps, runPaymentOps, type PendingItem } from './payments';
 import { useAction, useCos } from './useCos';
+import './ReviewDrawer.css';
 
 /** Receipt images are shown only as PNG/JPEG, whatever type the stream reports (never HTML or script in this origin). */
 const IMAGE_TYPES = ['image/png', 'image/jpeg'];
@@ -23,6 +24,7 @@ export function ReviewDrawer({ item, customer, current, onClose, onDone }: { ite
   const { t, lang } = useI18n();
   const cos = useCos();
   const action = useAction();
+  const comparisonId = useId(), confirmationHintId = useId();
   const [amount, setAmount] = useState(''), [reason, setReason] = useState(''), [compared, setCompared] = useState(false);
   const [image, setImage] = useState<string | null>(null), [imageError, setImageError] = useState(false);
   const fileId = item?.receipt?.id ?? null, declared = item?.receipt?.data.mime;
@@ -61,15 +63,22 @@ export function ReviewDrawer({ item, customer, current, onClose, onDone }: { ite
       {!fileId ? <Notice tone="warn">{t('payLaunch.queue.noReceipt')}</Notice>
         : image ? <img src={image} alt={t('payLaunch.review.receiptAlt')} style={{ width: '100%', height: 'auto' }} />
           : imageError ? <Notice tone="warn">{t('payLaunch.review.receiptUnavailable')}</Notice> : <p role="status">{t('payLaunch.loading')}</p>}
-      <Notice>{t('payLaunch.review.compare')}</Notice>
-      <label className="row"><input type="checkbox" checked={compared} disabled={locked} onChange={(e) => setCompared(e.target.checked)} /> {t('payLaunch.review.compared')}</label>
+      <div className="payment-review-comparison stack-sm">
+        <strong>{t('payLaunch.review.compareStep')}</strong>
+        <p id={comparisonId}>{t('payLaunch.review.compare')}</p>
+        <label className="payment-review-comparison__check">
+          <input type="checkbox" aria-describedby={comparisonId} checked={compared} disabled={locked} onChange={(e) => setCompared(e.target.checked)} />
+          <span>{t('payLaunch.review.compared')}</span>
+        </label>
+      </div>
       <Field label={t('payLaunch.review.received')} required>{(id) => <Input id={id} name="received" type="number" inputMode="numeric" min={1} step={1} value={amount} disabled={locked} onChange={(e) => edit(() => setAmount(e.target.value))} />}</Field>
       {differs && <Notice tone="warn">{t('payLaunch.review.differs')}</Notice>}
       <Field label={t('payLaunch.review.reason')} hint={t('payLaunch.review.reasonHint')}>{(id) => <Input id={id} name="reason" maxLength={500} value={reason} disabled={locked} onChange={(e) => edit(() => setReason(e.target.value))} />}</Field>
       {action.uncertain ? <Notice tone="warn">{t('payLaunch.uncertain')}</Notice> : action.error && <p role="alert">{t(refusalKey(action.error), { code: action.error })}</p>}
+      {!compared && <p id={confirmationHintId} className="payment-review-comparison__hint">{t('payLaunch.review.confirmationNeedsComparison')}</p>}
       <div className="row wrap">
-        <Button disabled={action.busy || !compared} loading={action.busy} onClick={() => void decide('approve')}>{t('payLaunch.review.approve')}</Button>
-        {item.booking && <Button variant="secondary" disabled={action.busy || !compared} onClick={() => void decide('approve', true)}>{t('payLaunch.review.approveCheckIn')}</Button>}
+        <Button aria-describedby={!compared ? confirmationHintId : undefined} disabled={action.busy || !compared} loading={action.busy} onClick={() => void decide('approve')}>{t('payLaunch.review.approve')}</Button>
+        {item.booking && <Button variant="secondary" aria-describedby={!compared ? confirmationHintId : undefined} disabled={action.busy || !compared} onClick={() => void decide('approve', true)}>{t('payLaunch.review.approveCheckIn')}</Button>}
         <Button variant="danger" disabled={action.busy} onClick={() => void decide('decline')}>{t('payLaunch.review.decline')}</Button>
       </div>
     </div>

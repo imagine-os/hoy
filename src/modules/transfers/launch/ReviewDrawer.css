@@ -1,0 +1,48 @@
+.payment-review-comparison {
+  padding: var(--sp-lg);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--r-md);
+  background: var(--color-surface-2);
+  color: var(--color-text);
+}
+
+.payment-review-comparison p,
+.payment-review-comparison__hint {
+  margin: 0;
+  color: var(--color-text);
+}
+
+.payment-review-comparison__check {
+  display: grid;
+  grid-template-columns: var(--icon-xl) minmax(0, 1fr);
+  align-items: center;
+  gap: var(--gap-control);
+  min-height: var(--h-ctl-lg);
+  padding: var(--sp-sm) var(--sp-md);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--r-md);
+  background: var(--color-surface-elevated);
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.payment-review-comparison__check input {
+  inline-size: var(--icon-xl);
+  block-size: var(--icon-xl);
+  margin: 0;
+  accent-color: var(--color-primary);
+  cursor: inherit;
+}
+
+.payment-review-comparison__check:hover,
+.payment-review-comparison__check:focus-within {
+  border-color: var(--color-primary);
+}
+
+.payment-review-comparison__check:has(:disabled) {
+  cursor: default;
+}
+
+.payment-review-comparison__hint {
+  font-weight: 650;
+}
