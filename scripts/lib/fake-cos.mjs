@@ -3,17 +3,22 @@
 // freeze; files upload/confirm; ADR 0038 settings; ADR 0040 Idempotency-Key replay). Fictional data only.
 // It is NOT Company OS: it exists so the frontend's requests and its handling of answers can be checked offline.
 
-const err = (code, status = 422) => Object.assign(new Error(code), { code, status });
+const err = (code, status = 422, details) => Object.assign(new Error(code), { code, status, ...(details ? { details } : {}) });
 const clone = (v) => JSON.parse(JSON.stringify(v));
 const stable = (v) => JSON.stringify(v, (_, x) => (x && typeof x === 'object' && !Array.isArray(x) ? Object.fromEntries(Object.entries(x).sort(([a], [b]) => a.localeCompare(b))) : x));
 
 /** Fields each entity stores; anything else in a write is dropped silently, like the real runtime. */
 const FIELDS = {
-  person: ['name', 'email', 'phone', 'user'],
-  member: ['person', 'price_audience'],
-  product: ['key', 'name', 'kind', 'price', 'tax_rate_percent', 'credits', 'validity_days', 'freezable', 'audience', 'active'],
+  person: ['name', 'email', 'phone', 'user', 'whatsapp'],
+  member: ['person', 'price_audience', 'source', 'status', 'joined_at'],
+  policy_acceptance: ['person', 'policy', 'version'],
+  product: ['key', 'name', 'kind', 'price', 'tax_rate_percent', 'credits', 'validity_days', 'freezable', 'audience', 'active', 'places'],
   payment: ['person', 'product', 'amount', 'method', 'status', 'date', 'concept', 'reference', 'provider', 'notes', 'for_entity', 'for_id', 'price_override_reason', 'status_reason'],
-  booking: ['person', 'occurrence', 'status', 'entitlement', 'payment_method', 'hold_until', 'hold_frozen_at', 'hold_left_minutes'],
+  // ADR 0045 (bookings 1.11.0): `party`, `party_size`, `party_lead` are server-set; `pass_code` is read on create, never stored.
+  booking: ['person', 'occurrence', 'status', 'entitlement', 'payment_method', 'hold_until', 'hold_frozen_at', 'hold_left_minutes', 'source', 'cancel_reason', 'party', 'party_size', 'party_lead'],
+  // ADR 0045 (credits 1.5.0): the group voucher an approved group payment issues.
+  voucher: ['kind', 'code', 'places', 'buyer', 'payment', 'product', 'max_uses', 'uses', 'classes', 'valid_until', 'booking', 'occurrence', 'joined', 'redeemed_by', 'redeemed_at', 'voided_at', 'note', 'recipient_email', 'recipient_name'],
+  occurrence: ['title', 'kind', 'starts_at', 'ends_at', 'capacity', 'status', 'booked_count'],
   invoice: ['kind', 'number', 'payment', 'person', 'product', 'total', 'issued_at', 'voided_at', 'void_reason'],
   file: ['owner_entity', 'owner_id', 'kind', 'status', 'mime', 'filename', 'size_bytes'],
 };
@@ -28,7 +33,7 @@ export function fakeCos({ productDates = true, approvedBy = true, voidRules = fa
   const fields = clone(FIELDS);
   if (productDates) fields.product.push('valid_from', 'valid_until');
   if (approvedBy) fields.payment.push('approved_by', 'approved_at');
-  const db = { person: [], member: [], product: [], payment: [], booking: [], invoice: [], file: [] };
+  const db = { person: [], member: [], product: [], payment: [], booking: [], invoice: [], file: [], voucher: [], occurrence: [], policy_acceptance: [] };
   const keys = new Map();
   const settings = { review_hours: '', review_closed_dates: '', hold_minutes_transfer: 15, hold_minutes_desk: 60, reschedule_hours: 12, late_cancel_hours: 12, policy_as_of_booking: true, hold_frozen_while_payment_pending: true };
   const calls = [], uploads = new Map();
@@ -66,7 +71,9 @@ export function fakeCos({ productDates = true, approvedBy = true, voidRules = fa
     if (entity === 'person') return r.data.user === me;
     if (['member', 'payment', 'booking', 'invoice'].includes(entity)) return r.data.person === mine;
     if (entity === 'file') return r.createdBy === me;
-    return entity === 'product';
+    // ADR 0045, Hoy recipe: a member reads their own group vouchers (buyer = their person), nothing else.
+    if (entity === 'voucher') return r.data.kind === 'group' && !!mine && r.data.buyer === mine;
+    return entity === 'product' || entity === 'occurrence';
   };
 
   function paymentRules(before, after, by) {
@@ -85,6 +92,7 @@ export function fakeCos({ productDates = true, approvedBy = true, voidRules = fa
       if (!String(after.status_reason ?? '').trim()) throw err('reason_required');
       if (voidRefusal) throw err(voidRefusal);
     }
+
     const approving = to === 'approved' && from !== 'approved';
     if (approving && product && after.amount !== product.data.price) {
       if (!after.price_override_reason) throw err('amount_mismatch');
@@ -108,7 +116,104 @@ export function fakeCos({ productDates = true, approvedBy = true, voidRules = fa
         booking.data.hold_until = new Date(now() + (booking.data.hold_left_minutes ?? 0) * 60000).toISOString(); booking.data.hold_frozen_at = null; booking.data.hold_left_minutes = null;
       }
     }
+    // ADR 0045 §1: an approved group payment issues one group voucher (once per payment); a void stamps it.
+    if (approving && product?.data.kind === 'group' && !db.voucher.some((v) => v.data.payment === r.id)) {
+      const day = new Date(now()).toISOString().slice(0, 10);
+      const until = product.data.validity_days ? new Date(Date.parse(`${day}T12:00:00Z`) + (product.data.validity_days - 1) * 864e5).toISOString().slice(0, 10) : null;
+      db.voucher.push(rec('voucher', { kind: 'group', code: passCode(), places: product.data.places, buyer: r.data.person, payment: r.id, product: product.id, max_uses: 1, uses: 0, classes: 1, valid_until: until, booking: null, occurrence: null, joined: 0, voided_at: null }, 'server'));
+    }
+    if (r.data.status === 'voided') for (const v of db.voucher) if (v.data.payment === r.id && v.data.kind === 'group' && !v.data.voided_at) v.data.voided_at = new Date(now()).toISOString();
     if (approving && product) db.invoice.push(rec('invoice', { kind: 'receipt', number: ++receiptNo, payment: r.id, person: r.data.person, product: product.id, total: r.data.amount, issued_at: new Date(now()).toISOString() }, 'server'));
+  }
+
+  // ── ADR 0045: group passes on bookings (a small stand-in for bookings 1.11.0 + credits 1.5.0) ─────────────────────
+  const ACTIVE = ['booked', 'held', 'checked_in'];
+  let codeSeq = 0;
+  const passCode = () => { const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let n = ++codeSeq * 7919 + 104729, c = ''; for (let i = 0; i < 8; i++) { c += A[n % A.length]; n = Math.floor(n / A.length) + i * 31; } return c; };
+  const partyActive = (party) => db.booking.filter((b) => b.data.party === party && ACTIVE.includes(b.data.status)).length;
+  /** §4: a party with an active booking holds max(party_size, active bookings); any other active booking holds one place. */
+  const placesTaken = (occId, exceptId = null) => {
+    let n = 0; const seen = new Set();
+    for (const b of db.booking) {
+      if (b.data.occurrence !== occId || !ACTIVE.includes(b.data.status) || b.id === exceptId) continue;
+      if (b.data.party) { if (!seen.has(b.data.party)) { seen.add(b.data.party); n += Math.max(b.data.party_size ?? 1, partyActive(b.data.party)); } }
+      else n++;
+    }
+    return n;
+  };
+  const recount = (occId) => { const o = db.occurrence.find((x) => x.id === occId); if (o) o.data.booked_count = placesTaken(occId); };
+  const stripStamps = (d) => { for (const k of ['party', 'party_size', 'party_lead']) delete d[k]; return d; };
+  function createBooking(data, role) {
+    const passCodeIn = data.pass_code;
+    const r = rec('booking', stripStamps({ ...data }));
+    r.data.status ??= 'booked';
+    if (role === 'member' && r.data.person !== myPersonId()) throw err('forbidden', 403);
+    const occ = db.occurrence.find((o) => o.id === r.data.occurrence);
+    if (r.data.entitlement === 'pass') {
+      if (!r.data.person) throw err('pass_person_required');
+      if (!passCodeIn) throw err('pass_unresolved');
+      if (!occ) throw err('occurrence_not_open');
+      if (occ.data.kind !== 'class') throw err('pass_class_only');
+      const v = db.voucher.find((x) => x.data.code === String(passCodeIn).trim().toUpperCase());
+      if (!v) throw err('voucher_invalid');
+      if (v.data.kind !== 'group') throw err('voucher_wrong_kind');
+      // As built: void, payment and expiry are the lead's checks; a join of a booked pass skips them (until check-in closes).
+      if (!v.data.booking) {
+        const pay = db.payment.find((p) => p.id === v.data.payment);
+        if (v.data.voided_at || !pay || pay.data.status !== 'approved') throw err('voucher_payment_not_approved');
+        if (v.data.valid_until && v.data.valid_until < new Date(now()).toISOString().slice(0, 10)) throw err('voucher_expired');
+      }
+      const desk = role !== 'member';
+      if (occ.data.status !== 'scheduled' || Date.parse(desk ? occ.data.ends_at : occ.data.starts_at) <= now()) throw err('occurrence_not_open');
+      if (db.booking.some((b) => b.data.occurrence === occ.id && b.data.person === r.data.person && ACTIVE.includes(b.data.status))) throw err('already_booked');
+      const places = v.data.places;
+      if (!v.data.booking) {
+        const free = occ.data.capacity - placesTaken(occ.id);
+        if (free < places) throw err('group_does_not_fit', 422, { needed: places, free });
+        Object.assign(r.data, { party: v.id, party_size: places, party_lead: true });
+      } else {
+        const lead = db.booking.find((b) => b.id === v.data.booking);
+        if (!lead || !ACTIVE.includes(lead.data.status)) throw err('voucher_used_up');
+        if (v.data.occurrence !== occ.id) throw err('pass_occurrence_mismatch', 422, { occurrence: v.data.occurrence });
+        if (partyActive(v.id) >= places) throw err('party_full');
+        Object.assign(r.data, { party: v.id, party_size: places, party_lead: false });
+      }
+      db.booking.push(r);
+      if (r.data.party_lead) Object.assign(v.data, { booking: r.id, occurrence: occ.id, uses: 1, redeemed_by: r.data.person, redeemed_at: new Date(now()).toISOString() });
+      v.data.joined = partyActive(v.id);
+    } else db.booking.push(r);
+    if (occ) recount(occ.id);
+    return r.id;
+  }
+  function updateBooking(r, data, role) {
+    const patch = stripStamps(pick('booking', data));
+    if (role === 'member' && r.data.person !== myPersonId()) throw err('write_forbidden', 403);
+    if (r.data.party) {
+      if (('occurrence' in patch && patch.occurrence !== r.data.occurrence) || ('entitlement' in patch && patch.entitlement !== r.data.entitlement)) throw err('booking_system_managed');
+      if ('person' in patch && patch.person !== r.data.person) {
+        // §5: a desk-only swap on an active party booking; the new person passes already_booked.
+        if (role === 'member') throw err('write_forbidden', 403);
+        if (!ACTIVE.includes(r.data.status)) throw err('invalid_transition');
+        if (db.booking.some((b) => b.data.occurrence === r.data.occurrence && b.data.person === patch.person && ACTIVE.includes(b.data.status))) throw err('already_booked');
+      }
+    } else if ('person' in patch && patch.person !== r.data.person) throw err('booking_system_managed');
+    if (patch.status === 'checked_in' && r.data.status === 'held') throw err('invalid_transition');
+    const wasActive = ACTIVE.includes(r.data.status);
+    r.data = { ...r.data, ...patch };
+    // §7 as built: the lead's cancel cancels the party's booked (or held) places, never a checked-in one. A studio-side
+    // `cancelled` returns the code only before the class starts and while nobody of the party has checked in.
+    if (r.data.party && wasActive && !ACTIVE.includes(r.data.status)) {
+      const v = db.voucher.find((x) => x.id === r.data.party);
+      if (r.data.party_lead) {
+        const occ = db.occurrence.find((o) => o.id === r.data.occurrence);
+        const started = !occ || Date.parse(occ.data.starts_at) <= now();
+        const anyoneIn = db.booking.some((b) => b.data.party === r.data.party && (b.data.status === 'checked_in' || b.data.checked_in_at));
+        for (const b of db.booking) if (b.id !== r.id && b.data.party === r.data.party && ['booked', 'held'].includes(b.data.status)) Object.assign(b.data, { status: 'cancelled', cancel_reason: 'party_lead_cancelled' });
+        if (v && r.data.status === 'cancelled' && role !== 'member' && !started && !anyoneIn) Object.assign(v.data, { booking: null, occurrence: null, uses: 0, redeemed_by: null, redeemed_at: null });
+      }
+      if (v) v.data.joined = partyActive(v.id);
+    }
+    recount(r.data.occurrence);
   }
 
   function write(op, ids) {
@@ -125,7 +230,8 @@ export function fakeCos({ productDates = true, approvedBy = true, voidRules = fa
         if (role === 'member' && (r.data.status !== 'pending' || r.data.person !== myPersonId())) throw err('forbidden', 403);
         const { approving, product } = paymentRules(null, r.data, me);
         db.payment.push(r); afterPayment(r, approving, product);
-      } else db[op.entity].push(r);
+      } else if (op.entity === 'booking') return createBooking(data, role);
+      else db[op.entity].push(r);
       return r.id;
     }
     const list = db[op.entity], r = list.find((x) => x.id === op.id);
@@ -136,9 +242,13 @@ export function fakeCos({ productDates = true, approvedBy = true, voidRules = fa
     if (op.entity === 'payment') {
       // Hoy's member write policy on payment: own row AND status pending, checked on the stored row and on the result (ADR 0033).
       if (role === 'member' && (r.data.status !== 'pending' || next.status !== 'pending' || next.person !== myPersonId())) throw err('write_forbidden', 403);
+      // ADR 0045 §8: a group payment's void is refused once its pass was used, whatever void_takes_back says.
+      if (next.status === 'voided' && r.data.status !== 'voided' && db.voucher.some((v) => v.data.payment === r.id && v.data.kind === 'group' && v.data.uses > 0)) throw err('void_pass_used');
       const { approving, product } = paymentRules(r.data, next, me);
       r.data = next; afterPayment(r, approving, product);
-    } else if (op.entity === 'booking' && next.status === 'checked_in' && r.data.status === 'held') throw err('invalid_transition');
+    } else if (op.entity === 'booking') updateBooking(r, data, role);
+    // As built: only a change to or from kind group is refused.
+    else if (op.entity === 'voucher' && 'kind' in (data ?? {}) && data.kind !== r.data.kind && (data.kind === 'group' || r.data.kind === 'group')) throw err('voucher_kind_fixed');
     else r.data = next;
     r.updatedAt = new Date(now()).toISOString();
     return r.id;
@@ -146,7 +256,7 @@ export function fakeCos({ productDates = true, approvedBy = true, voidRules = fa
 
   async function request(method, path, body, opts = {}) {
     calls.push({ method, path, body: clone(body ?? null), key: opts.idempotencyKey ?? null, as: me });
-    if (method === 'GET' && path === '/me') return { user: { id: me } };
+    if (method === 'GET' && path === '/me') return { user: { id: me }, roleKeys: [roleOf(me)], caps: [], isSuperAdmin: roleOf(me) === 'super_admin' };
     if (method === 'GET' && path === '/members') return { members: Object.entries(users).map(([id, u]) => ({ id, name: u.name, email: `${id}@example.test` })) };
     if (method === 'POST' && path === '/query') {
       if (!db[body.entity]) throw err('unknown entity', 404);
@@ -176,6 +286,14 @@ export function fakeCos({ productDates = true, approvedBy = true, voidRules = fa
         if (key) keys.set(key, { sig, answer });
         return clone(answer);
       } catch (e) { Object.assign(db, JSON.parse(snapshot)); [seq, receiptNo] = counter; throw e; }
+    }
+    // One-record writes (the provider's insert and update outside a batch), same rules as a batch op.
+    if ((m = /^\/api\/(\w+)(?:\/([\w-]+))?$/.exec(path)) && (method === 'POST' || method === 'PATCH') && db[m[1]]) {
+      const snapshot = JSON.stringify(db);
+      try {
+        const rid = write(method === 'POST' ? { op: 'create', entity: m[1], data: body } : { op: 'update', entity: m[1], id: m[2], data: body }, []);
+        return { data: clone(db[m[1]].find((x) => x.id === rid)) };
+      } catch (e) { Object.assign(db, JSON.parse(snapshot)); throw e; }
     }
     if (method === 'POST' && path === '/files') {
       const owner = db[body.ownerEntity]?.find((x) => x.id === body.ownerId);
@@ -209,8 +327,18 @@ export function fakeCos({ productDates = true, approvedBy = true, voidRules = fa
   }
   /** The browser's PUT of the bytes to the upload link (Supabase in production). */
   const put = async (url, init) => { uploads.set(url.split('/').pop(), init.body); return { ok: true, status: 200 }; };
+  /** `fetch` for the real CompanyOSProvider: `/api/cos/t/<tenant>/…` → request(); a refusal answers `{ error, details }`. */
+  const json = (status, body) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
+  async function fetchImpl(url, init = {}) {
+    const u = new URL(String(url), 'http://hoy.test/');
+    if (u.pathname.endsWith('app-config.json')) return json(200, { tenant: 'hoy', apiBase: '/api/cos' });
+    const path = u.pathname.replace(/^\/api\/cos\/t\/[^/]+/, '');
+    const headers = init.headers ?? {};
+    try { return json(200, await request(init.method ?? 'GET', path, init.body ? JSON.parse(init.body) : undefined, { idempotencyKey: headers['idempotency-key'] })); }
+    catch (e) { return json(e.status ?? 422, { error: e.code ?? e.message, ...(e.details ? { details: e.details } : {}), ...(e.opIndex != null ? { opIndex: e.opIndex } : {}) }); }
+  }
   return {
-    db, calls, settings, put, request,
+    db, calls, settings, put, request, fetch: fetchImpl,
     fileBlob: async (fileId) => new Blob([uploads.get(fileId) ?? new Uint8Array()], { type: 'image/png' }),
     as(user) { me = user; return this; },
     seed(entity, data, by = 'usr_admin') { const r = rec(entity, data, by); db[entity].push(r); return r; },

@@ -11,7 +11,7 @@ import { Link, useNavigate } from '../links';
 import { useI18n } from '../../../i18n/I18nProvider';
 import { useLayout } from '../../../layout/useLayout';
 import { FAMILY_LABEL, FAMILY_RATIONALE, ON_REQUEST_FORMATS } from '../../../tenant/pricing';
-import { useLivePricing } from '../../../data/livePricing';
+import { useLivePricing, websitePlans } from '../../../data/livePricing';
 import { tenant } from '../../../tenant/tenant';
 import { usePolicy, useWhatsappLink } from '../../admin/settings';
 import { Card } from '../../../components/molecule/Card/Card';
@@ -121,9 +121,9 @@ export function PlansPage() {
         </div>
       </section>
       {/* WEB-02b: any other product on sale in the master */}
-      {prices.generic.length > 0 && <section className="container site-section">
+      {websitePlans(prices.generic).length > 0 && <section className="container site-section">
         <div className="plans-heading"><h2>{t('site.plans.more.title')}</h2></div>
-        <div className="grid grid-2">{prices.generic.map((p) => <GenericPlanCard key={p.key} plan={p} onSelect={() => nav(purchaseEntry(user, sitePlanPath(p.key)))} />)}</div>
+        <div className="grid grid-2">{websitePlans(prices.generic).map((p) => <GenericPlanCard key={p.key} plan={p} onSelect={() => nav(purchaseEntry(user, sitePlanPath(p.key)))} />)}</div>
       </section>}
     </>,
     // Especiales (0017) + 0051 on request: the studio rental and corporate experiences are quoted case by case.

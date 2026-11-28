@@ -74,8 +74,8 @@ export function refusalText(e: unknown, lang: Lang): string {
   const day = dayLabel(d.date, lang);
   if (d.source === 'schedule') {
     return lang === 'en'
-      ? `That room already has “${d.title}” at that time, from another published timetable row (for example on ${day} at ${d.time}). Choose another time or room. If this row replaces that one, switch that one off and start this one after its last class already made.`
-      : `Esa sala ya tiene «${d.title}» a esa hora, de otro horario publicado (por ejemplo el ${day} a las ${d.time}). Elige otra hora u otra sala. Si este horario reemplaza a ese, desactívalo y haz que este empiece después de su última clase ya creada.`;
+      ? `That room already has “${d.title}” at that time, from another published timetable row (for example on ${day} at ${d.time}). Choose another time or room. If this row replaces that one, set the old row’s end date before the new row starts, or switch the old row off. Any classes already created keep their dates.`
+      : `Esa sala ya tiene «${d.title}» a esa hora, de otro horario publicado (por ejemplo el ${day} a las ${d.time}). Elige otra hora u otra sala. Si este horario reemplaza a ese, ponle al anterior una fecha final antes del inicio del nuevo, o desactívalo. Las clases ya creadas conservan sus fechas.`;
   }
   return lang === 'en'
     ? `That room already has “${d.title}” on ${day} at ${d.time}, a class another timetable row already made (that row may be switched off). Start this row after that date (set its start date), or cancel that class only if nobody has booked it.`

@@ -8,6 +8,8 @@ export const BOOKING_REFUSALS = [
   'hold_expired', 'reschedule_window_closed', 'invalid_transition', 'booking_system_managed', 'reason_required', 'payment_under_review',
   // credits (a booking from the balance, a redeemed voucher)
   'no_credits', 'lot_expired', 'lot_frozen', 'trial_used', 'voucher_invalid', 'voucher_expired', 'voucher_redeemed', 'voucher_used_up',
+  // the group pass (ADR 0045): a place taken with a code
+  'pass_unresolved', 'pass_class_only', 'group_does_not_fit', 'party_full', 'voucher_wrong_kind', 'pass_occurrence_mismatch', 'pass_person_required', 'voucher_payment_not_approved',
   // payments and files (the receipt for a held class)
   'product_inactive', 'audience_not_allowed', 'for_record_not_found',
   'file_too_large', 'file_type_not_allowed', 'file_upload_expired', 'file_upload_missing', 'storage_unavailable',

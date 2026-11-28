@@ -42,6 +42,16 @@ export const CONTRACT_REFUSALS = {
   voucher_redeemed: { es: 'Este bono ya se usó y no se puede cambiar.', en: 'This voucher has been used and cannot be changed.' },
   voucher_used_up: { es: 'Este bono ya se usó por completo, o ya lo canjeaste.', en: 'This voucher is fully used, or you have already redeemed it.' },
   voucher_first_time_only: { es: 'Este código es solo para personas nuevas en Hoy: ya tienes clases, un pago o una clase a la que asististe.', en: 'This code is only for people new to Hoy: you already have classes, a payment or an attended class.' },
+  // The group pass (ADR 0045: bookings 1.11.0, credits 1.5.0, payments 2.10.0).
+  pass_unresolved: { es: 'No pudimos leer el código del pase. Revisa el enlace e inténtalo de nuevo.', en: 'We could not read the pass code. Check the link and try again.' },
+  pass_class_only: { es: 'El pase grupal sirve solo para una clase del horario.', en: 'A group pass is for a timetable class only.' },
+  group_does_not_fit: { es: 'Esta clase no tiene lugar para todo el grupo. Elige otra clase.', en: 'This class has no room for the whole group. Choose another class.' },
+  party_full: { es: 'Todos los lugares de este pase ya tienen nombre.', en: 'Every place on this pass already has a name.' },
+  voucher_wrong_kind: { es: 'Este código no sirve aquí: un pase grupal reserva una clase y un bono suma clases.', en: 'This code does not work here: a group pass books a class and a voucher adds classes.' },
+  pass_occurrence_mismatch: { es: 'Este pase es para otra clase. Abre el enlace que te compartió el grupo.', en: 'This pass is for another class. Open the link the group shared with you.' },
+  pass_person_required: { es: 'Cada lugar del pase necesita una persona registrada.', en: 'Each place on the pass needs a registered person.' },
+  void_pass_used: { es: 'No se puede anular: el pase grupal de este pago ya reservó su clase.', en: 'This payment cannot be voided: its group pass has already booked its class.' },
+  voucher_kind_fixed: { es: 'El tipo de un bono no se puede cambiar después de crearlo.', en: 'A voucher’s type cannot be changed once it is created.' },
   // Payments
   product_inactive: { es: 'Este producto ya no está a la venta.', en: 'This product is no longer for sale.' },
   audience_not_allowed: { es: 'Este precio es solo para afiliados. Pregunta en recepción.', en: 'This price is for affiliates only. Ask at the front desk.' },

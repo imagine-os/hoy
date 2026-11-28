@@ -140,6 +140,8 @@ export const coreStrings: StringTable = {
   'core.plan.kind.trial': { es: 'Clase de prueba', en: 'Trial class' },
   'core.plan.kind.single': { es: 'Clase', en: 'Class' },
   'core.plan.kind.gift': { es: 'Regalo', en: 'Gift' },
+  'core.plan.kind.group': { es: 'Pase grupal', en: 'Group pass' },
+  'core.plan.places': { es: 'Una clase para {n} personas', en: 'One class for {n} people' },
   'core.plan.classes': { es: '{n} clases', en: '{n} classes' },
   'core.plan.oneClass': { es: '1 clase', en: '1 class' },
   'core.plan.validity': { es: 'Para usar en {days} días', en: 'To use within {days} days' },

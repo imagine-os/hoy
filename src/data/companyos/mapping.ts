@@ -124,10 +124,13 @@ function valueMap(toCos: Record<string, string>, fromCos: Record<string, string>
 }
 
 // ---------------------------------------------------------------- value tables (contract §2)
-/** bookings.paid_with ↔ booking.entitlement. A pack, a trial and a membership all spend a class credit. */
+/**
+ * bookings.paid_with ↔ booking.entitlement. A pack, a trial and a membership all spend a class credit. `pass`
+ * (bookings 1.11.0, ADR 0045): a place taken with a group pass's code.
+ */
 export const PAID_WITH = valueMap(
-  { package: 'credit', trial: 'credit', membership: 'credit', single: 'single', comp: 'comp', guest: 'guest' },
-  { credit: 'package', single: 'single', comp: 'comp', guest: 'guest' },
+  { package: 'credit', trial: 'credit', membership: 'credit', single: 'single', comp: 'comp', guest: 'guest', pass: 'pass' },
+  { credit: 'package', single: 'single', comp: 'comp', guest: 'guest', pass: 'pass' },
 );
 /** payments.method ↔ payment.method. PSE is the online gateway; a bank QR is a transfer. */
 export const PAYMENT_METHOD = valueMap(
@@ -138,8 +141,8 @@ export const PAYMENT_PROVIDER = valueMap({ wompi: 'gateway' }, { gateway: 'wompi
 /** transfer_receipts.status ↔ payment.status. */
 export const RECEIPT_STATUS = valueMap({ rejected: 'declined' }, { declined: 'rejected', voided: 'rejected', refunded: 'approved' });
 /** plans.family ← product.kind. */
-const FAMILY_OF_KIND: Record<string, string> = { single: 'bienvenida', trial: 'bienvenida', pack: 'paquetes', private: 'privadas', gift: 'regalos' };
-const KIND_OF_FAMILY: Record<string, string> = { bienvenida: 'single', paquetes: 'pack', privadas: 'private', regalos: 'gift' };
+const FAMILY_OF_KIND: Record<string, string> = { single: 'bienvenida', trial: 'bienvenida', pack: 'paquetes', private: 'privadas', gift: 'regalos', group: 'grupales' };
+const KIND_OF_FAMILY: Record<string, string> = { bienvenida: 'single', paquetes: 'pack', privadas: 'private', regalos: 'gift', grupales: 'group' };
 /** /me role keys → frontend roles: the one table in `src/auth/companyOsIdentity.ts` (`ROLE_KEYS`). */
 export { ROLE_OF_KEY } from '../../auth/companyOsIdentity';
 /** class_ledger.reason ← credit_entry.reason (and, for a grant, the lot's source). */
@@ -292,6 +295,14 @@ const bookings = entity({
     policy_hold_minutes: { field: 'policy_hold_minutes', from: num, readOnly: true },
     hold_left_minutes: { field: 'hold_left_minutes', from: num, readOnly: true },
     ledger_id: { derive: () => null }, payment_id: { derive: () => null }, rated: { derive: () => false },
+    /**
+     * ADR 0045 (bookings 1.11.0): a group pass's places. `party` (the voucher's id), `party_size` and `party_lead` are
+     * server-set and never sent (a client value is dropped there too); `pass_code` is sent on create and never stored.
+     */
+    party: { field: 'party', from: (v) => str(refId(v)), readOnly: true, browserOnly: true },
+    party_size: { field: 'party_size', from: num, readOnly: true, browserOnly: true },
+    party_lead: { field: 'party_lead', from: bool, readOnly: true, browserOnly: true },
+    pass_code: { field: 'pass_code', from: () => null, to: (v) => (typeof v === 'string' && v ? v : undefined), browserOnly: true },
   },
   /** Signed out the public identity reads booked mats only (class and mat; lane H2): each row is an occupied mat. */
   signedOutRow: (row) => ({ ...row, status: 'booked' }),
@@ -308,6 +319,8 @@ const plans = entity({
     active: { field: 'active', from: (v) => v !== false }, freezable: { field: 'freezable', from: bool },
     audience: { field: 'audience' },
     valid_from: { field: 'valid_from', from: str }, valid_until: { field: 'valid_until', from: str },
+    /** Kind `group` (payments 2.10.0): people per pass. */
+    places: { field: 'places', from: num },
     family: { field: 'kind', from: (v) => FAMILY_OF_KIND[String(v)] ?? 'paquetes', to: (v, row) => (row.kind as string | undefined) ?? KIND_OF_FAMILY[String(v)] ?? 'pack' },
   },
   /** English name, description, badge and order are website content, matched by the product key. */
@@ -433,6 +446,10 @@ const vouchers = entity({
     benefitKind: { derive: () => 'classes' }, participantCap: { derive: () => 1 }, capScope: { derive: () => 'lifetime' },
     creditUnit: { derive: () => 'per_person' }, cancellationPolicy: { derive: () => 'forfeit' },
     issuedBy: { derive: (r) => str(r.createdBy) ?? '' },
+    /** A group pass (credits 1.5.0, ADR 0045): its places, places named so far and its class; server-set but `places`. */
+    places: { field: 'places', from: num, readOnly: true },
+    joined: { field: 'joined', from: (v) => num(v) ?? 0, readOnly: true },
+    occurrence: { field: 'occurrence', from: (v) => str(refId(v)), readOnly: true },
   },
 });
 

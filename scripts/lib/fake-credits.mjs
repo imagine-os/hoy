@@ -25,6 +25,8 @@ export function fakeCredits({ today = '2026-11-02', products = [], payments = []
   const stamp = () => new Date(`${state.today}T15:00:00Z`).toISOString();
 
   function createVoucher(body) {
+    // ADR 0045: a group code comes only from an approved group payment (or Administration), never from these screens.
+    if (body.kind === 'group') throw refuse('forbidden', 403);
     if (!['gift', 'courtesy'].includes(body.kind)) throw refuse('validation_failed');
     if (!whole(body.classes) || (body.max_uses != null && !whole(body.max_uses))) throw refuse('invalid_quantity');
     // Server-set fields win over anything the client sends.
@@ -37,6 +39,8 @@ export function fakeCredits({ today = '2026-11-02', products = [], payments = []
     const wanted = String(body.voucher_code ?? '').trim().toUpperCase();
     const v = state.vouchers.find((x) => x.code === wanted);
     if (!v) throw refuse('voucher_invalid');
+    // ADR 0045 (credits 1.5.0): a group pass books one class for its group; it is never redeemed into classes.
+    if (v.kind === 'group') throw refuse('voucher_wrong_kind');
     if (v.valid_until && v.valid_until < state.today) throw refuse('voucher_expired');
     if (v.uses >= v.max_uses || state.lots.some((l) => l.voucher === v.id && l.person === body.person)) throw refuse('voucher_used_up');
     const lot = { id: id('lot'), created_at: stamp(), updated_at: stamp(), person: body.person, source: v.kind, quantity: v.classes, product: v.product ?? null, valid_from: state.today, valid_until: v.valid_until ?? null, voucher: v.id, voucher_code: wanted };

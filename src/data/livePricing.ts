@@ -47,7 +47,7 @@ export function livePricing(rows: CatalogPlan[], purchaseDate: string): PriceIte
   });
 }
 
-const GENERIC_KINDS = ['pack', 'trial', 'single', 'gift'] as const;
+const GENERIC_KINDS = ['pack', 'trial', 'single', 'gift', 'group'] as const;
 export type GenericPlanKind = typeof GENERIC_KINDS[number];
 /** A product of the master outside the launch price list, with the master's own words. */
 export interface GenericPlan {
@@ -59,8 +59,10 @@ export interface GenericPlan {
   classes: number;
   validityDays: number | null;
   freezable: boolean;
+  /** Kind `group` (ADR 0045): one class for this many people; it gives no classes to the balance. */
+  places: number | null;
 }
-type MasterRow = CatalogPlan & { kind?: unknown; classes?: unknown; validity_days?: unknown; freezable?: unknown; audience?: unknown; description?: { es?: string; en?: string } | null };
+type MasterRow = CatalogPlan & { kind?: unknown; classes?: unknown; places?: unknown; validity_days?: unknown; freezable?: unknown; audience?: unknown; description?: { es?: string; en?: string } | null };
 /** The master's key rule (`validateProduct`); the key goes into a link. */
 const PRODUCT_KEY = /^[a-z0-9_]{2,40}$/;
 
@@ -77,17 +79,22 @@ export function genericPlans(rows: CatalogPlan[], purchaseDate: string): Generic
   const plans = keys.flatMap((key): GenericPlan[] => {
     const row = rowOnSale(rows, key, purchaseDate) as MasterRow | undefined;
     if (!row || !(GENERIC_KINDS as readonly unknown[]).includes(row.kind) || row.audience) return [];
-    const classes = Number(row.classes);
-    if (!Number.isInteger(row.price) || row.price <= 0 || !Number.isInteger(classes) || classes < 1) return [];
+    const classes = Number(row.classes), places = Number(row.places), group = row.kind === 'group';
+    if (!Number.isInteger(row.price) || row.price <= 0) return [];
+    // A group pass gives one class for its places (ADR 0045), not credits; anything else must give classes.
+    if (group ? !Number.isInteger(places) || places < 2 : !Number.isInteger(classes) || classes < 1) return [];
     const days = Number(row.validity_days);
     return [{
       key, kind: row.kind as GenericPlanKind, name: { es: row.name_es, en: row.name_en || row.name_es },
-      description: { es: row.description?.es ?? '', en: row.description?.en ?? '' }, price: row.price, classes,
-      validityDays: Number.isInteger(days) && days > 0 ? days : null, freezable: row.freezable === true,
+      description: { es: row.description?.es ?? '', en: row.description?.en ?? '' }, price: row.price, classes: group ? 1 : classes,
+      validityDays: Number.isInteger(days) && days > 0 ? days : null, freezable: !group && row.freezable === true, places: group ? places : null,
     }];
   });
   return plans.sort((a, b) => GENERIC_KINDS.indexOf(a.kind) - GENERIC_KINDS.indexOf(b.kind) || a.price - b.price || a.key.localeCompare(b.key));
 }
+
+/** The public website's generic cards: no group pass (owner, 2026-11-23); members buy it in the app's Plans. */
+export const websitePlans = (plans: GenericPlan[]): GenericPlan[] => plans.filter((p) => p.kind !== 'group');
 
 export interface LivePricing {
   items: PriceItem[];
