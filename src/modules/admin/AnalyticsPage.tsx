@@ -4,7 +4,7 @@ import { useI18n } from '../../i18n/I18nProvider';
 import { formatDate } from '../../i18n/format';
 import { useLayout } from '../../layout/useLayout';
 import { useActions } from '../../actions';
-import { useStudioStats } from '../../data/useAnalytics';
+import { useStudioStatsStatus } from '../../data/useAnalytics';
 import type { AtRiskBand, StudioStats } from '../../data/analytics';
 import { StatTile } from '../../components/molecule/StatTile/StatTile';
 import { Card } from '../../components/molecule/Card/Card';
@@ -31,14 +31,14 @@ type TeacherRowView = StudioStats['byTeacher'][number] & { avg: number } & Recor
 
 /**
  * M-12 — practice analytics: attendance and retention for the studio team. Every figure comes from
- * `useStudioStats(range)` (src/data/analytics.ts); the page formats, it never computes. No revenue
+ * `useStudioStatsStatus(range)` (src/data/analytics.ts); the page formats, it never computes. No revenue
  * (ROADMAP §E 32 open). Members are never ranked; the at-risk list is who to call, linked to M-06.
  */
 export function AnalyticsPage() {
   const { t, lang, bi } = useI18n();
   const nav = useNavigate();
   const [range, setRange] = useState<Range>(30);
-  const s = useStudioStats(range);
+  const { stats: s, state } = useStudioStatsStatus(range);
   const { sections, isVisible } = useLayout(M12);
   const nf = useMemo(() => new Intl.NumberFormat(lang === 'en' ? 'en-US' : 'es-CO', { maximumFractionDigits: 1 }), [lang]);
   const num = (n: number) => nf.format(n);
@@ -169,15 +169,21 @@ export function AnalyticsPage() {
       <div className="page-head">
         <div>
           <h1>{t('admin.analytics.title')}</h1>
-          <p className="muted small">{t('admin.analytics.subtitle')} · {tn('admin.analytics.classesHeld', s.classesHeld, { n: s.classesHeld })}</p>
+          <p className="muted small">{t('admin.analytics.subtitle')}{state === 'ready' && <> · {tn('admin.analytics.classesHeld', s.classesHeld, { n: s.classesHeld })}</>}</p>
         </div>
         <div className="row wrap" role="tablist" aria-label={t('admin.analytics.range')}>
           {RANGES.map((r) => <Chip key={r} selected={range === r} onClick={() => setRange(r)}>{t(`admin.analytics.range.${r}`)}</Chip>)}
         </div>
       </div>
-      <div className="adm-analytics">
-        {sections.filter(isVisible).map((name) => SECTIONS[name] ? <div key={name} className="adm-an-sec" data-span={HALF.has(name) ? 'half' : 'full'}>{SECTIONS[name]()}</div> : null)}
-      </div>
+      {state === 'loading' ? (
+        <p className="muted small" role="status">{t('admin.analytics.loading')}</p>
+      ) : state === 'unavailable' ? (
+        <p className="muted small" role="alert">{t('admin.analytics.unavailable')}</p>
+      ) : (
+        <div className="adm-analytics">
+          {sections.filter(isVisible).map((name) => SECTIONS[name] ? <div key={name} className="adm-an-sec" data-span={HALF.has(name) ? 'half' : 'full'}>{SECTIONS[name]()}</div> : null)}
+        </div>
+      )}
     </div>
   );
 }

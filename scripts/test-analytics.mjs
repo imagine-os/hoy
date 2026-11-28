@@ -172,6 +172,22 @@ try {
     const empty = studioStats({ bookings: [], sessions: [], memberships: [], profiles: [], ledger: [], goals: [], teachers, modalities, now: NOW, rangeDays: 30 });
     check('(h) empty range → every rate 0, no division by zero', empty.fillRate === 0 && empty.attendanceRate === 0 && empty.visitsPerActiveMemberPerWeek === 0 && empty.secondVisitConversion.rate === 0);
   }
+  // Company OS keeps ended occurrences scheduled; past attendance uses the elapsed end, not a completion write.
+  {
+    const w = world();
+    const ended = w.session(new Date(2026, 8, 30, 9, 0), { status: 'scheduled' });
+    const open = w.session(new Date(2026, 8, 30, 9, 30), { status: 'scheduled' });
+    const future = w.session(new Date(2026, 8, 30, 11, 0), { status: 'scheduled' });
+    const cancelled = w.session(new Date(2026, 8, 29, 8, 0), { status: 'cancelled' });
+    const invalid = w.session(new Date(2026, 8, 29, 9, 0), { status: 'scheduled' });
+    invalid.ends_at = 'invalid';
+    for (const s of [ended, open, future, cancelled, invalid]) w.book('test_attendee', s);
+    const input = { bookings: w.bookings, sessions: w.sessions, memberships: [], profiles: [], ledger: [], goals: [], teachers: [{ id: 'tea_a', display_name: 'Fixture' }], modalities: [{ id: 'mod_a', name_en: 'Fixture', name_es: 'Prueba' }], now: NOW, rangeDays: 7 };
+    const stats = studioStats(input);
+    check('Company OS: scheduled at end boundary counts, open/future/cancelled/invalid occurrences do not', stats.classesHeld === 1 && stats.seatsAttended === 1 && stats.fillRate === 10 && stats.attendanceRate === 100);
+    check('Company OS: heatmap, modality and teacher use the same elapsed occurrence', stats.heatmap.length === 1 && stats.byModality[0]?.attended === 1 && stats.byTeacher[0]?.attended === 1 && A.teacherStats('tea_a', input).classesTaught === 1);
+  }
+
   // (i) atRisk band assignment
   {
     check('(i) 13 → none, 14 → 14, 45 → 30, 90 → 90, 200 → 90', atRiskBand(13) === null && atRiskBand(14) === 14 && atRiskBand(45) === 30 && atRiskBand(90) === 90 && atRiskBand(200) === 90);

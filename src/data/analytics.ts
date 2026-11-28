@@ -378,7 +378,13 @@ const rangeOf = (now: Date, days: number): Range => ({ from: new Date(now.getTim
 
 /** The classes that ran inside the range and the seats on them. */
 function heldClasses(sessions: ClassSessionRow[], rows: Visit[], r: Range, teacherId?: string) {
-  const held = sessions.filter((s) => s.status === 'completed' && inRange(s.starts_at, r) && (!teacherId || s.teacher_id === teacherId));
+  // Company OS can leave a past occurrence scheduled. As in attendance history, classify by its actual end time,
+  // without a status write. Keep cancelled, ongoing, future and undated occurrences out of held-class metrics.
+  const held = sessions.filter((s) =>
+    (s.status === 'completed' || s.status === 'scheduled')
+    && Date.parse(s.ends_at) <= r.to.getTime()
+    && inRange(s.starts_at, r)
+    && (!teacherId || s.teacher_id === teacherId));
   const ids = new Set(held.map((s) => s.id));
   const seats = rows.filter((v) => ids.has(v.session.id));
   const booked = seats.filter((v) => seatTaken(v.booking));
