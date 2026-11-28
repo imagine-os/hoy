@@ -7,12 +7,13 @@
 import { PUBLIC_SETTINGS_KEY } from './settingsSplit';
 
 export const COACH_PHOTO = { ownerEntity: 'coach', kind: 'photo' } as const;
+export const COACH_CLASS_COVER = { ownerEntity: 'coach', kind: 'class-cover' } as const;
 export const SETTING_IMAGE = { ownerEntity: 'setting', kind: 'image' } as const;
 /** A timetable class's image (Hoy 12 Nov, D2): file owner `schedule`, kind `image`, published at once; the tenant field `schedule.image` is a bare file id like `coach.photo`. */
 export const SCHEDULE_IMAGE = { ownerEntity: 'schedule', kind: 'image' } as const;
 export const SCHEDULE_FIELDS = { image: 'image' } as const;
 /** The tenant fields on `coach`: `bio` json `{ es, en }`, `specialties` json array of class type slugs, `photo` text, a bare file id. */
-export const COACH_FIELDS = { bio: 'bio', specialties: 'specialties', photo: 'photo' } as const;
+export const COACH_FIELDS = { bio: 'bio', specialties: 'specialties', photo: 'photo', classCover: 'default_class_photo' } as const;
 
 export interface ImageOwner { ownerEntity: string; kind: string; ownerId: string }
 /** What of the provider these need (`CompanyOSProvider`); the review build's provider has neither. */
@@ -63,10 +64,15 @@ const savedFileId = (saved: unknown): string | null => (typeof saved === 'string
 
 const codeOf = (e: unknown) => String((e as { code?: unknown } | null)?.code ?? 'unknown');
 const dataOf = (row: unknown) => ((row as { data?: unknown } | null)?.data ?? {}) as Record<string, unknown>;
+/** A schedule's own photo wins; the teacher's website portrait is never a fallback. */
+export function classCoverUrl(scheduleCover: unknown, teacherCover: unknown): string | null {
+  return coachPhotoUrl(scheduleCover) ?? coachPhotoUrl(teacherCover);
+}
+
 /** Does a record still point at this file? Then it isn't ours to delete (a second teacher; a save whose answer was lost). */
 async function stillHeld(port: ImagePort, owner: ImageOwner, id: string): Promise<boolean> {
   if (owner.ownerEntity === COACH_PHOTO.ownerEntity) {
-    const res = await port.request!<{ data?: unknown[] }>('POST', '/query', { entity: 'coach', filter: { field: COACH_FIELDS.photo, op: 'eq', value: id }, limit: 1 });
+    const res = await port.request!<{ data?: unknown[] }>('POST', '/query', { entity: 'coach', filter: { field: owner.kind === COACH_CLASS_COVER.kind ? COACH_FIELDS.classCover : COACH_FIELDS.photo, op: 'eq', value: id }, limit: 1 });
     return (res?.data?.length ?? 0) > 0;
   }
   const res = await port.request!<{ data?: unknown[] }>('POST', '/query', { entity: owner.ownerEntity, filter: { field: 'id', op: 'eq', value: owner.ownerId }, limit: 1 });
@@ -193,7 +199,8 @@ export function reportImageBusy(shared: boolean, busy: boolean, tell?: (busy: bo
 export async function prepareForUpload(owner: { ownerEntity: string; kind: string }, file: File, encodePhoto: (file: File) => Promise<File>): Promise<File> {
   const photo = owner.ownerEntity === COACH_PHOTO.ownerEntity && owner.kind === COACH_PHOTO.kind;
   const classImage = owner.ownerEntity === SCHEDULE_IMAGE.ownerEntity && owner.kind === SCHEDULE_IMAGE.kind;
-  return photo || classImage ? encodePhoto(file) : file;
+  const classCover = owner.ownerEntity === COACH_CLASS_COVER.ownerEntity && owner.kind === COACH_CLASS_COVER.kind;
+  return photo || classImage || classCover ? encodePhoto(file) : file;
 }
 
 /** The record that owns the QR: the public settings row. No row yet (nothing saved): null. A failed read throws. */

@@ -9,7 +9,7 @@ export const DESK_CODES = [
   'already_signed_up', 'person_not_found', 'teacher_required', 'person_email_mismatch', 'consent_required', 'duplicate_facet',
   'idempotency_conflict', 'idempotency_key_invalid', 'forbidden', 'disconnected', 'conflict', 'ifmatch_mismatch',
   'person_linked_to_other_user', 'user_linked_to_other_person', 'role_mismatch', 'redirect_not_allowed', 'invitation_failed', 'invitations_not_supported',
-  'occurrence_generated', 'resource_overlap', 'invalid_settings', 'undo_payment_voided',
+  'occurrence_generated', 'invalid_class_cover', 'resource_overlap', 'invalid_settings', 'undo_payment_voided',
   // ADR 0045: the group pass (adding a person into a place, swapping one).
   'pass_unresolved', 'pass_class_only', 'group_does_not_fit', 'party_full', 'voucher_wrong_kind', 'pass_occurrence_mismatch', 'pass_person_required',
   'voucher_invalid', 'voucher_expired', 'voucher_used_up', 'voucher_payment_not_approved',
@@ -57,6 +57,7 @@ export const deskStrings: StringTable = {
   'desk.error.invitation_failed': { es: 'No se pudo crear la invitación. El acceso quedó guardado; vuelve a enviar.', en: 'The invitation could not be created. The access was saved; send it again.' },
   'desk.error.invitations_not_supported': { es: 'Este entorno no envía invitaciones.', en: 'This environment does not send invitations.' },
   'desk.error.occurrence_generated': { es: 'Esta clase se generó del horario: cancélala en vez de borrarla.', en: 'This class was generated from the schedule: cancel it instead of deleting it.' },
+  'desk.error.invalid_class_cover': { es: 'Vuelve a cargar una foto para clases en el perfil de este profesor.', en: 'Upload a class photo again from this teacher’s profile.' },
   'desk.error.resource_overlap': { es: 'El salón ya está ocupado a esa hora.', en: 'The room is already in use at that time.' },
   'desk.error.invalid_settings': { es: 'Revisa el formato del horario.', en: 'Check the hours format.' },
   'desk.error.undo_payment_voided': { es: 'No se puede deshacer: el pago de esta reserva se anuló y no queda otro aprobado.', en: 'This cannot be undone: this booking\'s payment was voided and no other approved payment covers it.' },

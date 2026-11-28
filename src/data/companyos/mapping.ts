@@ -2,7 +2,7 @@ import { classDescriptionEditorial } from './classDescription';
 import type { BaseRow } from '../schema';
 import { tenant } from '../../tenant/tenant';
 import { modalities as seedModalities, plans as seedPlans, rooms as seedRooms } from '../seed/catalog';
-import { COACH_FIELDS, SCHEDULE_FIELDS, coachBio, coachPhotoUrl, coachSpecialties } from './publicImages';
+import { COACH_FIELDS, SCHEDULE_FIELDS, classCoverUrl, coachBio, coachPhotoUrl, coachSpecialties } from './publicImages';
 import { contentArticles, faqEntries } from '../seed/content';
 import { mediaAssets } from '../seed/media';
 import { legalDocuments } from '../seed/legal';
@@ -257,10 +257,13 @@ const classTemplates = entity({
 
 const classSessions = entity({
   table: 'class_sessions', entity: 'occurrence',
-  include: [{ field: 'schedule', as: 'schedule_row', fields: ['modality', SCHEDULE_FIELDS.image] }],
+  include: [
+    { field: 'schedule', as: 'schedule_row', fields: ['modality', SCHEDULE_FIELDS.image] },
+    { field: 'coach', as: 'coach_row', fields: [COACH_FIELDS.classCover] },
+  ],
   cols: {
-    // An occurrence shows its schedule's image; a class added by hand has no schedule and so none.
-    image_url: { derive: (r) => coachPhotoUrl(embedded(r, 'schedule_row')?.[SCHEDULE_FIELDS.image]) },
+    // An explicit timetable cover wins; otherwise use the occurrence's actual coach, including any substitute.
+    image_url: { derive: (r) => classCoverUrl(embedded(r, 'schedule_row')?.[SCHEDULE_FIELDS.image], embedded(r, 'coach_row')?.[COACH_FIELDS.classCover]) },
     template_id: { field: 'schedule', from: str }, title: { field: 'title' }, modality_id: classModalityCol,
     teacher_id: { field: 'coach', from: str }, room_id: { field: 'resource', from: str },
     starts_at: { field: 'starts_at', kind: 'instant' }, ends_at: { field: 'ends_at', kind: 'instant' },

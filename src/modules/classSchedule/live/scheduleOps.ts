@@ -105,6 +105,12 @@ export function updateCoachOps(coachId: string, personId: string, d: CoachDraft)
   ];
 }
 
+/** Save the class cover independently, with its own stale-write guard. */
+export function updateCoachClassCoverOps(id: string, photo: string | null, atOpen: unknown): BatchOp[] {
+  return [{ op: 'update', entity: 'coach', id, data: { [COACH_FIELDS.classCover]: coachPhotoValue(photo) },
+    ifMatch: { field: COACH_FIELDS.classCover, value: atOpen } }];
+}
+
 /**
  * AD-02 · studio cancel. One write: the server cancels every active booking, returns each class to its own lot
  * (credits `studio_cancel`), closes the waitlist, and the class-cancelled automation emails everyone (lane H-9).

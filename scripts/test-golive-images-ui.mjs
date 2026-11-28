@@ -90,7 +90,9 @@ const storage = createServer((req, res) => {
   storageSeen.push(`${req.method} ${req.url}`);
   req.resume();
   req.on('end', () => {
-    if (req.method === 'PUT') return setTimeout(() => { res.writeHead(200, cors); res.end(); }, world.flags.slowPut ?? 0);
+    if (req.method === 'PUT') return (world.flags.putGate ?? Promise.resolve()).then(() => {
+      res.writeHead(200, cors); res.end();
+    });
     res.writeHead(200, { 'content-type': 'image/png', 'content-length': PNG.length }); res.end(PNG);
   });
 });
@@ -314,39 +316,49 @@ try {
   // Closing or switching the form during an upload: Save isn't stuck, and the late file doesn't stay published.
   });
   await scenario('switching teachers during an upload', async () => {
-  reset({ slowPut: 1500 });
+  const put = Promise.withResolvers();
+  reset({ putGate: put.promise });
   ({ ctx, page } = await signedIn('admin@example.test'));
   await go(page, '/admin/class-schedule');
   await teacherForm(page, 'Clara Zuluaga');
-  await page.locator('.shared-image-field').getByRole('button', { name: 'Subir imagen' }).first().click();
-  await page.locator('.shared-image-field input[type=file]').setInputFiles(file());
-  await until(() => world.uploads.length > 0);
-  await page.locator('.card, [class*=card]').filter({ hasText: 'Nora Prueba' }).getByRole('button', { name: 'Editar' }).click();
-  // While the first upload is still running: the new form doesn't wait for a file that isn't its own.
-  const usable = await page.waitForFunction(() => { const b = [...document.querySelectorAll('button')].find((x) => x.textContent.trim() === 'Guardar'); return b && !b.disabled; }, null, { timeout: 1000 }).then(() => true, () => false);
-  const confirmed = world.log.some((l) => l.path.endsWith('/confirm'));
-  check('switching teachers during an upload: the new form\'s Save works, before that upload ends', usable && !confirmed, JSON.stringify({ usable, confirmed, form: await page.getByRole('button', { name: 'Guardar', exact: true }).count() }));
-  check('switching teachers during an upload: the late file is deleted, on nobody', await until(() => world.deletes.includes(world.uploads[0].id)) && world.coach.get('co_nora').data.photo === undefined);
+  try {
+    await page.locator('.shared-image-field').getByRole('button', { name: 'Subir imagen' }).first().click();
+    await page.locator('.shared-image-field input[type=file]').setInputFiles(file());
+    await until(() => world.uploads.length > 0);
+    const editButton = (name) => page.locator('.card, [class*=card]').filter({ hasText: name }).getByRole('button', { name: 'Editar' });
+    check('during a portrait upload: reopening the same editor still waits', await editButton('Clara Zuluaga').isDisabled());
+    await editButton('Nora Prueba').click();
+    await page.getByRole('button', { name: 'Guardar', exact: true }).click();
+    const saved = await until(() => world.log.some((l) => l.path === '/batch' && l.body.ops.some((o) => o.entity === 'coach' && o.id === 'co_nora')));
+    const confirmed = world.log.some((l) => l.path.endsWith('/confirm'));
+    check('switching teachers during an upload: the new form\'s Save works, before that upload ends', saved && !confirmed);
+  } finally { put.resolve(); }
+  check('switching teachers during an upload: the late file is deleted, on nobody', await until(() => world.deletes.includes(world.uploads[0].id)) && world.coach.get('co_nora').data.photo === undefined && world.coach.get('co_clara').data.photo === IDS.oldPhoto);
   await ctx.close();
-
-  // An inactive teacher's photo isn't public: the preview says so, and it is no failed upload.
   });
-  await scenario('cancelling during an upload', async () => {
-  reset({ slowPut: 1500 });
+
+  // Abandon the portrait via New; the separately labelled Cancel control and tabs intentionally wait.
+  await scenario('starting a new teacher during an upload', async () => {
+  const put = Promise.withResolvers();
+  reset({ putGate: put.promise });
   ({ ctx, page } = await signedIn('admin@example.test'));
   await go(page, '/admin/class-schedule');
   await teacherForm(page, 'Clara Zuluaga');
-  await page.locator('.shared-image-field').getByRole('button', { name: 'Subir imagen' }).first().click();
-  await page.locator('.shared-image-field input[type=file]').setInputFiles(file());
-  await until(() => world.uploads.length > 0);
-  check('during an upload: Cancel and the tabs wait', await page.getByRole('button', { name: 'Cancelar' }).last().isDisabled() && await chip(page, 'Salones').isDisabled());
-  await page.getByRole('button', { name: 'Nueva' }).click();
-  await page.getByLabel('Nombre').fill('Profe Nueva');
-  // A new teacher's form has no image field, so nothing else can tell it the upload stopped.
-  const usable = await page.waitForFunction(() => { const b = [...document.querySelectorAll('button')].find((x) => x.textContent.trim() === 'Guardar'); return b && !b.disabled; }, null, { timeout: 1000 }).then(() => true, () => false);
-  check('cancelling during an upload: a new teacher\'s Save isn\'t stuck', usable && !world.log.some((l) => l.path.endsWith('/confirm')));
-  check('cancelling during an upload: the late file is deleted', await until(() => world.deletes.includes(world.uploads[0].id)));
+  try {
+    await page.locator('.shared-image-field').getByRole('button', { name: 'Subir imagen' }).first().click();
+    await page.locator('.shared-image-field input[type=file]').setInputFiles(file());
+    await until(() => world.uploads.length > 0);
+    const save = page.getByRole('button', { name: 'Guardar', exact: true });
+    check('during an upload: current Save, labelled Cancel, and the tabs wait', await save.isDisabled() && await page.getByRole('button', { name: 'Cancelar' }).last().isDisabled() && await chip(page, 'Salones').isDisabled());
+    await page.getByRole('button', { name: 'Nueva' }).click();
+    await page.getByLabel('Nombre').fill('Profe Nueva');
+    await save.click();
+    const saved = await until(() => world.log.some((l) => l.path === '/batch' && l.body.ops.some((o) => o.op === 'create' && o.entity === 'person' && o.data.name === 'Profe Nueva')));
+    check('abandoning an upload via New: the new teacher can save before the old upload ends', saved && !world.log.some((l) => l.path.endsWith('/confirm')));
+  } finally { put.resolve(); }
+  check('abandoning an upload via New: the late file is deleted, not written to either teacher', await until(() => world.deletes.includes(world.uploads[0].id)) && world.coach.get('co_clara').data.photo === IDS.oldPhoto && !world.log.some((l) => l.path === '/batch' && l.body.ops.some((o) => o.data?.photo === world.uploads[0].id)));
   });
+
   for (const failSave of [false, true]) await scenario(`leaving during a save${failSave ? ' that fails' : ''}`, async () => {
   reset({ slowSave: 1200, failSave });
   ({ ctx, page } = await signedIn('admin@example.test'));
